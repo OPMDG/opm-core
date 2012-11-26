@@ -211,7 +211,7 @@ CREATE OR REPLACE FUNCTION public.list_users()
     RETURNS TABLE (accname text, rolname name)
 AS $$
     BEGIN
-        IF pg_has_role('pgf_admins', 'MEMBER') THEN
+        IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
             RETURN QUERY WITH
                 role_users AS (
                     SELECT users.rolname
@@ -224,7 +224,7 @@ AS $$
                 JOIN role_users AS u
                     ON (pg_has_role(rol.rolname, u.rolname, 'MEMBER')
                         AND u.rolname <> rol.rolname)
-                WHERE rol.rolname <> 'postgres';
+                WHERE NOT rol.rolsuper;
         ELSE
             RETURN QUERY WITH
                 role_users AS (
@@ -232,14 +232,14 @@ AS $$
                     FROM public.roles AS users
                     JOIN pg_catalog.pg_roles AS rol
                         ON (users.rolname=rol.rolname)
-                    WHERE pg_has_role(users.rolname, 'MEMBER')
+                    WHERE pg_has_role(session_user, users.rolname, 'MEMBER')
                 )
                 SELECT u.rolname, rol.rolname
                 FROM pg_catalog.pg_roles AS rol
                 JOIN role_users AS u
                     ON (pg_has_role(rol.rolname, u.rolname, 'MEMBER')
                         AND u.rolname <> rol.rolname)
-                WHERE rol.rolname <> 'postgres';
+                WHERE NOT rol.rolsuper;                
         END IF;
     END
 $$
