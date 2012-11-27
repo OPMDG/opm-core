@@ -53,6 +53,8 @@ CREATE TABLE public.roles (
     creation_ts timestamp with time zone DEFAULT now() NOT NULL,
     rolconfig text[]
 );
+CREATE UNIQUE INDEX idx_roles_rolname
+    ON roles USING btree (rolname);
 ALTER TABLE public.roles OWNER TO pgfactory;
 REVOKE ALL ON TABLE public.roles FROM public ;
 
@@ -178,32 +180,102 @@ Can only be executed by roles pgfactory and pgf_admins.
 @return name: name of the new account.';
 
 /*public.drop_account
+
+Drop an account.
+
+Also drop all roles that are connected only to this particular account.
+
+@return rolname: name of the dropped roles
 */
 CREATE OR REPLACE FUNCTION
-public.drop_account(IN p_account name,
-                    OUT rc boolean)
+public.drop_account(IN p_account name)
+ RETURNS SETOF text
 AS $$
--- It drops an account and also roles that are only in this account.
-    BEGIN
-        RAISE WARNING 'NOT YET IMPLEMENTED!';
-        rc := 'f';
-    END
+	-- It drops an account and also roles that are only in this account.
+ 	DECLARE
+		rolname name;
+	BEGIN
+		/* get list of roles to drop with the account.
+		 * don't drop roles that are part of several accounts
+		 */
+		FOR rolname IN SELECT roles_to_drop.rolname FROM (
+						SELECT array_agg(am.roleid) AS oid, rol.rolname
+						  FROM public.roles rol
+						  JOIN pg_roles pgrol ON (pgrol.rolname = rol.rolname)
+						  JOIN pg_auth_members am ON (am.member = pgrol.oid)
+						 WHERE pgrol.rolcanlogin
+						 GROUP BY 2
+						 HAVING count(*) = 1
+						) roles_to_drop
+						JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
+		LOOP
+			RAISE NOTICE 'role: %', rolname;
+			PERFORM 'SELECT drop_user(' || quote_literal(rolname) ||')';
+			RETURN NEXT rolname;
+		END LOOP;
+		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_account);
+		EXECUTE 'DROP ROLE ' || quote_ident(p_account);
+		RETURN;
+	END;
 $$
 LANGUAGE plpgsql
 VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.drop_account(IN name, OUT boolean)
+ALTER FUNCTION public.drop_account (IN name)
     OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.drop_account(IN name, OUT boolean)
+REVOKE ALL ON FUNCTION public.drop_account (IN name)
     FROM public;
-GRANT ALL ON FUNCTION public.drop_account(IN name, OUT boolean)
+GRANT ALL ON FUNCTION public.drop_account (IN name)
     TO pgf_admins;
 
-COMMENT ON FUNCTION public.drop_account(IN name, OUT boolean) IS 'Drop an account.
+COMMENT ON FUNCTION public.drop_account(IN name) IS 'Drop an account.
 
 It drops an account and also roles that are only in this account.';
+
+/*public.drop_account
+
+Drop an account.
+
+Also drop all roles that are connected only to this particular account.
+
+@return rc: return code.
+*/
+CREATE OR REPLACE FUNCTION
+public.drop_user(IN p_user name, OUT rc boolean)
+AS $$
+	DECLARE
+		p_rolname name;
+	-- It drops an account and also roles that are only in this account.
+	BEGIN
+	    EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = ' || quote_literal(p_user) INTO STRICT p_rolname;
+		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_user);
+		EXECUTE 'DROP ROLE ' || quote_ident(p_user);
+		RAISE NOTICE 'User % dropped.', p_user;
+		rc := true;
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			RAISE NOTICE 'Non-existent user %', p_user;
+			rc := false;
+		WHEN OTHERS THEN
+			RAISE LOG 'Impossible to drop user: %', p_user;
+			rc := false;
+	END;
+$$
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.drop_user (IN name)
+    OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.drop_user (IN name)
+    FROM public;
+GRANT ALL ON FUNCTION public.drop_user (IN name)
+    TO pgf_admins;
+
+COMMENT ON FUNCTION public.drop_user(IN name) IS 'Drop a user.';
 
 /* public.list_users
 */
