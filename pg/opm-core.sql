@@ -198,7 +198,11 @@ AS $$
 		/* get list of roles to drop with the account.
 		 * don't drop roles that are part of several accounts
 		 */
-		FOR rolname IN SELECT roles_to_drop.rolname FROM (
+	    IF (is_account(p_account) = false) THEN
+	      /* or do we raise an exception ? */
+	      RETURN;
+	    END IF;
+		FOR rolname IN EXECUTE 'SELECT roles_to_drop.rolname FROM (
 						SELECT array_agg(am.roleid) AS oid, rol.rolname
 						  FROM public.roles rol
 						  JOIN pg_roles pgrol ON (pgrol.rolname = rol.rolname)
@@ -208,9 +212,10 @@ AS $$
 						 HAVING count(*) = 1
 						) roles_to_drop
 						JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
+						AND pgacc.rolname = ' || quote_literal(p_account)
 		LOOP
 			RAISE NOTICE 'role: %', rolname;
-			PERFORM 'SELECT drop_user(' || quote_literal(rolname) ||')';
+			EXECUTE 'SELECT drop_user(' || quote_literal(rolname) ||')';
 			RETURN NEXT rolname;
 		END LOOP;
 		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_account);
@@ -249,6 +254,11 @@ AS $$
 		p_rolname name;
 	-- It drops an account and also roles that are only in this account.
 	BEGIN
+	    IF (is_user(p_user) = false) THEN
+	      rc := false;
+	      /* or do we raise an exception ? */
+	      RETURN;
+	    END IF;
 	    EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = ' || quote_literal(p_user) INTO STRICT p_rolname;
 		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_user);
 		EXECUTE 'DROP ROLE ' || quote_ident(p_user);
@@ -329,3 +339,62 @@ COMMENT ON FUNCTION public.list_users() IS 'List users.
 If current user is member of pgf_admins, list all users and account on the system.
 
 If current user is not admin, list all users and account who are related to the current user.';
+
+/*
+is_user(rolname)
+
+@return rc: true if the given rolname is a simple user
+ */
+CREATE OR REPLACE FUNCTION public.is_user(IN p_rolname name, OUT rc boolean)
+AS $$
+	BEGIN
+		EXECUTE 'SELECT CASE WHEN roles.rolname IS NOT NULL THEN true ELSE false END
+		  FROM public.roles roles
+		  JOIN pg_roles acc ON (acc.rolname = roles.rolname)
+		 WHERE acc.rolcanlogin
+		   AND roles.rolname = ' || quote_literal(p_rolname) || '' INTO rc;
+		IF (rc IS NULL) THEN
+		  rc := false;
+		END IF;
+	END;
+$$ 
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.is_user(IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.is_user(IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.is_user(IN name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given rolname is a user.';
+ 
+/*
+is_account(rolname)
+
+@return rc: true if the given rolname is an account
+ */
+CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
+AS $$
+	BEGIN
+		EXECUTE 'SELECT CASE WHEN roles.rolname IS NOT NULL THEN true ELSE false END
+		  FROM public.roles roles
+		  JOIN pg_roles acc ON (acc.rolname = roles.rolname)
+		 WHERE NOT acc.rolcanlogin
+		   AND roles.rolname = ' || quote_literal(p_rolname) INTO rc;
+		IF (rc IS NULL) THEN
+		  rc := false;
+		END IF;
+	END;
+$$ 
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.is_account(IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
+ 
