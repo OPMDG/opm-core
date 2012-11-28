@@ -398,3 +398,160 @@ GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
  
+/*
+public.grant_dispatcher(wh, role)
+
+@return rc: state of the operation
+ */
+CREATE OR REPLACE FUNCTION public.grant_dispatcher(IN p_whname text, IN p_rolname name, OUT rc boolean)
+AS $$
+	DECLARE
+		v_state   TEXT;
+		v_msg     TEXT;
+		v_detail  TEXT;
+		v_hint    TEXT;
+		v_context TEXT;
+	BEGIN
+	/* FIXME:
+	 * there are two ways to handle such thing:
+	 * - we call a warehouse specific function to grant the accordinate right on the hub table
+	 * - we assume that the hub table is named after warehouse_name.hub and grant insert right in this function
+	 *
+	 * we the second one.
+	 */
+
+		/* verify that the give role exists */
+		BEGIN
+			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+				rc := false;
+				RETURN;
+		END;
+		
+		/* verify that the given warehouse exists */
+		DECLARE
+			spc oid;
+		BEGIN
+			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(p_whname) INTO STRICT spc;
+			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
+				rc := false;
+				RETURN;
+		END;
+
+	EXECUTE 'GRANT INSERT ON TABLE ' || quote_ident(p_whname) || '.hub TO ' || quote_ident(p_rolname);
+	rc := true;
+	RAISE NOTICE 'GRANTED';
+
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			RAISE NOTICE 'Non-existent user %', p_rolname;
+			rc := false;
+		WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS
+				v_state   = RETURNED_SQLSTATE,
+				v_msg     = MESSAGE_TEXT,
+				v_detail  = PG_EXCEPTION_DETAIL,
+				v_hint    = PG_EXCEPTION_HINT,
+				v_context = PG_EXCEPTION_CONTEXT;
+			raise notice E'Unhandled error: impossible to grant user % on hub % :
+				state  : %
+				message: %
+				detail : %
+				hint   : %
+				context: %', p_rolname, p_whname, v_state, v_msg, v_detail, v_hint, v_context;
+			rc := false;
+	END;
+$$
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) IS 'Grant a role to dispatch performance data in a warehouse hub table.';
+
+/*
+public.revoke_dispatcher(wh, role)
+
+@return rc: state of the operation
+ */
+CREATE OR REPLACE FUNCTION public.revoke_dispatcher(IN p_whname text, IN p_rolname name, OUT rc boolean)
+AS $$
+	DECLARE
+		v_state   TEXT;
+		v_msg     TEXT;
+		v_detail  TEXT;
+		v_hint    TEXT;
+		v_context TEXT;
+	BEGIN
+	/* FIXME:
+	 * there are two ways to handle such thing:
+	 * - we call a warehouse specific function to revoke the accordinate right on the hub table
+	 * - we assume that the hub table is named after warehouse_name.hub and revoke insert right in this function
+	 */
+
+		/* verify that the give role exists */
+		BEGIN
+			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+				rc := false;
+				RETURN;
+		END;
+		
+		/* verify that the given warehouse exists */
+		DECLARE
+			spc oid;
+		BEGIN
+			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(p_whname) INTO STRICT spc;
+			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
+				rc := false;
+				RETURN;
+		END;
+
+	EXECUTE 'REVOKE INSERT ON TABLE ' || quote_ident(p_whname) || '.hub FROM ' || quote_ident(p_rolname);	
+	rc := true;
+	RAISE NOTICE 'REVOKED';
+
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			RAISE NOTICE 'Non-existent user %', p_rolname;
+			rc := false;
+		WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS
+				v_state   = RETURNED_SQLSTATE,
+				v_msg     = MESSAGE_TEXT,
+				v_detail  = PG_EXCEPTION_DETAIL,
+				v_hint    = PG_EXCEPTION_HINT,
+				v_context = PG_EXCEPTION_CONTEXT;
+			raise notice E'Unhandled error: impossible to grant user % on hub % :
+				state  : %
+				message: %
+				detail : %
+				hint   : %
+				context: %', p_rolname, p_whname, v_state, v_msg, v_detail, v_hint, v_context;
+			rc := false;
+	END;
+$$
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) IS 'Revoke dispatch ability for a give role on a given hub table.';
