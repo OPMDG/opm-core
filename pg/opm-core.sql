@@ -443,9 +443,9 @@ AS $$
 				RETURN;
 		END;
 
-	EXECUTE 'GRANT INSERT ON TABLE ' || quote_ident(p_whname) || '.hub TO ' || quote_ident(p_rolname);
-	rc := true;
-	RAISE NOTICE 'GRANTED';
+		EXECUTE 'GRANT INSERT ON TABLE ' || quote_ident(p_whname) || '.hub TO ' || quote_ident(p_rolname);
+		rc := true;
+		RAISE NOTICE 'GRANTED';
 
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN
@@ -474,7 +474,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) OWNER TO pgfactory;
 REVOKE ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) TO pgf_admins;
 
 COMMENT ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) IS 'Grant a role to dispatch performance data in a warehouse hub table.';
 
@@ -498,7 +498,8 @@ AS $$
 	 * - we assume that the hub table is named after warehouse_name.hub and revoke insert right in this function
 	 */
 
-		/* verify that the give role exists */
+
+	/* verify that the give role exists */
 		BEGIN
 			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
 		EXCEPTION
@@ -521,9 +522,9 @@ AS $$
 				RETURN;
 		END;
 
-	EXECUTE 'REVOKE INSERT ON TABLE ' || quote_ident(p_whname) || '.hub FROM ' || quote_ident(p_rolname);	
-	rc := true;
-	RAISE NOTICE 'REVOKED';
+		EXECUTE 'REVOKE INSERT ON TABLE ' || quote_ident(p_whname) || '.hub FROM ' || quote_ident(p_rolname);	
+		rc := true;
+		RAISE NOTICE 'REVOKED';
 
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN
@@ -552,6 +553,222 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) OWNER TO pgfactory;
 REVOKE ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) TO pgf_admins;
 
 COMMENT ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) IS 'Revoke dispatch ability for a give role on a given hub table.';
+
+/*
+public.grant_service(service, role)
+
+@return rc: status
+ */
+CREATE OR REPLACE FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean)
+AS $$
+	DECLARE
+		v_state      text;
+		v_msg        text;
+		v_detail     text;
+		v_hint       text;
+		v_context    text;
+		v_whname     text;
+		v_is_acl_empty boolean;
+				
+		v_sql        text;
+	BEGIN
+	/* verify that the give role exists */
+		BEGIN
+			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+				rc := false;
+				RETURN;
+		END;
+
+		/* which warehouse ? */
+		EXECUTE 'SELECT warehouse FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_whname;
+
+		/* verify that the given warehouse exists */
+		DECLARE
+			spc oid;
+		BEGIN
+			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(v_whname) INTO STRICT spc;
+			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
+				rc := false;
+				RETURN;
+		END;
+
+		/* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
+        EXECUTE 'SELECT CASE WHEN array_dims(seracl) IS NULL THEN true ELSE false END AS is_acl_empty FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_is_acl_empty;
+		IF v_is_acl_empty = true THEN
+			EXECUTE 'UPDATE services
+						SET seracl = seracl || aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || ')
+					  WHERE id = ' || quote_literal(p_service_id);
+		ELSE
+			/* update ACL in the service table */
+			EXECUTE 'UPDATE services
+						SET seracl = /* array_append( */ seracl /*, */ || aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || '/*)*/)
+					  WHERE NOT aclcontains(seracl, aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || '))
+						AND id = ' || quote_literal(p_service_id);
+		END IF;
+
+		/* put the ACL on the partition, let the warehouse function do it */
+		v_sql := 'SELECT ' || quote_ident(v_whname) || '.grant_service(' || quote_literal(p_service_id);
+				
+		RAISE NOTICE 'SQL: %', v_sql;
+		RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
+		rc := false;
+
+	EXCEPTION
+		WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS
+				v_state   = RETURNED_SQLSTATE,
+				v_msg     = MESSAGE_TEXT,
+				v_detail  = PG_EXCEPTION_DETAIL,
+				v_hint    = PG_EXCEPTION_HINT,
+				v_context = PG_EXCEPTION_CONTEXT;
+			raise notice E'Unhandled error:
+				state  : %
+				message: %
+				detail : %
+				hint   : %
+				context: %', v_state, v_msg, v_detail, v_hint, v_context;
+			rc := false;
+	END;
+$$
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
+GRANT ALL ON FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
+
+COMMENT ON FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a service.';
+
+/*
+public.revoke_service(service, role)
+
+@return rc: status
+ */
+CREATE OR REPLACE FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean)
+AS $$
+	DECLARE
+		v_state      text;
+		v_msg        text;
+		v_detail     text;
+		v_hint       text;
+		v_context    text;
+		v_whname     text;
+		v_is_acl_empty boolean;
+		v_acl_exists   boolean;
+		v_acl_last_element boolean;
+		v_seracl     aclitem[];
+				
+		v_sql        text;
+	BEGIN
+	/* verify that the give role exists */
+		BEGIN
+			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+				rc := false;
+				RETURN;
+		END;
+
+		/* which warehouse ? */
+		EXECUTE 'SELECT warehouse FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_whname;
+
+		/* verify that the given warehouse exists */
+		DECLARE
+			spc oid;
+		BEGIN
+			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(v_whname) INTO STRICT spc;
+			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
+				rc := false;
+				RETURN;
+		END;
+
+		/* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
+        EXECUTE 'SELECT CASE WHEN array_dims(seracl) IS NULL THEN true ELSE false END AS is_acl_empty FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_is_acl_empty;
+		IF v_is_acl_empty = true THEN
+			RAISE NOTICE 'ACL is empty';
+			rc := false;
+			RETURN;
+		ELSE
+			/* does the ACL exists ? */
+			EXECUTE 'SELECT CASE WHEN aclcontains(seracl, aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || ')) THEN true ELSE false END FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_acl_exists;
+			IF v_acl_exists = false THEN
+				RAISE NOTICE 'ACL does not exists';
+				rc := false;
+				RETURN;
+			END IF;
+
+			/* if the ACL is the last remaining one, then put an empty ACL directly. Otherwise, execute the CTE to do the right update */
+			EXECUTE 'SELECT CASE WHEN array_length(seracl, 1) = 1 THEN true ELSE false END AS is_acl_empty FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_acl_last_element;
+			IF v_acl_last_element = true THEN
+				RAISE NOTICE 'last element';
+				EXECUTE 'UPDATE services
+						SET seracl = ARRAY[]::aclitem[]
+					  WHERE id = ' || quote_literal(p_service_id);
+
+			ELSE
+				EXECUTE 'WITH
+						explode_seracl AS (
+							SELECT id, unnest(seracl) AS acl
+							  FROM services
+							 WHERE id = ' || quote_literal(p_service_id) || '
+						),
+						filter_acl AS (
+							SELECT id, array_agg(acl) AS acl
+							  FROM explode_seracl
+							 WHERE NOT aclitemeq(acl,  aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || ')) -- ACL to remove is filtered
+							 GROUP BY id
+						)
+						UPDATE services SET seracl=acl FROM filter_acl WHERE services.id=filter_acl.id -- then ACL is rewritten';
+			END IF;
+		END IF;
+
+		/* put the ACL on the partition, let the warehouse function do it */
+		v_sql := 'SELECT ' || quote_ident(v_whname) || '.revoke_service(' || quote_literal(p_service_id);
+				
+		RAISE NOTICE 'SQL: %', v_sql;
+		RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
+		rc := false;
+
+	EXCEPTION
+		WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS
+				v_state   = RETURNED_SQLSTATE,
+				v_msg     = MESSAGE_TEXT,
+				v_detail  = PG_EXCEPTION_DETAIL,
+				v_hint    = PG_EXCEPTION_HINT,
+				v_context = PG_EXCEPTION_CONTEXT;
+			raise notice E'Unhandled error:
+				state  : %
+				message: %
+				detail : %
+				hint   : %
+				context: %', v_state, v_msg, v_detail, v_hint, v_context;
+			rc := false;
+	END;
+$$
+LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
+GRANT ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
+
+COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a service.';
+
