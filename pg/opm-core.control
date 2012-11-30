@@ -1,0 +1,7 @@
+# wh_nagios extension
+comment = 'pgFactory core'
+default_version = '1.0'
+module_pathname = '$libdir/pgfactore-core'
+superuser = false
+relocatable = false
+schema = 'public'

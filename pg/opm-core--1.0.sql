@@ -1,3 +1,6 @@
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION wh_nagios" to load this file. \quit
+
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
@@ -6,17 +9,22 @@ SET client_min_messages = warning;
 SET escape_string_warning = off;
 SET search_path = public, pg_catalog;
 
+/*
 \c postgres
 DROP DATABASE IF EXISTS pgfactory;
 DROP ROLE IF EXISTS pgfactory;
 DROP ROLE IF EXISTS pgf_admins;
 DROP ROLE IF EXISTS pgf_accounts;
+*/
+
 CREATE ROLE pgfactory CREATEROLE;
 CREATE ROLE pgf_admins CREATEROLE;
 CREATE ROLE pgf_accounts;
 
+/*
 CREATE DATABASE pgfactory OWNER pgfactory;
 \c pgfactory
+*/
 
 CREATE TABLE public.services (
     id bigserial PRIMARY KEY,
@@ -373,6 +381,9 @@ COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given 
 is_account(rolname)
 
 @return rc: true if the given rolname is an account
+
+
+--- retourne NULL si inexistant
  */
 CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
 AS $$
@@ -616,7 +627,7 @@ AS $$
 		END IF;
 
 		/* put the ACL on the partition, let the warehouse function do it */
-		v_sql := 'SELECT ' || quote_ident(v_whname) || '.grant_service(' || quote_literal(p_service_id);
+		v_sql := 'SELECT ' || quote_ident(v_whname) || '.grant_service(' || quote_literal(p_service_id) || ')';
 				
 		RAISE NOTICE 'SQL: %', v_sql;
 		RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
@@ -775,7 +786,6 @@ COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname n
 /*
 list_services()
  */
-
 CREATE OR REPLACE FUNCTION public.list_services()
     RETURNS TABLE (id bigint, hostname text, warehouse text, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
 AS $$
@@ -817,3 +827,4 @@ REVOKE ALL ON FUNCTION public.list_services() FROM public;
 GRANT ALL ON FUNCTION public.list_services() TO public;
 
 COMMENT ON FUNCTION public.list_services() IS 'List services available for the session user.';
+
