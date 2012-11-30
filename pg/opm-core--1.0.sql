@@ -222,7 +222,6 @@ AS $$
 						JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
 						AND pgacc.rolname = ' || quote_literal(p_account)
 		LOOP
-			RAISE NOTICE 'role: %', rolname;
 			EXECUTE 'SELECT drop_user(' || quote_literal(rolname) ||')';
 			RETURN NEXT rolname;
 		END LOOP;
@@ -270,7 +269,6 @@ AS $$
 	    EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = ' || quote_literal(p_user) INTO STRICT p_rolname;
 		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_user);
 		EXECUTE 'DROP ROLE ' || quote_ident(p_user);
-		RAISE NOTICE 'User % dropped.', p_user;
 		rc := true;
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN
