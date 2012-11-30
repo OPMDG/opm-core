@@ -772,3 +772,48 @@ GRANT ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname
 
 COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a service.';
 
+/*
+list_services()
+ */
+
+CREATE OR REPLACE FUNCTION public.list_services()
+    RETURNS TABLE (id bigint, hostname text, warehouse text, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
+AS $$
+    BEGIN
+		IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+			RETURN QUERY SELECT s.id, s.hostname, s.warehouse, s.service, s.last_modified, s.creation_ts, s.servalid
+						   FROM services s;
+        ELSE
+            RETURN QUERY EXECUTE 'WITH RECURSIVE
+							v_roles AS (
+								SELECT pr.oid AS oid, r.rolname, ARRAY[r.rolname] AS roles
+								  FROM public.roles r
+								  JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
+								 WHERE r.rolname = ' || quote_literal(session_user) || '
+								UNION ALL
+								SELECT pa.oid, v.rolname, v.roles|| pa.rolname::text
+								  FROM v_roles v
+								  JOIN pg_auth_members am ON (am.member = v.oid)
+								  JOIN pg_roles pa ON (am.roleid = pa.oid)
+								 WHERE NOT pa.rolname::name = ANY(v.roles)
+							),
+							acl AS (
+								SELECT id, hostname, warehouse, service, last_modified, creation_ts, servalid, (aclexplode(seracl)).*
+								  FROM services
+								 WHERE array_length(seracl, 1) IS NOT NULL
+							)
+							SELECT id, hostname, warehouse, service, last_modified, creation_ts, servalid
+							  FROM acl 
+							 WHERE grantee IN (SELECT oid FROM v_roles)';
+		END IF;
+	END;
+$$ LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.list_services() OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.list_services() FROM public;
+GRANT ALL ON FUNCTION public.list_services() TO public;
+
+COMMENT ON FUNCTION public.list_services() IS 'List services available for the session user.';
