@@ -33,6 +33,9 @@ CREATE TABLE public.services (
     service text NOT NULL,
     last_modified date DEFAULT (now())::date NOT NULL,
     creation_ts timestamp with time zone DEFAULT now() NOT NULL,
+    last_cleanup timestamp with time zone DEFAULT now() NOT NULL,
+    oldest_record timestamp with time zone DEFAULT now(),
+    newest_record timestamp with time zone,
     servalid interval,
     seracl aclitem[] NOT NULL DEFAULT '{}'::aclitem[]
 );
