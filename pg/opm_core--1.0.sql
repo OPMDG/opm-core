@@ -143,7 +143,7 @@ AS $$
     DECLARE
         p_account name;
     BEGIN
-        
+
         IF coalesce(array_length(p_accounts, 1), 0) < 1 THEN
             -- or maybe we should raise an exception ?
             RAISE WARNING 'A user must have at least one associated account!';
@@ -153,7 +153,7 @@ AS $$
 
         EXECUTE format('CREATE ROLE %I LOGIN ENCRYPTED PASSWORD %L',
             p_user, p_passwd);
-        
+
         FOREACH p_account IN ARRAY p_accounts
         LOOP
             EXECUTE format('GRANT %I TO %I', p_account, p_user);
@@ -202,36 +202,39 @@ CREATE OR REPLACE FUNCTION
 public.drop_account(IN p_account name)
  RETURNS SETOF text
 AS $$
-	-- It drops an account and also roles that are only in this account.
- 	DECLARE
-		rolname name;
-	BEGIN
-		/* get list of roles to drop with the account.
-		 * don't drop roles that are part of several accounts
-		 */
-	    IF (is_account(p_account) = false) THEN
-	      /* or do we raise an exception ? */
-	      RETURN;
-	    END IF;
-		FOR rolname IN EXECUTE 'SELECT roles_to_drop.rolname FROM (
-						SELECT array_agg(am.roleid) AS oid, rol.rolname
-						  FROM public.roles rol
-						  JOIN pg_roles pgrol ON (pgrol.rolname = rol.rolname)
-						  JOIN pg_auth_members am ON (am.member = pgrol.oid)
-						 WHERE pgrol.rolcanlogin
-						 GROUP BY 2
-						 HAVING count(*) = 1
-						) roles_to_drop
-						JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
-						AND pgacc.rolname = ' || quote_literal(p_account)
-		LOOP
-			EXECUTE 'SELECT drop_user(' || quote_literal(rolname) ||')';
-			RETURN NEXT rolname;
-		END LOOP;
-		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_account);
-		EXECUTE 'DROP ROLE ' || quote_ident(p_account);
-		RETURN;
-	END;
+        -- It drops an account and also roles that are only in this account.
+        DECLARE
+                rolname name;
+        BEGIN
+            /* get list of roles to drop with the account.
+             * don't drop roles that are part of several accounts
+             */
+            IF (is_account(p_account) = false) THEN
+              /* or do we raise an exception ? */
+              RETURN;
+            END IF;
+                FOR rolname IN EXECUTE format(
+                    'SELECT roles_to_drop.rolname FROM (
+                        SELECT array_agg(am.roleid) AS oid, rol.rolname
+                            FROM public.roles rol
+                            JOIN pg_roles pgrol ON (pgrol.rolname = rol.rolname)
+                            JOIN pg_auth_members am ON (am.member = pgrol.oid)
+                         WHERE pgrol.rolcanlogin
+                         GROUP BY 2
+                         HAVING count(*) = 1
+                        ) roles_to_drop
+                        JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
+                        AND pgacc.rolname = %L', p_account)
+                LOOP
+                        EXECUTE format('SELECT drop_user(%L)', rolname);
+                        RETURN NEXT rolname;
+                END LOOP;
+
+                EXECUTE format('DELETE FROM public.roles WHERE rolname = %L', p_account);
+                EXECUTE format('DROP ROLE %I', p_account);
+                -- FIXME return the account role as well !
+                RETURN;
+        END;
 $$
 LANGUAGE plpgsql
 VOLATILE
@@ -260,27 +263,28 @@ Also drop all roles that are connected only to this particular account.
 CREATE OR REPLACE FUNCTION
 public.drop_user(IN p_user name, OUT rc boolean)
 AS $$
-	DECLARE
-		p_rolname name;
-	-- It drops an account and also roles that are only in this account.
-	BEGIN
-	    IF (is_user(p_user) = false) THEN
-	      rc := false;
-	      /* or do we raise an exception ? */
-	      RETURN;
-	    END IF;
-	    EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = ' || quote_literal(p_user) INTO STRICT p_rolname;
-		EXECUTE 'DELETE FROM public.roles WHERE rolname = ' || quote_literal(p_user);
-		EXECUTE 'DROP ROLE ' || quote_ident(p_user);
-		rc := true;
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			RAISE NOTICE 'Non-existent user %', p_user;
-			rc := false;
-		WHEN OTHERS THEN
-			RAISE LOG 'Impossible to drop user: %', p_user;
-			rc := false;
-	END;
+        DECLARE
+                p_rolname name;
+        -- It drops an account and also roles that are only in this account.
+        BEGIN
+            IF (is_user(p_user) = false) THEN
+              rc := false;
+              /* or do we raise an exception ? */
+              RETURN;
+            END IF;
+
+            EXECUTE format('SELECT rolname FROM public.roles WHERE rolname = %L', p_user) INTO STRICT p_rolname;
+            EXECUTE format('DELETE FROM public.roles WHERE rolname = %L', p_user);
+            EXECUTE format('DROP ROLE %I', p_user);
+            rc := true;
+        EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                        RAISE NOTICE 'Non-existent user %', p_user;
+                        rc := false;
+                WHEN OTHERS THEN
+                        RAISE LOG 'Impossible to drop user: %', p_user;
+                        rc := false;
+        END;
 $$
 LANGUAGE plpgsql
 VOLATILE
@@ -330,7 +334,7 @@ AS $$
                 JOIN role_users AS u
                     ON (pg_has_role(rol.rolname, u.rolname, 'MEMBER')
                         AND u.rolname <> rol.rolname)
-                WHERE NOT rol.rolsuper;                
+                WHERE NOT rol.rolsuper;
         END IF;
     END
 $$
@@ -356,17 +360,22 @@ is_user(rolname)
  */
 CREATE OR REPLACE FUNCTION public.is_user(IN p_rolname name, OUT rc boolean)
 AS $$
-	BEGIN
-		EXECUTE 'SELECT CASE WHEN roles.rolname IS NOT NULL THEN true ELSE false END
-		  FROM public.roles roles
-		  JOIN pg_roles acc ON (acc.rolname = roles.rolname)
-		 WHERE acc.rolcanlogin
-		   AND roles.rolname = ' || quote_literal(p_rolname) || '' INTO rc;
-		IF (rc IS NULL) THEN
-		  rc := false;
-		END IF;
-	END;
-$$ 
+        BEGIN
+                EXECUTE format('
+                    SELECT CASE
+                            WHEN roles.rolname IS NOT NULL THEN true
+                            ELSE false
+                        END
+                    FROM public.roles roles
+                        JOIN pg_roles acc ON (acc.rolname = roles.rolname)
+                    WHERE acc.rolcanlogin
+                        AND roles.rolname = %L', p_rolname) INTO rc;
+
+                IF (rc IS NULL) THEN
+                  rc := false;
+                END IF;
+        END;
+$$
 LANGUAGE plpgsql
 VOLATILE
 LEAKPROOF
@@ -377,7 +386,7 @@ REVOKE ALL ON FUNCTION public.is_user(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_user(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given rolname is a user.';
- 
+
 /*
 is_account(rolname)
 
@@ -388,17 +397,22 @@ is_account(rolname)
  */
 CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
 AS $$
-	BEGIN
-		EXECUTE 'SELECT CASE WHEN roles.rolname IS NOT NULL THEN true ELSE false END
-		  FROM public.roles roles
-		  JOIN pg_roles acc ON (acc.rolname = roles.rolname)
-		 WHERE NOT acc.rolcanlogin
-		   AND roles.rolname = ' || quote_literal(p_rolname) INTO rc;
-		IF (rc IS NULL) THEN
-		  rc := false;
-		END IF;
-	END;
-$$ 
+        BEGIN
+                EXECUTE format('
+                    SELECT CASE
+                            WHEN roles.rolname IS NOT NULL THEN true
+                            ELSE false
+                        END
+                    FROM public.roles roles
+                        JOIN pg_roles acc ON (acc.rolname = roles.rolname)
+                    WHERE NOT acc.rolcanlogin
+                        AND roles.rolname = %L', p_rolname) INTO rc;
+
+                IF (rc IS NULL) THEN
+                  rc := false;
+                END IF;
+        END;
+$$
 LANGUAGE plpgsql
 VOLATILE
 LEAKPROOF
@@ -409,7 +423,7 @@ REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
- 
+
 /*
 public.grant_dispatcher(wh, role)
 
@@ -417,67 +431,68 @@ public.grant_dispatcher(wh, role)
  */
 CREATE OR REPLACE FUNCTION public.grant_dispatcher(IN p_whname text, IN p_rolname name, OUT rc boolean)
 AS $$
-	DECLARE
-		v_state   TEXT;
-		v_msg     TEXT;
-		v_detail  TEXT;
-		v_hint    TEXT;
-		v_context TEXT;
-	BEGIN
-	/* FIXME:
-	 * there are two ways to handle such thing:
-	 * - we call a warehouse specific function to grant the accordinate right on the hub table
-	 * - we assume that the hub table is named after warehouse_name.hub and grant insert right in this function
-	 *
-	 * we the second one.
-	 */
+        DECLARE
+                v_state   TEXT;
+                v_msg     TEXT;
+                v_detail  TEXT;
+                v_hint    TEXT;
+                v_context TEXT;
+        BEGIN
+        /* FIXME:
+         * there are two ways to handle such thing:
+         * - we call a warehouse specific function to grant the accordinate right on the hub table
+         * - we assume that the hub table is named after warehouse_name.hub and grant insert right in this function
+         *
+         * we the second one.
+         */
 
-		/* verify that the give role exists */
-		BEGIN
-			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-				rc := false;
-				RETURN;
-		END;
-		
-		/* verify that the given warehouse exists */
-		DECLARE
-			spc oid;
-		BEGIN
-			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(p_whname) INTO STRICT spc;
-			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
-				rc := false;
-				RETURN;
-		END;
+                /* verify that the give role exists */
+                BEGIN
+                        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+                                rc := false;
+                                RETURN;
+                END;
 
-		EXECUTE 'GRANT INSERT ON TABLE ' || quote_ident(p_whname) || '.hub TO ' || quote_ident(p_rolname);
-		rc := true;
-		RAISE NOTICE 'GRANTED';
+                /* verify that the given warehouse exists */
+                DECLARE
+                        spc oid;
+                BEGIN
+                        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', p_whname) INTO STRICT spc;
+                        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
+                                rc := false;
+                                RETURN;
+                END;
 
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			RAISE NOTICE 'Non-existent user %', p_rolname;
-			rc := false;
-		WHEN OTHERS THEN
-			GET STACKED DIAGNOSTICS
-				v_state   = RETURNED_SQLSTATE,
-				v_msg     = MESSAGE_TEXT,
-				v_detail  = PG_EXCEPTION_DETAIL,
-				v_hint    = PG_EXCEPTION_HINT,
-				v_context = PG_EXCEPTION_CONTEXT;
-			raise notice E'Unhandled error: impossible to grant user % on hub % :
-				state  : %
-				message: %
-				detail : %
-				hint   : %
-				context: %', p_rolname, p_whname, v_state, v_msg, v_detail, v_hint, v_context;
-			rc := false;
-	END;
+                EXECUTE format('GRANT INSERT ON TABLE %I.hub TO %I', p_whname, p_rolname);
+                -- FIXME check success before return
+                rc := true;
+                RAISE NOTICE 'GRANTED';
+
+        EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                        RAISE NOTICE 'Non-existent user %', p_rolname;
+                        rc := false;
+                WHEN OTHERS THEN
+                        GET STACKED DIAGNOSTICS
+                                v_state   = RETURNED_SQLSTATE,
+                                v_msg     = MESSAGE_TEXT,
+                                v_detail  = PG_EXCEPTION_DETAIL,
+                                v_hint    = PG_EXCEPTION_HINT,
+                                v_context = PG_EXCEPTION_CONTEXT;
+                        raise notice E'Unhandled error: impossible to grant user % on hub % :
+                                state  : %
+                                message: %
+                                detail : %
+                                hint   : %
+                                context: %', p_rolname, p_whname, v_state, v_msg, v_detail, v_hint, v_context;
+                        rc := false;
+        END;
 $$
 LANGUAGE plpgsql
 VOLATILE
@@ -497,66 +512,66 @@ public.revoke_dispatcher(wh, role)
  */
 CREATE OR REPLACE FUNCTION public.revoke_dispatcher(IN p_whname text, IN p_rolname name, OUT rc boolean)
 AS $$
-	DECLARE
-		v_state   TEXT;
-		v_msg     TEXT;
-		v_detail  TEXT;
-		v_hint    TEXT;
-		v_context TEXT;
-	BEGIN
-	/* FIXME:
-	 * there are two ways to handle such thing:
-	 * - we call a warehouse specific function to revoke the accordinate right on the hub table
-	 * - we assume that the hub table is named after warehouse_name.hub and revoke insert right in this function
-	 */
+        DECLARE
+                v_state   TEXT;
+                v_msg     TEXT;
+                v_detail  TEXT;
+                v_hint    TEXT;
+                v_context TEXT;
+        BEGIN
+        /* FIXME:
+         * there are two ways to handle such thing:
+         * - we call a warehouse specific function to revoke the accordinate right on the hub table
+         * - we assume that the hub table is named after warehouse_name.hub and revoke insert right in this function
+         */
 
 
-	/* verify that the give role exists */
-		BEGIN
-			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-				rc := false;
-				RETURN;
-		END;
-		
-		/* verify that the given warehouse exists */
-		DECLARE
-			spc oid;
-		BEGIN
-			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(p_whname) INTO STRICT spc;
-			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
-				rc := false;
-				RETURN;
-		END;
+        /* verify that the give role exists */
+                BEGIN
+                        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+                                rc := false;
+                                RETURN;
+                END;
 
-		EXECUTE 'REVOKE INSERT ON TABLE ' || quote_ident(p_whname) || '.hub FROM ' || quote_ident(p_rolname);	
-		rc := true;
-		RAISE NOTICE 'REVOKED';
+                /* verify that the given warehouse exists */
+                DECLARE
+                        spc oid;
+                BEGIN
+                        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', p_whname) INTO STRICT spc;
+                        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
+                                rc := false;
+                                RETURN;
+                END;
 
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			RAISE NOTICE 'Non-existent user %', p_rolname;
-			rc := false;
-		WHEN OTHERS THEN
-			GET STACKED DIAGNOSTICS
-				v_state   = RETURNED_SQLSTATE,
-				v_msg     = MESSAGE_TEXT,
-				v_detail  = PG_EXCEPTION_DETAIL,
-				v_hint    = PG_EXCEPTION_HINT,
-				v_context = PG_EXCEPTION_CONTEXT;
-			raise notice E'Unhandled error: impossible to grant user % on hub % :
-				state  : %
-				message: %
-				detail : %
-				hint   : %
-				context: %', p_rolname, p_whname, v_state, v_msg, v_detail, v_hint, v_context;
-			rc := false;
-	END;
+                EXECUTE format('REVOKE INSERT ON TABLE %I.hub FROM %I', p_whname, p_rolname);
+                rc := true;
+                RAISE NOTICE 'REVOKED';
+
+        EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                        RAISE NOTICE 'Non-existent user %', p_rolname;
+                        rc := false;
+                WHEN OTHERS THEN
+                        GET STACKED DIAGNOSTICS
+                                v_state   = RETURNED_SQLSTATE,
+                                v_msg     = MESSAGE_TEXT,
+                                v_detail  = PG_EXCEPTION_DETAIL,
+                                v_hint    = PG_EXCEPTION_HINT,
+                                v_context = PG_EXCEPTION_CONTEXT;
+                        raise notice E'Unhandled error: impossible to grant user % on hub % :
+                                state  : %
+                                message: %
+                                detail : %
+                                hint   : %
+                                context: %', p_rolname, p_whname, v_state, v_msg, v_detail, v_hint, v_context;
+                        rc := false;
+        END;
 $$
 LANGUAGE plpgsql
 VOLATILE
@@ -576,80 +591,92 @@ public.grant_service(service, role)
  */
 CREATE OR REPLACE FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean)
 AS $$
-	DECLARE
-		v_state      text;
-		v_msg        text;
-		v_detail     text;
-		v_hint       text;
-		v_context    text;
-		v_whname     text;
-		v_is_acl_empty boolean;
-				
-		v_sql        text;
-	BEGIN
-	/* verify that the give role exists */
-		BEGIN
-			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-				rc := false;
-				RETURN;
-		END;
+        DECLARE
+                v_state      text;
+                v_msg        text;
+                v_detail     text;
+                v_hint       text;
+                v_context    text;
+                v_whname     text;
+                v_is_acl_empty boolean;
 
-		/* which warehouse ? */
-		EXECUTE 'SELECT warehouse FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_whname;
+                v_sql        text;
+        BEGIN
+        /* verify that the give role exists */
+                BEGIN
+                        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+                                rc := false;
+                                RETURN;
+                END;
 
-		/* verify that the given warehouse exists */
-		DECLARE
-			spc oid;
-		BEGIN
-			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(v_whname) INTO STRICT spc;
-			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
-				rc := false;
-				RETURN;
-		END;
+                /* which warehouse ? */
+                EXECUTE format('SELECT warehouse FROM services WHERE id = %L', p_service_id) INTO v_whname;
 
-		/* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
-        EXECUTE 'SELECT CASE WHEN array_dims(seracl) IS NULL THEN true ELSE false END AS is_acl_empty FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_is_acl_empty;
-		IF v_is_acl_empty = true THEN
-			EXECUTE 'UPDATE services
-						SET seracl = seracl || aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || ')
-					  WHERE id = ' || quote_literal(p_service_id);
-		ELSE
-			/* update ACL in the service table */
-			EXECUTE 'UPDATE services
-						SET seracl = /* array_append( */ seracl /*, */ || aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || '/*)*/)
-					  WHERE NOT aclcontains(seracl, aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || '))
-						AND id = ' || quote_literal(p_service_id);
-		END IF;
+                /* verify that the given warehouse exists */
+                DECLARE
+                        spc oid;
+                BEGIN
+                        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', v_whname) INTO STRICT spc;
+                        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
+                                rc := false;
+                                RETURN;
+                END;
 
-		/* put the ACL on the partition, let the warehouse function do it */
-		v_sql := 'SELECT ' || quote_ident(v_whname) || '.grant_service(' || quote_literal(p_service_id) || ')';
-				
-		RAISE NOTICE 'SQL: %', v_sql;
-		RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
-		rc := false;
+                /* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
+        EXECUTE format('
+            SELECT CASE
+                    WHEN array_dims(seracl) IS NULL THEN true
+                    ELSE false
+                END AS is_acl_empty
+            FROM services WHERE id = %L', p_service_id
+        ) INTO v_is_acl_empty;
 
-	EXCEPTION
-		WHEN OTHERS THEN
-			GET STACKED DIAGNOSTICS
-				v_state   = RETURNED_SQLSTATE,
-				v_msg     = MESSAGE_TEXT,
-				v_detail  = PG_EXCEPTION_DETAIL,
-				v_hint    = PG_EXCEPTION_HINT,
-				v_context = PG_EXCEPTION_CONTEXT;
-			raise notice E'Unhandled error:
-				state  : %
-				message: %
-				detail : %
-				hint   : %
-				context: %', v_state, v_msg, v_detail, v_hint, v_context;
-			rc := false;
-	END;
+                IF v_is_acl_empty = true THEN
+                        EXECUTE format('UPDATE services
+                            SET seracl = seracl || aclitemin(%L)
+                            WHERE id = %L', p_rolname || '=r/pgfactory', p_service_id
+                        );
+                ELSE
+                        /* update ACL in the service table */
+                        EXECUTE format('UPDATE services
+                            SET seracl = seracl || aclitemin(%L)
+                            WHERE NOT aclcontains(seracl, aclitemin(%L))
+                                AND id = %L',
+                                p_rolname || '=r/pgfactory',
+                                p_rolname || '=r/pgfactory',
+                                p_service_id
+                        );
+                END IF;
+
+                /* put the ACL on the partition, let the warehouse function do it */
+                v_sql := format('SELECT %I.grant_service(%L)', v_whname, p_service_id);
+
+                RAISE NOTICE 'SQL: %', v_sql;
+                RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
+                rc := false;
+
+        EXCEPTION
+                WHEN OTHERS THEN
+                        GET STACKED DIAGNOSTICS
+                                v_state   = RETURNED_SQLSTATE,
+                                v_msg     = MESSAGE_TEXT,
+                                v_detail  = PG_EXCEPTION_DETAIL,
+                                v_hint    = PG_EXCEPTION_HINT,
+                                v_context = PG_EXCEPTION_CONTEXT;
+                        raise notice E'Unhandled error:
+                                state  : %
+                                message: %
+                                detail : %
+                                hint   : %
+                                context: %', v_state, v_msg, v_detail, v_hint, v_context;
+                        rc := false;
+        END;
 $$
 LANGUAGE plpgsql
 VOLATILE
@@ -669,109 +696,137 @@ public.revoke_service(service, role)
  */
 CREATE OR REPLACE FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean)
 AS $$
-	DECLARE
-		v_state      text;
-		v_msg        text;
-		v_detail     text;
-		v_hint       text;
-		v_context    text;
-		v_whname     text;
-		v_is_acl_empty boolean;
-		v_acl_exists   boolean;
-		v_acl_last_element boolean;
-		v_seracl     aclitem[];
-				
-		v_sql        text;
-	BEGIN
-	/* verify that the give role exists */
-		BEGIN
-			EXECUTE 'SELECT true FROM public.roles WHERE rolname = ' || quote_literal(p_rolname) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-				rc := false;
-				RETURN;
-		END;
+        DECLARE
+                v_state      text;
+                v_msg        text;
+                v_detail     text;
+                v_hint       text;
+                v_context    text;
+                v_whname     text;
+                v_is_acl_empty boolean;
+                v_acl_exists   boolean;
+                v_acl_last_element boolean;
+                v_seracl     aclitem[];
 
-		/* which warehouse ? */
-		EXECUTE 'SELECT warehouse FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_whname;
+                v_sql        text;
+        BEGIN
+        /* verify that the give role exists */
+                BEGIN
+                        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
+                                rc := false;
+                                RETURN;
+                END;
 
-		/* verify that the given warehouse exists */
-		DECLARE
-			spc oid;
-		BEGIN
-			EXECUTE 'SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = ' || quote_literal(v_whname) INTO STRICT spc;
-			EXECUTE 'SELECT true FROM pg_catalog.pg_class WHERE relname = ' || quote_literal('hub') || ' AND relnamespace = ' || quote_literal(spc) INTO STRICT rc;
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
-				rc := false;
-				RETURN;
-		END;
+                /* which warehouse ? */
+                EXECUTE format('SELECT warehouse FROM services WHERE id = %L', p_service_id) INTO v_whname;
 
-		/* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
-        EXECUTE 'SELECT CASE WHEN array_dims(seracl) IS NULL THEN true ELSE false END AS is_acl_empty FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_is_acl_empty;
-		IF v_is_acl_empty = true THEN
-			RAISE NOTICE 'ACL is empty';
-			rc := false;
-			RETURN;
-		ELSE
-			/* does the ACL exists ? */
-			EXECUTE 'SELECT CASE WHEN aclcontains(seracl, aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || ')) THEN true ELSE false END FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_acl_exists;
-			IF v_acl_exists = false THEN
-				RAISE NOTICE 'ACL does not exists';
-				rc := false;
-				RETURN;
-			END IF;
+                /* verify that the given warehouse exists */
+                DECLARE
+                        spc oid;
+                BEGIN
+                        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', v_whname) INTO STRICT spc;
+                        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
+                EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                                RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
+                                rc := false;
+                                RETURN;
+                END;
 
-			/* if the ACL is the last remaining one, then put an empty ACL directly. Otherwise, execute the CTE to do the right update */
-			EXECUTE 'SELECT CASE WHEN array_length(seracl, 1) = 1 THEN true ELSE false END AS is_acl_empty FROM services WHERE id = ' || quote_literal(p_service_id) INTO v_acl_last_element;
-			IF v_acl_last_element = true THEN
-				RAISE NOTICE 'last element';
-				EXECUTE 'UPDATE services
-						SET seracl = ARRAY[]::aclitem[]
-					  WHERE id = ' || quote_literal(p_service_id);
+                /* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
+        EXECUTE format('SELECT
+                CASE
+                    WHEN array_dims(seracl) IS NULL THEN true
+                    ELSE false
+                END AS is_acl_empty
+            FROM services WHERE id = %L', p_service_id
+        ) INTO v_is_acl_empty;
+                IF v_is_acl_empty = true THEN
+                        RAISE NOTICE 'ACL is empty';
+                        rc := false;
+                        RETURN;
+                ELSE
+                        /* does the ACL exists ? */
+                        EXECUTE format('SELECT
+                                CASE
+                                    WHEN aclcontains(seracl, aclitemin(%L)) THEN true
+                                    ELSE false
+                                END
+                            FROM services
+                            WHERE id = %L', p_rolname || '=r/pgfactory', p_service_id
+                        ) INTO v_acl_exists;
 
-			ELSE
-				EXECUTE 'WITH
-						explode_seracl AS (
-							SELECT id, unnest(seracl) AS acl
-							  FROM services
-							 WHERE id = ' || quote_literal(p_service_id) || '
-						),
-						filter_acl AS (
-							SELECT id, array_agg(acl) AS acl
-							  FROM explode_seracl
-							 WHERE NOT aclitemeq(acl,  aclitemin(' || quote_literal(p_rolname || '=r/pgfactory') || ')) -- ACL to remove is filtered
-							 GROUP BY id
-						)
-						UPDATE services SET seracl=acl FROM filter_acl WHERE services.id=filter_acl.id -- then ACL is rewritten';
-			END IF;
-		END IF;
+                        IF v_acl_exists = false THEN
+                                RAISE NOTICE 'ACL does not exists';
+                                rc := false;
+                                RETURN;
+                        END IF;
 
-		/* put the ACL on the partition, let the warehouse function do it */
-		v_sql := 'SELECT ' || quote_ident(v_whname) || '.revoke_service(' || quote_literal(p_service_id);
-				
-		RAISE NOTICE 'SQL: %', v_sql;
-		RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
-		rc := false;
+                        /* if the ACL is the last remaining one, then put an empty ACL directly. Otherwise, execute the CTE to do the right update */
+                        EXECUTE format('SELECT
+                                CASE
+                                    WHEN array_length(seracl, 1) = 1 THEN true
+                                    ELSE false
+                                END AS is_acl_empty
+                            FROM services
+                            WHERE id = %L', p_service_id) INTO v_acl_last_element;
 
-	EXCEPTION
-		WHEN OTHERS THEN
-			GET STACKED DIAGNOSTICS
-				v_state   = RETURNED_SQLSTATE,
-				v_msg     = MESSAGE_TEXT,
-				v_detail  = PG_EXCEPTION_DETAIL,
-				v_hint    = PG_EXCEPTION_HINT,
-				v_context = PG_EXCEPTION_CONTEXT;
-			raise notice E'Unhandled error:
-				state  : %
-				message: %
-				detail : %
-				hint   : %
-				context: %', v_state, v_msg, v_detail, v_hint, v_context;
-			rc := false;
-	END;
+                        IF v_acl_last_element = true THEN
+                                RAISE NOTICE 'last element';
+                                EXECUTE format('UPDATE services
+                                    SET seracl = ARRAY[]::aclitem[]
+                                    WHERE id = %L', p_service_id
+                                );
+
+                        ELSE
+                                EXECUTE format('WITH
+                                    explode_seracl AS (
+                                        SELECT id, unnest(seracl) AS acl
+                                            FROM services
+                                        WHERE id = %L
+                                    ),
+                                    filter_acl AS (
+                                        SELECT id, array_agg(acl) AS acl
+                                            FROM explode_seracl
+                                        WHERE NOT aclitemeq(acl,  aclitemin(%L)) -- ACL to remove is filtered
+                                        GROUP BY id
+                                    )
+                                    UPDATE services
+                                    SET seracl=acl
+                                    FROM filter_acl
+                                    WHERE services.id=filter_acl.id -- then ACL is rewritten',
+                                    p_service_id,
+                                    p_rolname || '=r/pgfactory'
+                                );
+                        END IF;
+                END IF;
+
+                /* put the ACL on the partition, let the warehouse function do it */
+                v_sql := format('SELECT %I.revoke_service(%L)', v_whname, p_service_id);
+
+                RAISE NOTICE 'SQL: %', v_sql;
+                RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
+                rc := false;
+
+        EXCEPTION
+                WHEN OTHERS THEN
+                        GET STACKED DIAGNOSTICS
+                                v_state   = RETURNED_SQLSTATE,
+                                v_msg     = MESSAGE_TEXT,
+                                v_detail  = PG_EXCEPTION_DETAIL,
+                                v_hint    = PG_EXCEPTION_HINT,
+                                v_context = PG_EXCEPTION_CONTEXT;
+                        raise notice E'Unhandled error:
+                                state  : %
+                                message: %
+                                detail : %
+                                hint   : %
+                                context: %', v_state, v_msg, v_detail, v_hint, v_context;
+                        rc := false;
+        END;
 $$
 LANGUAGE plpgsql
 VOLATILE
@@ -791,33 +846,34 @@ CREATE OR REPLACE FUNCTION public.list_services()
     RETURNS TABLE (id bigint, hostname text, warehouse text, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
 AS $$
     BEGIN
-		IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
-			RETURN QUERY SELECT s.id, s.hostname, s.warehouse, s.service, s.last_modified, s.creation_ts, s.servalid
-						   FROM services s;
+                IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+                        RETURN QUERY SELECT s.id, s.hostname, s.warehouse, s.service, s.last_modified, s.creation_ts, s.servalid
+                                                   FROM services s;
         ELSE
-            RETURN QUERY EXECUTE 'WITH RECURSIVE
-							v_roles AS (
-								SELECT pr.oid AS oid, r.rolname, ARRAY[r.rolname] AS roles
-								  FROM public.roles r
-								  JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
-								 WHERE r.rolname = ' || quote_literal(session_user) || '
-								UNION ALL
-								SELECT pa.oid, v.rolname, v.roles|| pa.rolname::text
-								  FROM v_roles v
-								  JOIN pg_auth_members am ON (am.member = v.oid)
-								  JOIN pg_roles pa ON (am.roleid = pa.oid)
-								 WHERE NOT pa.rolname::name = ANY(v.roles)
-							),
-							acl AS (
-								SELECT id, hostname, warehouse, service, last_modified, creation_ts, servalid, (aclexplode(seracl)).*
-								  FROM services
-								 WHERE array_length(seracl, 1) IS NOT NULL
-							)
-							SELECT id, hostname, warehouse, service, last_modified, creation_ts, servalid
-							  FROM acl 
-							 WHERE grantee IN (SELECT oid FROM v_roles)';
-		END IF;
-	END;
+            RETURN QUERY EXECUTE format('WITH RECURSIVE
+                v_roles AS (
+                    SELECT pr.oid AS oid, r.rolname, ARRAY[r.rolname] AS roles
+                      FROM public.roles r
+                      JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
+                     WHERE r.rolname = %L
+                    UNION ALL
+                    SELECT pa.oid, v.rolname, v.roles|| pa.rolname::text
+                      FROM v_roles v
+                      JOIN pg_auth_members am ON (am.member = v.oid)
+                      JOIN pg_roles pa ON (am.roleid = pa.oid)
+                     WHERE NOT pa.rolname::name = ANY(v.roles)
+                ),
+                acl AS (
+                    SELECT id, hostname, warehouse, service, last_modified,
+                        creation_ts, servalid, (aclexplode(seracl)).*
+                    FROM services
+                    WHERE array_length(seracl, 1) IS NOT NULL
+                )
+                SELECT id, hostname, warehouse, service, last_modified, creation_ts, servalid
+                FROM acl
+                WHERE grantee IN (SELECT oid FROM v_roles)', session_user);
+                END IF;
+        END;
 $$ LANGUAGE plpgsql
 VOLATILE
 LEAKPROOF
