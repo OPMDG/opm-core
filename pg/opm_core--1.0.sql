@@ -143,6 +143,7 @@ AS $$
 DECLARE
     p_account name;
 BEGIN
+    -- FIXME put all new users in pgf_accounts role ?
 
     IF coalesce(array_length(p_accounts, 1), 0) < 1 THEN
         -- or maybe we should raise an exception ?
@@ -446,6 +447,9 @@ BEGIN
  * - we assume that the hub table is named after warehouse_name.hub and grant insert right in this function
  *
  * we the second one.
+ * FIXME ioguix: I think we should pick the first option. Fro wh_nagios, We actually need to grant
+ * 3 objects: the schema, the table and the sequence. The extension itself is the best place to
+ * handle this.
  */
 
     /* verify that the give role exists */
