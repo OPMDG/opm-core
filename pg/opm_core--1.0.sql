@@ -859,12 +859,12 @@ BEGIN
                 s.service, s.last_modified, s.creation_ts, s.servalid
             FROM services s;
     ELSE
-        RETURN QUERY EXECUTE format('WITH RECURSIVE
+        RETURN QUERY EXECUTE 'WITH RECURSIVE
                 v_roles AS (
                     SELECT pr.oid AS oid, r.rolname, ARRAY[r.rolname] AS roles
                       FROM public.roles r
                       JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
-                     WHERE r.rolname = %L
+                     WHERE r.rolname = $1
                     UNION ALL
                     SELECT pa.oid, v.rolname, v.roles|| pa.rolname::text
                       FROM v_roles v
@@ -881,9 +881,7 @@ BEGIN
                 SELECT id, hostname, warehouse, service,
                     last_modified, creation_ts, servalid
                 FROM acl
-                WHERE grantee IN (SELECT oid FROM v_roles)',
-            session_user
-        );
+                WHERE grantee IN (SELECT oid FROM v_roles)' USING session_user;
     END IF;
 END;
 $$ LANGUAGE plpgsql
