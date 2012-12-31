@@ -20,6 +20,7 @@ DROP ROLE IF EXISTS pgf_roles;
 CREATE ROLE pgfactory CREATEROLE;
 CREATE ROLE pgf_admins CREATEROLE;
 CREATE ROLE pgf_roles;
+GRANT pgfactory TO pgf_admins;
 
 /*
 CREATE DATABASE pgfactory OWNER pgfactory;
