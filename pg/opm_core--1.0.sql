@@ -14,12 +14,12 @@ SET search_path = public, pg_catalog;
 DROP DATABASE IF EXISTS pgfactory;
 DROP ROLE IF EXISTS pgfactory;
 DROP ROLE IF EXISTS pgf_admins;
-DROP ROLE IF EXISTS pgf_accounts;
+DROP ROLE IF EXISTS pgf_roles;
 */
 
 CREATE ROLE pgfactory CREATEROLE;
 CREATE ROLE pgf_admins CREATEROLE;
-CREATE ROLE pgf_accounts;
+CREATE ROLE pgf_roles;
 
 /*
 CREATE DATABASE pgfactory OWNER pgfactory;
@@ -94,7 +94,7 @@ public.create_account (IN p_account text,
 AS $$
 BEGIN
     EXECUTE format('CREATE ROLE %I', p_account);
-    EXECUTE format('GRANT pgf_accounts TO %I', p_account);
+    EXECUTE format('GRANT pgf_roles TO %I', p_account);
     INSERT INTO public.roles (rolname) VALUES (p_account)
         RETURNING roles.id, roles.rolname
             INTO create_account.id, create_account.accname;
@@ -144,8 +144,6 @@ AS $$
 DECLARE
     p_account name;
 BEGIN
-    -- FIXME put all new users in pgf_accounts role ?
-
     IF coalesce(array_length(p_accounts, 1), 0) < 1 THEN
         -- or maybe we should raise an exception ?
         RAISE WARNING 'A user must have at least one associated account!';
@@ -161,7 +159,7 @@ BEGIN
         EXECUTE format('GRANT %I TO %I', p_account, p_user);
     END LOOP;
 
-    EXECUTE format('GRANT pgf_accounts TO %I', p_user);
+    EXECUTE format('GRANT pgf_roles TO %I', p_user);
 
     INSERT INTO public.roles (rolname) VALUES (p_user);
 
@@ -226,7 +224,7 @@ BEGIN
                 JOIN pg_catalog.pg_roles AS a ON (a.oid = am.roleid)
             WHERE pg_has_role(u.oid, $1, ''MEMBER'')
                 AND u.rolname NOT IN (''postgres'', $2)
-                AND a.rolname <> ''pgf_accounts''
+                AND a.rolname <> ''pgf_roles''
             GROUP BY 1
         ) AS t
         WHERE t.count = 1' USING p_account, p_account
