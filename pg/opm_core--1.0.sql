@@ -219,17 +219,17 @@ BEGIN
     END IF;
 
     FOR rolname IN EXECUTE
-        'SELECT roles_to_drop.rolname FROM (
-            SELECT array_agg(am.roleid) AS oid, rol.rolname
-                FROM public.roles rol
-                    JOIN pg_roles pgrol ON (pgrol.rolname = rol.rolname)
-                    JOIN pg_auth_members am ON (am.member = pgrol.oid)
-             WHERE pgrol.rolcanlogin
-             GROUP BY 2
-             HAVING count(*) = 1
-        ) roles_to_drop
-        JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
-        AND pgacc.rolname = $1' USING p_account
+        'SELECT t.rolname FROM (
+            SELECT u.rolname, count(*)
+            FROM pg_roles AS u
+                JOIN pg_auth_members AS am ON (am.member = u.oid)
+                JOIN pg_catalog.pg_roles AS a ON (a.oid = am.roleid)
+            WHERE pg_has_role(u.oid, $1, ''MEMBER'')
+                AND u.rolname NOT IN (''postgres'', $2)
+                AND a.rolname <> ''pgf_accounts''
+            GROUP BY 1
+        ) AS t
+        WHERE t.count = 1' USING p_account, p_account
     LOOP
         EXECUTE format('SELECT drop_user(%L)', rolname);
         RETURN NEXT rolname;
@@ -280,8 +280,11 @@ BEGIN
         RETURN;
     END IF;
 
-    EXECUTE format('SELECT rolname FROM public.roles WHERE rolname = %L', p_user) INTO STRICT p_rolname;
-    EXECUTE format('DELETE FROM public.roles WHERE rolname = %L', p_user);
+    EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = $1'
+        INTO STRICT p_rolname USING p_user;
+
+    EXECUTE 'DELETE FROM public.roles WHERE rolname = $1' USING p_user;
+
     EXECUTE format('DROP ROLE %I', p_user);
 
     rc := true;
