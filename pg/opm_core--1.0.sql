@@ -94,6 +94,7 @@ public.create_account (IN p_account text,
 AS $$
 BEGIN
     EXECUTE format('CREATE ROLE %I', p_account);
+    EXECUTE format('GRANT pgf_accounts TO %I', p_account);
     INSERT INTO public.roles (rolname) VALUES (p_account)
         RETURNING roles.id, roles.rolname
             INTO create_account.id, create_account.accname;
@@ -159,6 +160,8 @@ BEGIN
     LOOP
         EXECUTE format('GRANT %I TO %I', p_account, p_user);
     END LOOP;
+
+    EXECUTE format('GRANT pgf_accounts TO %I', p_user);
 
     INSERT INTO public.roles (rolname) VALUES (p_user);
 
@@ -357,30 +360,46 @@ If current user is member of pgf_admins, list all users and account on the syste
 If current user is not admin, list all users and account who are related to the current user.';
 
 /*
+is_pgf_role(rolname)
+
+@return: if given role exists as a pgFactory role (account or user), returns its
+oid, id, name and canlogin attributes. NULL if not exists or not a pgFactory
+role.
+ */
+CREATE OR REPLACE FUNCTION public.is_pgf_role(IN p_rolname name, OUT oid oid, OUT id bigint, OUT rolname name, OUT rolcanlogin boolean)
+AS $$
+    SELECT acc.oid, roles.id, acc.rolname, acc.rolcanlogin
+    FROM public.roles roles
+        JOIN pg_catalog.pg_roles acc ON (acc.rolname = roles.rolname)
+    WHERE roles.rolname = p_rolname
+$$
+LANGUAGE SQL
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
+'If given role exists as a pgFactory role (account or user), returns its name
+and canlogin attributes. Nothing if not exists or not a pgFactory role';
+
+/*
 is_user(rolname)
 
 @return rc: true if the given rolname is a simple user
  */
 CREATE OR REPLACE FUNCTION public.is_user(IN p_rolname name, OUT rc boolean)
 AS $$
-BEGIN
-    EXECUTE format('
-        SELECT CASE
-                WHEN roles.rolname IS NOT NULL THEN true
-                ELSE false
-            END
-        FROM public.roles roles
-            JOIN pg_roles acc ON (acc.rolname = roles.rolname)
-        WHERE acc.rolcanlogin
-            AND roles.rolname = %L', p_rolname) INTO rc;
-
-    IF (rc IS NULL) THEN
-        rc := false;
-    END IF;
-END;
+    SELECT CASE (public.is_pgf_role(p_rolname)).rolcanlogin
+        WHEN true THEN true
+        ELSE false
+    END;
 $$
-LANGUAGE plpgsql
-VOLATILE
+LANGUAGE SQL
+STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
@@ -400,24 +419,13 @@ is_account(rolname)
  */
 CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
 AS $$
-BEGIN
-    EXECUTE format('
-        SELECT CASE
-                WHEN roles.rolname IS NOT NULL THEN true
-                ELSE false
-            END
-        FROM public.roles roles
-            JOIN pg_roles acc ON (acc.rolname = roles.rolname)
-        WHERE NOT acc.rolcanlogin
-            AND roles.rolname = %L', p_rolname) INTO rc;
-
-    IF (rc IS NULL) THEN
-        rc := false;
-    END IF;
-END;
+    SELECT CASE NOT (public.is_pgf_role(p_rolname)).rolcanlogin
+        WHEN true THEN true
+        ELSE false
+    END;
 $$
-LANGUAGE plpgsql
-VOLATILE
+LANGUAGE SQL
+STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
@@ -426,6 +434,27 @@ REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
+
+/*
+wh_exists(wh)
+
+@return rc: true if the given warehouse exists
+ */
+CREATE OR REPLACE FUNCTION public.wh_exists(IN p_whname text, OUT rc boolean)
+AS $$
+    SELECT count(*) > 0
+    FROM pg_catalog.pg_namespace
+    WHERE nspname = $1;
+$$
+LANGUAGE SQL
+STABLE
+LEAKPROOF;
+
+ALTER FUNCTION public.wh_exists(IN text, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.wh_exists(IN text, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.wh_exists(IN text, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.wh_exists(IN text, OUT boolean) IS 'Returns true if the given warehouse exists.';
 
 /*
 public.grant_dispatcher(wh, role)
@@ -441,49 +470,26 @@ DECLARE
         v_hint    TEXT;
         v_context TEXT;
 BEGIN
-/* FIXME:
- * there are two ways to handle such thing:
- * - we call a warehouse specific function to grant the accordinate right on the hub table
- * - we assume that the hub table is named after warehouse_name.hub and grant insert right in this function
- *
- * we the second one.
- * FIXME ioguix: I think we should pick the first option. Fro wh_nagios, We actually need to grant
- * 3 objects: the schema, the table and the sequence. The extension itself is the best place to
- * handle this.
- */
+    rc := wh_exists(p_whname);
 
-    /* verify that the give role exists */
-    BEGIN
-        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-            rc := false;
-            RETURN;
-    END;
+    IF NOT rc THEN
+        RAISE WARNING 'Warehouse ''%'' does not exists!', p_whname;
+        RETURN;
+    END IF;
 
-    /* verify that the given warehouse exists */
-    DECLARE
-        spc oid;
-    BEGIN
-        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', p_whname) INTO STRICT spc;
-        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
-            rc := false;
-            RETURN;
-    END;
-
-    EXECUTE format('GRANT INSERT ON TABLE %I.hub TO %I', p_whname, p_rolname);
     -- FIXME check success before return
-    rc := true;
-    RAISE NOTICE 'GRANTED';
+    EXECUTE format('SELECT %I.grant_dispatcher($1)', p_whname)
+        INTO STRICT rc USING p_rolname;
+
+    IF NOT rc THEN
+        RAISE WARNING 'FAILED';
+    ELSE
+        RAISE NOTICE 'GRANTED';
+    END IF;
+
+    RETURN;
 
 EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RAISE NOTICE 'Non-existent user %', p_rolname;
-        rc := false;
     WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS
             v_state   = RETURNED_SQLSTATE,
@@ -491,7 +497,7 @@ EXCEPTION
             v_detail  = PG_EXCEPTION_DETAIL,
             v_hint    = PG_EXCEPTION_HINT,
             v_context = PG_EXCEPTION_CONTEXT;
-        raise notice E'Unhandled error: impossible to grant user % on hub % :
+        raise WARNING 'Could not grant dispatch to ''%'' on ''%'':
             state  : %
             message: %
             detail : %
@@ -509,7 +515,8 @@ ALTER FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) OWNER TO p
 REVOKE ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) TO pgf_admins;
 
-COMMENT ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) IS 'Grant a role to dispatch performance data in a warehouse hub table.';
+COMMENT ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean)
+IS 'Grant a role to dispatch performance data in a warehouse hub table.';
 
 /*
 public.revoke_dispatcher(wh, role)
@@ -525,39 +532,26 @@ DECLARE
         v_hint    TEXT;
         v_context TEXT;
 BEGIN
-/* FIXME:
- * there are two ways to handle such thing:
- * - we call a warehouse specific function to revoke the accordinate right on the hub table
- * - we assume that the hub table is named after warehouse_name.hub and revoke insert right in this function
- */
-
-
-/* verify that the give role exists */
-    BEGIN
-        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-            rc := false;
-            RETURN;
-    END;
 
     /* verify that the given warehouse exists */
-    DECLARE
-        spc oid;
-    BEGIN
-        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', p_whname) INTO STRICT spc;
-        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given warehouse does not exists: %', p_whname;
-            rc := false;
-            RETURN;
-    END;
+    rc := wh_exists(p_whname);
 
-    EXECUTE format('REVOKE INSERT ON TABLE %I.hub FROM %I', p_whname, p_rolname);
-    rc := true;
-    RAISE NOTICE 'REVOKED';
+    IF NOT rc THEN
+        RAISE WARNING 'Warehouse ''%'' does not exists!', p_whname;
+        RETURN;
+    END IF;
+
+    -- FIXME check success before return
+    EXECUTE format('SELECT %I.revoke_dispatcher($1)', p_whname)
+        INTO STRICT rc USING p_rolname;
+
+    IF NOT rc THEN
+        RAISE WARNING 'FAILED';
+    ELSE
+        RAISE NOTICE 'REVOKED';
+    END IF;
+
+    RETURN;
 
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
