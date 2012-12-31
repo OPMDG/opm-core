@@ -414,7 +414,8 @@ CREATE OR REPLACE FUNCTION public.is_user(IN p_rolname name, OUT rc boolean)
 AS $$
     SELECT CASE (public.is_pgf_role(p_rolname)).rolcanlogin
         WHEN true THEN true
-        ELSE false
+        WHEN false THEN false
+        ELSE NULL
     END;
 $$
 LANGUAGE SQL
@@ -440,7 +441,8 @@ CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
 AS $$
     SELECT CASE NOT (public.is_pgf_role(p_rolname)).rolcanlogin
         WHEN true THEN true
-        ELSE false
+        WHEN false THEN false
+        ELSE NULL
     END;
 $$
 LANGUAGE SQL
