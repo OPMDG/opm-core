@@ -14,12 +14,13 @@ SET search_path = public, pg_catalog;
 DROP DATABASE IF EXISTS pgfactory;
 DROP ROLE IF EXISTS pgfactory;
 DROP ROLE IF EXISTS pgf_admins;
-DROP ROLE IF EXISTS pgf_accounts;
+DROP ROLE IF EXISTS pgf_roles;
 */
 
 CREATE ROLE pgfactory CREATEROLE;
 CREATE ROLE pgf_admins CREATEROLE;
-CREATE ROLE pgf_accounts;
+CREATE ROLE pgf_roles;
+GRANT pgfactory TO pgf_admins;
 
 /*
 CREATE DATABASE pgfactory OWNER pgfactory;
@@ -102,7 +103,7 @@ BEGIN
         RETURN;
     END IF;
     EXECUTE format('CREATE ROLE %I', p_account);
-    EXECUTE format('GRANT pgf_accounts TO %I', p_account);
+    EXECUTE format('GRANT pgf_roles TO %I', p_account);
     INSERT INTO public.roles (rolname) VALUES (p_account)
         RETURNING roles.id, roles.rolname
             INTO create_account.id, create_account.accname;
@@ -153,8 +154,6 @@ DECLARE
     p_account name;
     v_err integer;
 BEGIN
-    -- FIXME put all new users in pgf_accounts role ?
-
     EXECUTE format('SELECT COUNT(*) FROM pg_roles WHERE rolname = %L', p_user) INTO STRICT v_err;
 
     IF (v_err != 0) THEN
@@ -177,7 +176,7 @@ BEGIN
         EXECUTE format('GRANT %I TO %I', p_account, p_user);
     END LOOP;
 
-    EXECUTE format('GRANT pgf_accounts TO %I', p_user);
+    EXECUTE format('GRANT pgf_roles TO %I', p_user);
 
     INSERT INTO public.roles (rolname) VALUES (p_user);
 
@@ -235,17 +234,17 @@ BEGIN
     END IF;
 
     FOR rolname IN EXECUTE
-        'SELECT roles_to_drop.rolname FROM (
-            SELECT array_agg(am.roleid) AS oid, rol.rolname
-                FROM public.roles rol
-                    JOIN pg_roles pgrol ON (pgrol.rolname = rol.rolname)
-                    JOIN pg_auth_members am ON (am.member = pgrol.oid)
-             WHERE pgrol.rolcanlogin
-             GROUP BY 2
-             HAVING count(*) = 1
-        ) roles_to_drop
-        JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
-        AND pgacc.rolname = $1' USING p_account
+        'SELECT t.rolname FROM (
+            SELECT u.rolname, count(*)
+            FROM pg_roles AS u
+                JOIN pg_auth_members AS am ON (am.member = u.oid)
+                JOIN pg_catalog.pg_roles AS a ON (a.oid = am.roleid)
+            WHERE pg_has_role(u.oid, $1, ''MEMBER'')
+                AND u.rolname NOT IN (''postgres'', $2)
+                AND a.rolname <> ''pgf_roles''
+            GROUP BY 1
+        ) AS t
+        WHERE t.count = 1' USING p_account, p_account
     LOOP
         EXECUTE format('SELECT drop_user(%L)', rolname);
         RETURN NEXT rolname;
@@ -296,8 +295,11 @@ BEGIN
         RETURN;
     END IF;
 
-    EXECUTE format('SELECT rolname FROM public.roles WHERE rolname = %L', p_user) INTO STRICT p_rolname;
-    EXECUTE format('DELETE FROM public.roles WHERE rolname = %L', p_user);
+    EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = $1'
+        INTO STRICT p_rolname USING p_user;
+
+    EXECUTE 'DELETE FROM public.roles WHERE rolname = $1' USING p_user;
+
     EXECUTE format('DROP ROLE %I', p_user);
 
     rc := true;
@@ -362,7 +364,7 @@ BEGIN
 END
 $$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
@@ -874,12 +876,12 @@ BEGIN
                 s.service, s.last_modified, s.creation_ts, s.servalid
             FROM services s;
     ELSE
-        RETURN QUERY EXECUTE format('WITH RECURSIVE
+        RETURN QUERY EXECUTE 'WITH RECURSIVE
                 v_roles AS (
                     SELECT pr.oid AS oid, r.rolname, ARRAY[r.rolname] AS roles
                       FROM public.roles r
                       JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
-                     WHERE r.rolname = %L
+                     WHERE r.rolname = $1
                     UNION ALL
                     SELECT pa.oid, v.rolname, v.roles|| pa.rolname::text
                       FROM v_roles v
@@ -896,13 +898,11 @@ BEGIN
                 SELECT id, hostname, warehouse, service,
                     last_modified, creation_ts, servalid
                 FROM acl
-                WHERE grantee IN (SELECT oid FROM v_roles)',
-            session_user
-        );
+                WHERE grantee IN (SELECT oid FROM v_roles)' USING session_user;
     END IF;
 END;
 $$ LANGUAGE plpgsql
-VOLATILE
+STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
