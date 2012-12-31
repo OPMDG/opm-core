@@ -92,7 +92,15 @@ CREATE OR REPLACE FUNCTION
 public.create_account (IN p_account text,
                        OUT id bigint, OUT accname text)
 AS $$
+DECLARE
+    v_err integer;
 BEGIN
+    EXECUTE format('SELECT COUNT(*) FROM pg_roles WHERE rolname = %L', p_account) INTO STRICT v_err;
+
+    IF (v_err != 0) THEN
+        RAISE EXCEPTION 'Given role already exists: %', p_account;
+        RETURN;
+    END IF;
     EXECUTE format('CREATE ROLE %I', p_account);
     EXECUTE format('GRANT pgf_accounts TO %I', p_account);
     INSERT INTO public.roles (rolname) VALUES (p_account)
@@ -143,8 +151,16 @@ public.create_user (IN p_user text, IN p_passwd text, IN p_accounts name[],
 AS $$
 DECLARE
     p_account name;
+    v_err integer;
 BEGIN
     -- FIXME put all new users in pgf_accounts role ?
+
+    EXECUTE format('SELECT COUNT(*) FROM pg_roles WHERE rolname = %L', p_user) INTO STRICT v_err;
+
+    IF (v_err != 0) THEN
+        RAISE EXCEPTION 'Given user already exists: %', p_user;
+        RETURN;
+    END IF;
 
     IF coalesce(array_length(p_accounts, 1), 0) < 1 THEN
         -- or maybe we should raise an exception ?
