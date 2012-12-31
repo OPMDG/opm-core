@@ -218,7 +218,7 @@ BEGIN
       RETURN;
     END IF;
 
-    FOR rolname IN EXECUTE format(
+    FOR rolname IN EXECUTE
         'SELECT roles_to_drop.rolname FROM (
             SELECT array_agg(am.roleid) AS oid, rol.rolname
                 FROM public.roles rol
@@ -229,8 +229,7 @@ BEGIN
              HAVING count(*) = 1
         ) roles_to_drop
         JOIN pg_roles pgacc ON (pgacc.oid = ANY(roles_to_drop.oid))
-        AND pgacc.rolname = %L', p_account
-    )
+        AND pgacc.rolname = $1' USING p_account
     LOOP
         EXECUTE format('SELECT drop_user(%L)', rolname);
         RETURN NEXT rolname;
@@ -238,7 +237,9 @@ BEGIN
 
     EXECUTE format('DELETE FROM public.roles WHERE rolname = %L', p_account);
     EXECUTE format('DROP ROLE %I', p_account);
-    -- FIXME return the account role as well !
+
+    RETURN NEXT p_account;
+
     RETURN;
 END;
 $$
