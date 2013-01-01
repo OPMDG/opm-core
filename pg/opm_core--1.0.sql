@@ -148,7 +148,7 @@ Can only be executed by roles pgfactory and pgf_admins.
 */
 CREATE OR REPLACE FUNCTION
 public.create_user (IN p_user text, IN p_passwd text, IN p_accounts name[],
-                    OUT rc boolean)
+                    OUT id bigint, OUT usename text)
 AS $$
 DECLARE
     p_account name;
@@ -164,7 +164,6 @@ BEGIN
     IF coalesce(array_length(p_accounts, 1), 0) < 1 THEN
         -- or maybe we should raise an exception ?
         RAISE WARNING 'A user must have at least one associated account!';
-        rc := 'f';
         RETURN;
     END IF;
 
@@ -178,9 +177,8 @@ BEGIN
 
     EXECUTE format('GRANT pgf_roles TO %I', p_user);
 
-    INSERT INTO public.roles (rolname) VALUES (p_user);
-
-    rc := 't';
+    INSERT INTO public.roles (rolname) VALUES (p_user) RETURNING roles.id, roles.rolname
+        INTO create_user.id, create_user.usename;
 END
 $$
 LANGUAGE plpgsql
@@ -283,14 +281,13 @@ Also drop all roles that are connected only to this particular account.
 @return rc: return code.
 */
 CREATE OR REPLACE FUNCTION
-public.drop_user(IN p_user name, OUT rc boolean)
+public.drop_user(IN p_user name, OUT id bigint, OUT rolname name)
 AS $$
 DECLARE
         p_rolname name;
 -- It drops an account and also roles that are only in this account.
 BEGIN
     IF (is_user(p_user) = false) THEN
-        rc := false;
         /* or do we raise an exception ? */
         RETURN;
     END IF;
@@ -298,18 +295,18 @@ BEGIN
     EXECUTE 'SELECT rolname FROM public.roles WHERE rolname = $1'
         INTO STRICT p_rolname USING p_user;
 
-    EXECUTE 'DELETE FROM public.roles WHERE rolname = $1' USING p_user;
+    EXECUTE 'DELETE FROM public.roles
+            WHERE rolname = $1
+            RETURNING roles.id, roles.rolname'
+        INTO drop_user.id, drop_user.rolname USING p_user;
 
     EXECUTE format('DROP ROLE %I', p_user);
 
-    rc := true;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
         RAISE NOTICE 'Non-existent user %', p_user;
-        rc := false;
     WHEN OTHERS THEN
         RAISE LOG 'Impossible to drop user: %', p_user;
-        rc := false;
 END;
 $$
 LANGUAGE plpgsql
