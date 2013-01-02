@@ -217,11 +217,11 @@ Also drop all roles that are connected only to this particular account.
 */
 CREATE OR REPLACE FUNCTION
 public.drop_account(IN p_account name)
- RETURNS SETOF text
+ RETURNS TABLE(id bigint, rolname name)
 AS $$
 -- It drops an account and also roles that are only in this account.
 DECLARE
-        rolname name;
+        p_role record;
 BEGIN
     /* get list of roles to drop with the account.
      * don't drop roles that are part of several accounts
@@ -244,14 +244,15 @@ BEGIN
         ) AS t
         WHERE t.count = 1' USING p_account, p_account
     LOOP
-        EXECUTE format('SELECT drop_user(%L)', rolname);
-        RETURN NEXT rolname;
+        EXECUTE format('SELECT * FROM drop_user(%L)', rolname) INTO drop_account.id, drop_account.rolname;
+        RETURN NEXT;
     END LOOP;
 
-    EXECUTE format('DELETE FROM public.roles WHERE rolname = %L', p_account);
+    EXECUTE 'DELETE FROM public.roles WHERE rolname = $1 RETURNING id, rolname'
+        INTO drop_account.id, drop_account.rolname USING p_account;
     EXECUTE format('DROP ROLE %I', p_account);
 
-    RETURN NEXT p_account;
+    RETURN NEXT;
 
     RETURN;
 END;
