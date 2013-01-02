@@ -458,7 +458,7 @@ wh_exists(wh)
 
 @return rc: true if the given warehouse exists
  */
-CREATE OR REPLACE FUNCTION public.wh_exists(IN p_whname text, OUT rc boolean)
+CREATE OR REPLACE FUNCTION public.wh_exists(IN p_whname name, OUT rc boolean)
 AS $$
     SELECT count(*) > 0
     FROM pg_catalog.pg_namespace
