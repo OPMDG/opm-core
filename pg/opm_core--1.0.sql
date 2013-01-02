@@ -30,7 +30,7 @@ CREATE DATABASE pgfactory OWNER pgfactory;
 CREATE TABLE public.services (
     id bigserial PRIMARY KEY,
     hostname text NOT NULL,
-    warehouse text NOT NULL,
+    warehouse name NOT NULL,
     service text NOT NULL,
     last_modified date DEFAULT (now())::date NOT NULL,
     creation_ts timestamp with time zone DEFAULT now() NOT NULL,
@@ -61,7 +61,7 @@ COMMENT ON COLUMN public.services.seracl IS 'ACL on a particulier service';
 -- Map properties and info between accounts/users and internal pgsql roles
 CREATE TABLE public.roles (
     id bigserial PRIMARY KEY,
-    rolname text NOT NULL,
+    rolname name NOT NULL,
     creation_ts timestamp with time zone DEFAULT now() NOT NULL,
     rolconfig text[]
 );
