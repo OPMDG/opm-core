@@ -468,11 +468,11 @@ LANGUAGE SQL
 STABLE
 LEAKPROOF;
 
-ALTER FUNCTION public.wh_exists(IN text, OUT boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.wh_exists(IN text, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.wh_exists(IN text, OUT boolean) TO public;
+ALTER FUNCTION public.wh_exists(IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) TO public;
 
-COMMENT ON FUNCTION public.wh_exists(IN text, OUT boolean) IS 'Returns true if the given warehouse exists.';
+COMMENT ON FUNCTION public.wh_exists(IN name, OUT boolean) IS 'Returns true if the given warehouse exists.';
 
 /*
 public.grant_dispatcher(wh, role)
