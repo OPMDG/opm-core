@@ -325,39 +325,29 @@ COMMENT ON FUNCTION public.drop_user(IN name) IS 'Drop a user.';
 
 /* public.list_users
 */
-CREATE OR REPLACE FUNCTION public.list_users()
-    RETURNS TABLE (accname text, rolname name)
+CREATE OR REPLACE FUNCTION public.list_users(p_account name DEFAULT NULL)
+    RETURNS TABLE (useid bigint, accname name, rolname name)
 AS $$
+DECLARE
+    query text := $q$SELECT u.id, a.rolname, u.rolname
+        FROM public.roles AS u
+            JOIN pg_catalog.pg_roles AS a
+                ON pg_has_role(u.rolname, a.rolname, 'MEMBER')
+        WHERE a.rolname <> u.rolname
+            AND a.rolname <> 'pgf_roles'$q$;
 BEGIN
-    IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
-        RETURN QUERY WITH
-            role_users AS (
-                SELECT users.rolname
-                FROM public.roles AS users
-                JOIN pg_catalog.pg_roles AS rol ON (users.rolname=rol.rolname)
-            )
-            SELECT u.rolname, rol.rolname
-            FROM pg_catalog.pg_roles AS rol
-            JOIN role_users AS u
-                ON (pg_has_role(rol.rolname, u.rolname, 'MEMBER')
-                    AND u.rolname <> rol.rolname)
-            WHERE NOT rol.rolsuper;
-    ELSE
-        RETURN QUERY WITH
-            role_users AS (
-                SELECT users.rolname
-                FROM public.roles AS users
-                JOIN pg_catalog.pg_roles AS rol
-                    ON (users.rolname=rol.rolname)
-                WHERE pg_has_role(session_user, users.rolname, 'MEMBER')
-            )
-            SELECT u.rolname, rol.rolname
-            FROM pg_catalog.pg_roles AS rol
-            JOIN role_users AS u
-                ON (pg_has_role(rol.rolname, u.rolname, 'MEMBER')
-                    AND u.rolname <> rol.rolname)
-            WHERE NOT rol.rolsuper;
+    IF p_account IS NOT NULL THEN
+        query := format(
+            query || ' AND a.rolname = %L',
+            p_account
+        );
     END IF;
+
+    IF NOT pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+        query := query || $q$ AND pg_has_role(session_user, a.rolname, 'MEMBER')$q$;
+    END IF;
+
+    RETURN QUERY EXECUTE query;
 END
 $$
 LANGUAGE plpgsql
@@ -365,11 +355,11 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_users() OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.list_users() FROM public;
-GRANT ALL ON FUNCTION public.list_users() TO public;
+ALTER FUNCTION public.list_users(name) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.list_users(name) FROM public;
+GRANT ALL ON FUNCTION public.list_users(name) TO public;
 
-COMMENT ON FUNCTION public.list_users() IS 'List users.
+COMMENT ON FUNCTION public.list_users(name) IS 'List users.
 
 If current user is member of pgf_admins, list all users and account on the system.
 
