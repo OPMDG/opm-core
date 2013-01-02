@@ -479,7 +479,7 @@ public.grant_dispatcher(wh, role)
 
 @return rc: state of the operation
  */
-CREATE OR REPLACE FUNCTION public.grant_dispatcher(IN p_whname text, IN p_rolname name, OUT rc boolean)
+CREATE OR REPLACE FUNCTION public.grant_dispatcher(IN p_whname name, IN p_rolname name, OUT rc boolean)
 AS $$
 DECLARE
         v_state   TEXT;
@@ -529,11 +529,11 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean) TO pgf_admins;
+ALTER FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) TO pgf_admins;
 
-COMMENT ON FUNCTION public.grant_dispatcher(IN text, IN name, OUT boolean)
+COMMENT ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean)
 IS 'Grant a role to dispatch performance data in a warehouse hub table.';
 
 /*
@@ -541,7 +541,7 @@ public.revoke_dispatcher(wh, role)
 
 @return rc: state of the operation
  */
-CREATE OR REPLACE FUNCTION public.revoke_dispatcher(IN p_whname text, IN p_rolname name, OUT rc boolean)
+CREATE OR REPLACE FUNCTION public.revoke_dispatcher(IN p_whname name, IN p_rolname name, OUT rc boolean)
 AS $$
 DECLARE
         v_state   TEXT;
@@ -596,11 +596,11 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) TO pgf_admins;
+ALTER FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) TO pgf_admins;
 
-COMMENT ON FUNCTION public.revoke_dispatcher(IN text, IN name, OUT boolean) IS 'Revoke dispatch ability for a give role on a given hub table.';
+COMMENT ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) IS 'Revoke dispatch ability for a give role on a given hub table.';
 
 /*
 public.grant_service(service, role)
