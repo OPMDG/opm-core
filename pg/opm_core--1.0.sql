@@ -873,7 +873,7 @@ BEGIN
                       JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
                      WHERE r.rolname = $1
                     UNION ALL
-                    SELECT pa.oid, v.rolname, v.roles|| pa.rolname::text
+                    SELECT pa.oid, v.rolname, v.roles|| pa.rolname
                       FROM v_roles v
                       JOIN pg_auth_members am ON (am.member = v.oid)
                       JOIN pg_roles pa ON (am.roleid = pa.oid)
