@@ -858,7 +858,7 @@ COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname n
 list_services()
  */
 CREATE OR REPLACE FUNCTION public.list_services()
-    RETURNS TABLE (id bigint, hostname text, warehouse text, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
+    RETURNS TABLE (id bigint, hostname text, warehouse name, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
 AS $$
 BEGIN
     IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
@@ -873,7 +873,7 @@ BEGIN
                       JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
                      WHERE r.rolname = $1
                     UNION ALL
-                    SELECT pa.oid, v.rolname, v.roles|| pa.rolname
+                    SELECT pa.oid, v.rolname, v.roles || pa.rolname
                       FROM v_roles v
                       JOIN pg_auth_members am ON (am.member = v.oid)
                       JOIN pg_roles pa ON (am.roleid = pa.oid)
@@ -898,7 +898,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_services() OWNER TO pgfactory;
 REVOKE ALL ON FUNCTION public.list_services() FROM public;
-GRANT ALL ON FUNCTION public.list_services() TO public;
+GRANT EXECUTE ON FUNCTION public.list_services() TO public;
 
 COMMENT ON FUNCTION public.list_services() IS 'List services available for the session user.';
 
