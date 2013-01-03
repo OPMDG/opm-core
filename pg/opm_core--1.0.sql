@@ -421,9 +421,8 @@ COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given 
 is_account(rolname)
 
 @return rc: true if the given rolname is an account
+            NULL if role does not exist
 
-
---- retourne NULL si inexistant
  */
 CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
 AS $$
@@ -443,6 +442,37 @@ REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
+
+/*
+is_admin(rolname)
+
+@return rc: true if the given rolname is an admin
+            NULL if role does not exist
+
+ */
+CREATE OR REPLACE FUNCTION public.is_admin(IN p_rolname name, OUT rc boolean)
+AS $$
+    BEGIN
+        SELECT CASE pg_has_role(p_rolname,'pgf_admins','MEMBER')
+            WHEN true THEN true
+            WHEN false THEN false
+        END INTO rc;
+    EXCEPTION
+        WHEN OTHERS THEN
+            rc := NULL;
+    END;
+$$
+LANGUAGE plpgsql
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.is_admin(IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.is_admin(IN name, OUT boolean) FROM public;
+GRANT EXECUTE ON FUNCTION public.is_admin(IN name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
+
 
 /*
 wh_exists(wh)
