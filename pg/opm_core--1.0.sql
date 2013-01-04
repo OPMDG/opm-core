@@ -328,12 +328,15 @@ CREATE OR REPLACE FUNCTION public.list_users(p_account name DEFAULT NULL)
     RETURNS TABLE (useid bigint, accname name, rolname name)
 AS $$
 DECLARE
-    query text := $q$SELECT u.id, a.rolname, u.rolname
+    query text := $q$
+        SELECT u.id, a.rolname, u.rolname
         FROM public.roles AS u
-            JOIN pg_catalog.pg_roles AS a
-                ON pg_has_role(u.rolname, a.rolname, 'MEMBER')
-        WHERE a.rolname <> u.rolname
-            AND a.rolname <> 'pgf_roles'$q$;
+            JOIN pg_catalog.pg_roles AS r ON (u.rolname = r.rolname)
+            JOIN pg_auth_members AS m ON (r.oid = m.member)
+            JOIN pg_roles AS a ON (a.oid = m.roleid)
+        WHERE a.rolname <> r.rolname
+            AND a.rolname <> 'pgf_roles'
+    $q$;
 BEGIN
     IF p_account IS NOT NULL THEN
         query := format(
