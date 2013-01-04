@@ -21,6 +21,7 @@ CREATE ROLE pgfactory CREATEROLE;
 CREATE ROLE pgf_admins CREATEROLE;
 CREATE ROLE pgf_roles;
 GRANT pgfactory TO pgf_admins;
+GRANT pgf_roles TO pgf_admins;
 
 /*
 CREATE DATABASE pgfactory OWNER pgfactory;
@@ -74,6 +75,9 @@ COMMENT ON COLUMN public.roles.id IS 'Role uniquer identier. Is the primary key 
 COMMENT ON COLUMN public.roles.rolname IS 'rolname, same as rolname from table pg_roles';
 COMMENT ON COLUMN public.roles.creation_ts IS 'Role creation date and time';
 COMMENT ON COLUMN public.roles.rolconfig IS 'Specific configuration for a particular role';
+
+
+INSERT INTO public.roles (rolname) VALUES ('pgf_admins');
 
 /* public.create_account
 Create a new account.
@@ -230,14 +234,18 @@ AS $$
 DECLARE
         p_role record;
 BEGIN
+
+    IF p_account = 'pgf_admins' THEN
+      RAISE EXCEPTION 'Account "pgf_admins" can not be deleted!';
+    END IF;
+
+    IF (is_account(p_account) = false) THEN
+      RAISE EXCEPTION 'Account % is not a pgfactory account!', p_account;
+    END IF;
+
     /* get list of roles to drop with the account.
      * don't drop roles that are part of several accounts
      */
-    IF (is_account(p_account) = false) THEN
-      /* or do we raise an exception ? */
-      RETURN;
-    END IF;
-
     FOR rolname IN EXECUTE
         'SELECT t.rolname FROM (
             SELECT u.rolname, count(*)
@@ -345,6 +353,7 @@ DECLARE
             JOIN pg_roles AS a ON (a.oid = m.roleid)
         WHERE a.rolname <> r.rolname
             AND a.rolname <> 'pgf_roles'
+            AND r.rolcanlogin
     $q$;
 BEGIN
     IF p_account IS NOT NULL THEN
@@ -379,14 +388,21 @@ If current user is not admin, list all users and account who are related to the 
 /* public.list_accounts
 */
 CREATE OR REPLACE FUNCTION public.list_accounts()
-    RETURNS TABLE (accname name)
+    RETURNS TABLE (accid bigint, accname name)
 AS $$
+DECLARE
+    query text := $q$
+        SELECT a.id, r.rolname
+        FROM public.roles AS a
+            JOIN pg_catalog.pg_roles AS r ON (a.rolname = r.rolname)
+        WHERE NOT r.rolcanlogin
+    $q$;
 BEGIN
     IF NOT pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
-        RETURN QUERY SELECT DISTINCT l.accname FROM list_users() l;
-    ELSE
-        RETURN QUERY SELECT r.rolname FROM roles r JOIN pg_roles pr ON r.rolname = pr.rolname WHERE NOT pr.rolcanlogin;
+        query := query || $q$ AND pg_has_role(session_user, r.rolname, 'MEMBER')$q$;
     END IF;
+
+    RETURN QUERY EXECUTE query;
 END
 $$
 LANGUAGE plpgsql
@@ -405,44 +421,15 @@ If current user is member of pgf_admins, list all account on the system.
 If current user is not admin, list all account who are related to the current user.';
 
 /*
-is_pgf_role(rolname)
-
-@return: if given role exists as a pgFactory role (account or user), returns its
-oid, id, name and canlogin attributes. NULL if not exists or not a pgFactory
-role.
- */
-CREATE OR REPLACE FUNCTION public.is_pgf_role(IN p_rolname name, OUT oid oid, OUT id bigint, OUT rolname name, OUT rolcanlogin boolean)
-AS $$
-    SELECT acc.oid, roles.id, acc.rolname, acc.rolcanlogin
-    FROM public.roles roles
-        JOIN pg_catalog.pg_roles acc ON (acc.rolname = roles.rolname)
-    WHERE roles.rolname = p_rolname
-$$
-LANGUAGE SQL
-STABLE
-LEAKPROOF
-SECURITY DEFINER;
-
-ALTER FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO public;
-
-COMMENT ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
-'If given role exists as a pgFactory role (account or user), returns its name
-and canlogin attributes. Nothing if not exists or not a pgFactory role';
-
-/*
 is_user(rolname)
 
 @return rc: true if the given rolname is a simple user
  */
 CREATE OR REPLACE FUNCTION public.is_user(IN p_rolname name, OUT rc boolean)
 AS $$
-    SELECT CASE (public.is_pgf_role(p_rolname)).rolcanlogin
-        WHEN true THEN true
-        WHEN false THEN false
-        ELSE NULL
-    END;
+    SELECT count(*) > 0
+    FROM public.list_users()
+    WHERE rolname = p_rolname;
 $$
 LANGUAGE SQL
 STABLE
@@ -464,11 +451,9 @@ is_account(rolname)
  */
 CREATE OR REPLACE FUNCTION public.is_account(IN p_rolname name, OUT rc boolean)
 AS $$
-    SELECT CASE NOT (public.is_pgf_role(p_rolname)).rolcanlogin
-        WHEN true THEN true
-        WHEN false THEN false
-        ELSE NULL
-    END;
+    SELECT count(*) > 0
+    FROM public.list_accounts()
+    WHERE accname = p_rolname;
 $$
 LANGUAGE SQL
 STABLE
@@ -509,8 +494,35 @@ ALTER FUNCTION public.is_admin(IN name, OUT boolean) OWNER TO pgfactory;
 REVOKE ALL ON FUNCTION public.is_admin(IN name, OUT boolean) FROM public;
 GRANT EXECUTE ON FUNCTION public.is_admin(IN name, OUT boolean) TO public;
 
-COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
+COMMENT ON FUNCTION public.is_admin(IN name, OUT boolean) IS 'Tells if the given rolname is an admin.';
 
+/*
+is_pgf_role(rolname)
+
+@return: if given role exists as a pgFactory role (account or user), returns its
+oid, id, name and canlogin attributes. NULL if not exists or not a pgFactory
+role.
+ */
+CREATE OR REPLACE FUNCTION public.is_pgf_role(IN p_rolname name, OUT boolean)
+AS $$
+    SELECT bool_or(x)
+    FROM (
+        SELECT public.is_user($1)
+        UNION
+        SELECT public.is_account($1)
+    ) t(x);
+$$
+LANGUAGE SQL
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
+'If given role exists as a pgFactory role (account or user), returns true';
 
 /*
 wh_exists(wh)
