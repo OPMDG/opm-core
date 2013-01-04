@@ -102,6 +102,7 @@ BEGIN
     END IF;
     EXECUTE format('CREATE ROLE %I', p_account);
     EXECUTE format('GRANT pgf_roles TO %I', p_account);
+    EXECUTE format('GRANT %I TO pgf_admins WITH ADMIN OPTION', p_account);
     INSERT INTO public.roles (rolname) VALUES (p_account)
         RETURNING roles.id, roles.rolname
             INTO create_account.id, create_account.accname;
