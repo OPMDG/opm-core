@@ -168,15 +168,23 @@ BEGIN
     EXECUTE format('CREATE ROLE %I LOGIN ENCRYPTED PASSWORD %L',
         p_user, p_passwd);
 
+    v_err := 0;
     FOREACH p_account IN ARRAY p_accounts
     LOOP
-        EXECUTE format('GRANT %I TO %I', p_account, p_user);
+        IF (is_account(p_account)) THEN
+            v_err := v_err + 1;
+            EXECUTE format('GRANT %I TO %I', p_account, p_user);
+        END IF;
     END LOOP;
 
     EXECUTE format('GRANT pgf_roles TO %I', p_user);
 
     INSERT INTO public.roles (rolname) VALUES (p_user) RETURNING roles.id, roles.rolname
         INTO create_user.id, create_user.usename;
+    IF (v_err = 0) THEN
+        -- or maybe we should raise an exception ?
+        RAISE WARNING 'A user must have at least one associated account!';
+    END IF;
 END
 $$
 LANGUAGE plpgsql
