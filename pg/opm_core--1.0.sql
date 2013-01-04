@@ -376,6 +376,34 @@ If current user is member of pgf_admins, list all users and account on the syste
 
 If current user is not admin, list all users and account who are related to the current user.';
 
+/* public.list_accounts
+*/
+CREATE OR REPLACE FUNCTION public.list_accounts()
+    RETURNS TABLE (accname name)
+AS $$
+BEGIN
+    IF NOT pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+        RETURN QUERY SELECT DISTINCT l.accname FROM list_users() l;
+    ELSE
+        RETURN QUERY SELECT r.rolname FROM roles r JOIN pg_roles pr ON r.rolname = pr.rolname WHERE NOT pr.rolcanlogin;
+    END IF;
+END
+$$
+LANGUAGE plpgsql
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.list_accounts() OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.list_accounts() FROM public;
+GRANT EXECUTE ON FUNCTION public.list_accounts() TO public;
+
+COMMENT ON FUNCTION public.list_accounts() IS 'List accounts.
+
+If current user is member of pgf_admins, list all account on the system.
+
+If current user is not admin, list all account who are related to the current user.';
+
 /*
 is_pgf_role(rolname)
 
