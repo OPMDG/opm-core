@@ -224,6 +224,7 @@ Drop an account.
 
 Also drop all roles that are connected only to this particular account.
 
+@return id: oid of the dropped roles
 @return rolname: name of the dropped roles
 */
 CREATE OR REPLACE FUNCTION
@@ -1065,3 +1066,51 @@ REVOKE ALL ON FUNCTION public.revoke_account(p_rolname name, p_accountname name)
 GRANT EXECUTE ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) TO public;
 
 COMMENT ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) IS 'Revoke an account from a user.';
+
+/*
+list_warehouses()
+
+@return whname: names of the warehouses
+ */
+CREATE OR REPLACE FUNCTION public.list_warehouses() RETURNS TABLE (whname name)
+AS $$
+BEGIN
+    RETURN QUERY SELECT n.nspname
+        FROM pg_namespace n
+        JOIN pg_available_extensions e ON n.nspname = e.name AND e.installed_version IS NOT NULL
+        WHERE nspname ~ '^wh_';
+END;
+$$ LANGUAGE plpgsql
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.list_warehouses() OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.list_warehouses() FROM public;
+GRANT EXECUTE ON FUNCTION public.list_warehouses() TO public;
+
+COMMENT ON FUNCTION public.list_warehouses() IS 'List all warehouses';
+
+/*
+list_processes()
+
+@return prname: names of the processes
+ */
+CREATE OR REPLACE FUNCTION public.list_processes() RETURNS TABLE (prname name)
+AS $$
+BEGIN
+    RETURN QUERY SELECT n.nspname
+        FROM pg_namespace n
+        JOIN pg_available_extensions e ON n.nspname = e.name AND e.installed_version IS NOT NULL
+        WHERE n.nspname ~ '^pr_';
+END;
+$$ LANGUAGE plpgsql
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.list_processes() OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.list_processes() FROM public;
+GRANT EXECUTE ON FUNCTION public.list_processes() TO public;
+
+COMMENT ON FUNCTION public.list_processes() IS 'List all processes';
