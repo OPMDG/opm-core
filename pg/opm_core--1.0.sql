@@ -1028,9 +1028,20 @@ revoke_account(p_rolname name, p_accountname name)
  */
 CREATE OR REPLACE FUNCTION public.revoke_account(p_rolname name, p_accountname name) RETURNS boolean
 AS $$
+DECLARE
+    v_ok boolean;
 BEGIN
     IF ( (NOT is_user(p_rolname)) OR (NOT is_account(p_accountname)) ) THEN
         RETURN NULL;
+    END IF;
+    IF (NOT pg_has_role(p_rolname, p_accountname, 'MEMBER')) THEN
+        RETURN false;
+    END IF;
+
+    SELECT (COUNT(*) > 0) INTO v_ok FROM public.list_users() WHERE rolname = p_rolname AND accname != p_accountname;
+    IF (NOT v_ok) THEN
+        RAISE NOTICE 'Could not revoke account % from user % : only existing account for this user', p_accountname, p_rolname;
+        RETURN false;
     END IF;
 
     IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
