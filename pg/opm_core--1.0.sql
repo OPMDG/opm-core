@@ -982,3 +982,75 @@ GRANT EXECUTE ON FUNCTION public.list_services() TO public;
 
 COMMENT ON FUNCTION public.list_services() IS 'List services available for the session user.';
 
+/*
+grant_account(p_rolname name, p_accountname name)
+
+@return : true if granted
+            NULL if role or account does not exist
+
+ */
+CREATE OR REPLACE FUNCTION public.grant_account(p_rolname name, p_accountname name) RETURNS boolean
+AS $$
+BEGIN
+    IF ( (NOT is_user(p_rolname)) OR (NOT is_account(p_accountname)) ) THEN
+        RETURN NULL;
+    END IF;
+
+    IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
+        EXECUTE format('GRANT %I TO %I',p_accountname, p_rolname);
+        RETURN true;
+    ELSE
+        RETURN false;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Could not grant account % to user %', p_accountname, p_rolname;
+        RETURN false;
+END;
+$$ LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.grant_account(p_rolname name, p_accountname name) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.grant_account(p_rolname name, p_accountname name) FROM public;
+GRANT EXECUTE ON FUNCTION public.grant_account(p_rolname name, p_accountname name) TO public;
+
+COMMENT ON FUNCTION public.grant_account(p_rolname name, p_accountname name) IS 'Grant an account to a user.';
+
+
+/*
+revoke_account(p_rolname name, p_accountname name)
+
+@return : true if revoked
+            NULL if role or account does not exist
+
+ */
+CREATE OR REPLACE FUNCTION public.revoke_account(p_rolname name, p_accountname name) RETURNS boolean
+AS $$
+BEGIN
+    IF ( (NOT is_user(p_rolname)) OR (NOT is_account(p_accountname)) ) THEN
+        RETURN NULL;
+    END IF;
+
+    IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
+        EXECUTE format('REVOKE %I FROM %I',p_accountname, p_rolname);
+        RETURN true;
+    ELSE
+        RETURN false;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Could not revoke account % from user %', p_accountname, p_rolname;
+        RETURN false;
+END;
+$$ LANGUAGE plpgsql
+VOLATILE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.revoke_account(p_rolname name, p_accountname name) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) FROM public;
+GRANT EXECUTE ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) TO public;
+
+COMMENT ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) IS 'Revoke an account from a user.';
