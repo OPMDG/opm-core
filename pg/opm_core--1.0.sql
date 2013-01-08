@@ -533,8 +533,8 @@ wh_exists(wh)
 CREATE OR REPLACE FUNCTION public.wh_exists(IN p_whname name, OUT rc boolean)
 AS $$
     SELECT count(*) > 0
-    FROM pg_catalog.pg_namespace
-    WHERE nspname = $1;
+    FROM public.list_warehouses()
+    WHERE whname = $1;
 $$
 LANGUAGE SQL
 STABLE
@@ -545,6 +545,27 @@ REVOKE ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.wh_exists(IN name, OUT boolean) IS 'Returns true if the given warehouse exists.';
+
+/*
+pr_exists(wh)
+
+@return rc: true if the given process exists
+ */
+CREATE OR REPLACE FUNCTION public.pr_exists(IN p_prname name, OUT rc boolean)
+AS $$
+    SELECT count(*) > 0
+    FROM public.list_processes()
+    WHERE prname = $1;
+$$
+LANGUAGE SQL
+STABLE
+LEAKPROOF;
+
+ALTER FUNCTION public.pr_exists(IN name, OUT boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) TO public;
+
+COMMENT ON FUNCTION public.pr_exists(IN name, OUT boolean) IS 'Returns true if the given process exists.';
 
 /*
 public.grant_dispatcher(wh, role)
