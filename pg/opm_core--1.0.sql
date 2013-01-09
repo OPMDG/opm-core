@@ -722,8 +722,6 @@ DECLARE
         v_context    text;
         v_whname     text;
         v_is_acl_empty boolean;
-
-        v_sql        text;
 BEGIN
 /* verify that the give role exists */
     BEGIN
@@ -778,11 +776,10 @@ BEGIN
     END IF;
 
     /* put the ACL on the partition, let the warehouse function do it */
-    v_sql := format('SELECT %I.grant_service(%L)', v_whname, p_service_id);
-
-    RAISE NOTICE 'SQL: %', v_sql;
-    RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
-    rc := false;
+    EXECUTE format('SELECT %I.grant_service(%s, %L)', v_whname, p_service_id, p_rolname) INTO STRICT rc;
+    IF (NOT rc) THEN
+        RAISE EXCEPTION 'Could not perform grant_service on warehouse %', v_whname;
+    END IF;
 
 EXCEPTION
     WHEN OTHERS THEN
@@ -934,11 +931,10 @@ BEGIN
     END IF;
 
     /* put the ACL on the partition, let the warehouse function do it */
-    v_sql := format('SELECT %I.revoke_service(%L)', v_whname, p_service_id);
-
-    RAISE NOTICE 'SQL: %', v_sql;
-    RAISE NOTICE 'UNFINISHED ! Need to determine an API between core and wh to give rights on a service data';
-    rc := false;
+    format('SELECT %I.revoke_service(%s,%L)', v_whname, p_service_id, p_rolname) INTO STRICT rc;
+    IF (NOT rc) THEN
+        RAISE EXCEPTION 'Could not perform revoke_service on warehouse %', v_whname;
+    END IF;
 
 EXCEPTION
     WHEN OTHERS THEN
@@ -966,7 +962,7 @@ ALTER FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, 
 REVOKE ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
 GRANT ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
 
-COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a service.';
+COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Revoke SELECT on a service.';
 
 /*
 list_services()
