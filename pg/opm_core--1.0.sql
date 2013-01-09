@@ -23,6 +23,18 @@ CREATE ROLE pgf_roles;
 GRANT pgfactory TO pgf_admins;
 GRANT pgf_roles TO pgf_admins;
 
+DO LANGUAGE plpgsql
+$$
+DECLARE
+    v_dbname name;
+BEGIN
+    SELECT current_database() INTO v_dbname;
+    EXECUTE format('REVOKE ALL ON DATABASE %I FROM public',v_dbname);
+    EXECUTE format('GRANT ALL ON DATABASE %I TO pgfactory',v_dbname);
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO pgf_roles',v_dbname);
+END;
+$$;
+
 /*
 CREATE DATABASE pgfactory OWNER pgfactory;
 \c pgfactory
