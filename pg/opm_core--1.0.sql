@@ -105,6 +105,13 @@ COMMENT ON COLUMN public.services.last_modified IS 'last day that the dispatcher
 COMMENT ON COLUMN public.services.creation_ts IS 'warehouse creation date and time for this particular service';
 COMMENT ON COLUMN public.services.servalid IS 'data retention time';
 
+SELECT pg_catalog.pg_extension_config_dump('public.roles', '');
+SELECT pg_catalog.pg_extension_config_dump('public.roles_id_seq', '');
+SELECT pg_catalog.pg_extension_config_dump('public.servers', '');
+SELECT pg_catalog.pg_extension_config_dump('public.servers_id_seq', '');
+SELECT pg_catalog.pg_extension_config_dump('public.services', '');
+SELECT pg_catalog.pg_extension_config_dump('public.services_id_seq', '');
+
 /* public.create_account
 Create a new account.
 
