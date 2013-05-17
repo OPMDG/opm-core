@@ -40,35 +40,6 @@ CREATE DATABASE pgfactory OWNER pgfactory;
 \c pgfactory
 */
 
-CREATE TABLE public.services (
-    id bigserial PRIMARY KEY,
-    hostname text NOT NULL,
-    warehouse name NOT NULL,
-    service text NOT NULL,
-    last_modified date DEFAULT (now())::date NOT NULL,
-    creation_ts timestamp with time zone DEFAULT now() NOT NULL,
-    last_cleanup timestamp with time zone DEFAULT now() NOT NULL,
-    servalid interval,
-    seracl aclitem[] NOT NULL DEFAULT '{}'::aclitem[]
-);
-CREATE UNIQUE INDEX idx_services_hostname_service_label
-    ON services USING btree (hostname, service);
-ALTER TABLE public.services OWNER TO pgfactory;
-REVOKE ALL ON TABLE public.services FROM public ;
-
-COMMENT ON TABLE public.services IS 'Table services lists all available metrics.
-
-This table is a master table. Each warehouse have a specific services tables inherited from this master table';
-
-COMMENT ON COLUMN public.services.id IS 'Service unique identifier. Is the primary key';
-COMMENT ON COLUMN public.services.hostname IS 'hostname that provides this specific metric';
-COMMENT ON COLUMN public.services.warehouse IS 'warehouse that stores this specific metric';
-COMMENT ON COLUMN public.services.service IS 'service name that provides a specific metric';
-COMMENT ON COLUMN public.services.last_modified IS 'last day that the dispatcher pushed datas in the warehouse';
-COMMENT ON COLUMN public.services.creation_ts IS 'warehouse creation date and time for this particular hostname/service';
-COMMENT ON COLUMN public.services.servalid IS 'data retention time';
-COMMENT ON COLUMN public.services.seracl IS 'ACL on a particulier service';
-
 -- Map properties and info between accounts/users and internal pgsql roles
 CREATE TABLE public.roles (
     id bigserial PRIMARY KEY,
@@ -90,6 +61,49 @@ COMMENT ON COLUMN public.roles.rolconfig IS 'Specific configuration for a partic
 
 
 INSERT INTO public.roles (rolname) VALUES ('pgf_admins');
+
+CREATE TABLE public.servers (
+    id bigserial PRIMARY KEY,
+    hostname name NOT NULL,
+    id_role bigint REFERENCES public.roles (id)
+) ;
+CREATE UNIQUE INDEX idx_servers_hostname
+    ON public.servers USING btree(hostname) ;
+ALTER TABLE public.servers OWNER TO pgfactory ;
+
+REVOKE ALL ON TABLE public.servers FROM public ;
+
+COMMENT ON COLUMN public.servers.id IS 'Server unique identifier. Is the primary key' ;
+COMMENT ON COLUMN public.servers.hostname IS 'hostname of the server, as referenced by dispatcher. Must be unique' ;
+COMMENT ON COLUMN public.servers.id_role IS 'owner of the server' ;
+
+COMMENT ON TABLE public.servers IS 'Table servers lists all referenced servers' ;
+CREATE TABLE public.services (
+    id bigserial PRIMARY KEY,
+    id_server bigint NOT NULL REFERENCES public.servers (id),
+    warehouse name NOT NULL,
+    service text NOT NULL,
+    last_modified date DEFAULT (now())::date NOT NULL,
+    creation_ts timestamp with time zone DEFAULT now() NOT NULL,
+    last_cleanup timestamp with time zone DEFAULT now() NOT NULL,
+    servalid interval
+);
+CREATE UNIQUE INDEX idx_services_service_label
+    ON services USING btree (service);
+ALTER TABLE public.services OWNER TO pgfactory;
+REVOKE ALL ON TABLE public.services FROM public ;
+
+COMMENT ON TABLE public.services IS 'Table services lists all available metrics.
+
+This table is a master table. Each warehouse have a specific services tables inherited from this master table';
+
+COMMENT ON COLUMN public.services.id IS 'Service unique identifier. Is the primary key';
+COMMENT ON COLUMN public.services.id_server IS 'Identifier of the server';
+COMMENT ON COLUMN public.services.warehouse IS 'warehouse that stores this specific metric';
+COMMENT ON COLUMN public.services.service IS 'service name that provides a specific metric';
+COMMENT ON COLUMN public.services.last_modified IS 'last day that the dispatcher pushed datas in the warehouse';
+COMMENT ON COLUMN public.services.creation_ts IS 'warehouse creation date and time for this particular service';
+COMMENT ON COLUMN public.services.servalid IS 'data retention time';
 
 /* public.create_account
 Create a new account.
@@ -708,79 +722,53 @@ GRANT ALL ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) TO
 COMMENT ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) IS 'Revoke dispatch ability for a give role on a given hub table.';
 
 /*
-public.grant_service(service, role)
-
-@return rc: status
+grant_server()
  */
-CREATE OR REPLACE FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean)
+CREATE OR REPLACE FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean)
 AS $$
 DECLARE
-        v_state      text;
-        v_msg        text;
-        v_detail     text;
-        v_hint       text;
-        v_context    text;
-        v_whname     text;
-        v_is_acl_empty boolean;
+    v_state   TEXT;
+    v_msg     TEXT;
+    v_detail  TEXT;
+    v_hint    TEXT;
+    v_context TEXT;
+    v_serversrow public.servers%rowtype;
+    v_servicesrow public.services%rowtype;
+    v_rolid bigint;
+    v_nb integer;
 BEGIN
-/* verify that the give role exists */
-    BEGIN
-        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-            rc := false;
-            RETURN;
-    END;
-
-    /* which warehouse ? */
-    EXECUTE format('SELECT warehouse FROM services WHERE id = %L', p_service_id) INTO v_whname;
-
-    /* verify that the given warehouse exists */
-    DECLARE
-        spc oid;
-    BEGIN
-        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', v_whname) INTO STRICT spc;
-        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
-            rc := false;
-            RETURN;
-    END;
-
-        /* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
-    EXECUTE format('
-        SELECT CASE
-                WHEN array_dims(seracl) IS NULL THEN true
-                ELSE false
-            END AS is_acl_empty
-        FROM services WHERE id = %L', p_service_id
-    ) INTO v_is_acl_empty;
-
-    IF v_is_acl_empty = true THEN
-        EXECUTE format('UPDATE services
-            SET seracl = seracl || aclitemin(%L)
-            WHERE id = %L', p_rolname || '=r/pgfactory', p_service_id
-        );
-    ELSE
-        /* update ACL in the service table */
-        EXECUTE format('UPDATE services
-            SET seracl = seracl || aclitemin(%L)
-            WHERE NOT aclcontains(seracl, aclitemin(%L))
-                AND id = %L',
-            p_rolname || '=r/pgfactory',
-            p_rolname || '=r/pgfactory',
-            p_service_id
-        );
+    rc := false;
+    --Does the server exists ?
+    SELECT COUNT(*) INTO v_nb FROM public.servers WHERE id = p_server_id;
+    IF (v_nb <> 1) THEN
+        RAISE WARNING 'Server % does not exists.', p_server_id;
+        RETURN;
     END IF;
 
-    /* put the ACL on the partition, let the warehouse function do it */
-    EXECUTE format('SELECT %I.grant_service(%s, %L)', v_whname, p_service_id, p_rolname) INTO STRICT rc;
-    IF (NOT rc) THEN
-        RAISE EXCEPTION 'Could not perform grant_service on warehouse %', v_whname;
+    --Does the role exists ?
+    IF (NOT is_pgf_role(p_rolname)) THEN
+        RAISE WARNING 'Role % is not a pgfactory role.', p_rolname;
+        RETURN;
     END IF;
 
+    --Is the server already owned ?
+    EXECUTE format('SELECT * FROM public.servers WHERE id = %s', p_server_id) INTO v_serversrow;
+    IF (v_serversrow.id_role IS NOT NULL) THEN
+        RAISE WARNING 'The server % is already owned by pgfactory role %', v_serversrow.hostname, v_serversrow.id_role;
+        RETURN;
+    END IF;
+
+    rc := true; -- must be set to true, if no partitions
+    EXECUTE format('SELECT id FROM public.roles WHERE rolname = %L', p_rolname) INTO v_rolid;
+    EXECUTE format('UPDATE public.servers SET id_role = %s WHERE id = %s', v_rolid, p_server_id);
+    FOR v_servicesrow IN SELECT * FROM public.list_services()
+    LOOP
+        /* put the ACL on the partitions, let the warehouse function do it */
+        EXECUTE format('SELECT %I.grant_service(%s, %L)', v_servicesrow.warehouse, v_servicesrow.id, p_rolname) INTO STRICT rc;
+        IF (NOT rc) THEN
+            RAISE EXCEPTION 'Could not perform grant_service on warehouse %', v_servicesrow.warehouse;
+        END IF;
+    END LOOP;
 EXCEPTION
     WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS
@@ -789,12 +777,12 @@ EXCEPTION
             v_detail  = PG_EXCEPTION_DETAIL,
             v_hint    = PG_EXCEPTION_HINT,
             v_context = PG_EXCEPTION_CONTEXT;
-        raise notice E'Unhandled error:
+        RAISE WARNING E'Unhandled error: impossible to grant server % for user % :
             state  : %
             message: %
             detail : %
             hint   : %
-            context: %', v_state, v_msg, v_detail, v_hint, v_context;
+            context: %', p_server_id, p_rolname, v_state, v_msg, v_detail, v_hint, v_context;
         rc := false;
 END;
 $$
@@ -803,139 +791,53 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
-GRANT ALL ON FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
+ALTER FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
+GRANT ALL ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
 
-COMMENT ON FUNCTION public.grant_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a service.';
+COMMENT ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a server.';
+
 
 /*
-public.revoke_service(service, role)
-
-@return rc: status
+revoke_server()
  */
-CREATE OR REPLACE FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean)
+CREATE OR REPLACE FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean)
 AS $$
 DECLARE
-        v_state      text;
-        v_msg        text;
-        v_detail     text;
-        v_hint       text;
-        v_context    text;
-        v_whname     text;
-        v_is_acl_empty boolean;
-        v_acl_exists   boolean;
-        v_acl_last_element boolean;
-        v_seracl     aclitem[];
-
-        v_sql        text;
+    v_state   TEXT;
+    v_msg     TEXT;
+    v_detail  TEXT;
+    v_hint    TEXT;
+    v_context TEXT;
+    v_servicesrow public.services%rowtype;
+    v_rolid bigint;
+    v_nb integer;
 BEGIN
-/* verify that the give role exists */
-    BEGIN
-        EXECUTE format('SELECT true FROM public.roles WHERE rolname = %L', p_rolname) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given role is not a PGFactory role %', p_rolname;
-            rc := false;
-            RETURN;
-    END;
-
-    /* which warehouse ? */
-    EXECUTE format('SELECT warehouse FROM services WHERE id = %L', p_service_id) INTO v_whname;
-
-    /* verify that the given warehouse exists */
-    DECLARE
-        spc oid;
-    BEGIN
-        EXECUTE format('SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = %L', v_whname) INTO STRICT spc;
-        EXECUTE format('SELECT true FROM pg_catalog.pg_class WHERE relname = ''hub'' AND relnamespace = %L', spc) INTO STRICT rc;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'Given warehouse does not exists: %', v_whname;
-            rc := false;
-            RETURN;
-    END;
-
-    /* avoid the following error if seracl is empty: ACL arrays must be one-dimensional */
-    EXECUTE format('SELECT
-                CASE
-                    WHEN array_dims(seracl) IS NULL THEN true
-                    ELSE false
-                END AS is_acl_empty
-            FROM services WHERE id = %L',
-        p_service_id
-    ) INTO v_is_acl_empty;
-
-    IF v_is_acl_empty = true THEN
-        RAISE NOTICE 'ACL is empty';
-        rc := false;
+    rc := false;
+    --Does the server exists ?
+    SELECT COUNT(*) INTO v_nb FROM public.servers WHERE id = p_server_id;
+    IF (v_nb <> 1) THEN
+        RAISE WARNING 'Server % does not exists.', p_server_id;
         RETURN;
-    ELSE
-        /* does the ACL exists ? */
-        EXECUTE format('SELECT
-                    CASE
-                        WHEN aclcontains(seracl, aclitemin(%L)) THEN true
-                        ELSE false
-                    END
-                FROM services
-                WHERE id = %L',
-            p_rolname || '=r/pgfactory', p_service_id
-        ) INTO v_acl_exists;
-
-        IF v_acl_exists = false THEN
-            RAISE NOTICE 'ACL does not exists';
-            rc := false;
-            RETURN;
-        END IF;
-
-        /* if the ACL is the last remaining one, then put an empty ACL directly. Otherwise, execute the CTE to do the right update */
-        EXECUTE format('SELECT
-                CASE
-                    WHEN array_length(seracl, 1) = 1 THEN true
-                    ELSE false
-                END AS is_acl_empty
-            FROM services
-            WHERE id = %L', p_service_id
-        ) INTO v_acl_last_element;
-
-        IF v_acl_last_element = true THEN
-            RAISE NOTICE 'last element';
-            EXECUTE format('UPDATE services
-                SET seracl = ARRAY[]::aclitem[]
-                WHERE id = %L', p_service_id
-            );
-
-        ELSE
-            EXECUTE format('WITH
-                    explode_seracl AS (
-                        SELECT id, unnest(seracl) AS acl
-                            FROM services
-                        WHERE id = %L
-                    ),
-                    filter_acl AS (
-                        SELECT id, array_agg(acl) AS acl
-                            FROM explode_seracl
-                        WHERE
-                            -- ACL to remove is filtered
-                            NOT aclitemeq(acl,  aclitemin(%L))
-                        GROUP BY id
-                    )
-                    UPDATE services
-                    SET seracl=acl
-                    FROM filter_acl
-                    WHERE services.id=filter_acl.id -- then ACL is rewritten',
-                p_service_id,
-                p_rolname || '=r/pgfactory'
-            );
-        END IF;
     END IF;
 
-    /* put the ACL on the partition, let the warehouse function do it */
-    format('SELECT %I.revoke_service(%s,%L)', v_whname, p_service_id, p_rolname) INTO STRICT rc;
-    IF (NOT rc) THEN
-        RAISE EXCEPTION 'Could not perform revoke_service on warehouse %', v_whname;
+    --Does the role own the server ?
+    EXECUTE format('SELECT COUNT(*) FROM public.servers s JOIN public.roles r ON s.id_role = r.id WHERE s.id = %s AND r.rolname = %L', p_server_id, p_rolname) INTO v_nb;
+    IF (v_nb <> 1) THEN
+        RAISE WARNING 'The server % is not owned by pgfactory role %', p_server_id, p_rolname;
+        RETURN;
     END IF;
 
+    rc := true; -- must be set to true, if no partitions
+    EXECUTE format('UPDATE public.servers SET id_role = NULL WHERE id = %s', p_server_id);
+    FOR v_servicesrow IN SELECT * FROM public.list_services()
+    LOOP
+        /* revoke the ACL on the partitions, let the warehouse function do it */
+        EXECUTE format('SELECT %I.revoke_service(%s, %L)', v_servicesrow.warehouse, v_servicesrow.id, p_rolname) INTO STRICT rc;
+        IF (NOT rc) THEN
+            RAISE EXCEPTION 'Could not perform revoke_service on warehouse %', v_servicesrow.warehouse;
+        END IF;
+    END LOOP;
 EXCEPTION
     WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS
@@ -944,12 +846,12 @@ EXCEPTION
             v_detail  = PG_EXCEPTION_DETAIL,
             v_hint    = PG_EXCEPTION_HINT,
             v_context = PG_EXCEPTION_CONTEXT;
-        raise notice E'Unhandled error:
+        RAISE WARNING E'Unhandled error: impossible to revoke server % from user % :
             state  : %
             message: %
             detail : %
             hint   : %
-            context: %', v_state, v_msg, v_detail, v_hint, v_context;
+            context: %', p_server_id, p_rolname, v_state, v_msg, v_detail, v_hint, v_context;
         rc := false;
 END;
 $$
@@ -958,48 +860,53 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
-GRANT ALL ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
+ALTER FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
+GRANT ALL ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
 
-COMMENT ON FUNCTION public.revoke_service(IN p_service_id bigint, IN p_rolname name, OUT rc boolean) IS 'Revoke SELECT on a service.';
+COMMENT ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) IS 'Revoke SELECT from a server.';
+
+/*
+list_servers()
+ */
+CREATE OR REPLACE FUNCTION public.list_servers()
+  RETURNS TABLE (id bigint, hostname name, rolname name)
+AS $$
+BEGIN
+    IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+        RETURN QUERY SELECT s.id, s.hostname, r.rolname
+            FROM public.servers s
+            LEFT JOIN public.roles r ON s.id_role = r.id;
+    ELSE
+        RETURN QUERY EXECUTE s.id, s.hostname, r.rolname
+            FROM public.servers s
+            JOIN public.roles r ON s.id_role = r.id
+            WHERE pg_has_role(session_user, r.rolname, 'MEMBER') ;
+    END IF;
+END;
+$$ LANGUAGE plpgsql
+STABLE
+LEAKPROOF
+SECURITY DEFINER;
+
+ALTER FUNCTION public.list_servers() OWNER TO pgfactory;
+REVOKE ALL ON FUNCTION public.list_servers() FROM public;
+GRANT EXECUTE ON FUNCTION public.list_servers() TO public;
+
+COMMENT ON FUNCTION public.list_servers() IS 'List services available for the session user.';
 
 /*
 list_services()
  */
 CREATE OR REPLACE FUNCTION public.list_services()
-    RETURNS TABLE (id bigint, hostname text, warehouse name, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
+    RETURNS TABLE (id bigint, id_server bigint, warehouse name, service text, last_modified date, creation_ts timestamp with time zone, servalid interval)
 AS $$
 BEGIN
-    IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
-        RETURN QUERY SELECT s.id, s.hostname, s.warehouse,
-                s.service, s.last_modified, s.creation_ts, s.servalid
-            FROM services s;
-    ELSE
-        RETURN QUERY EXECUTE 'WITH RECURSIVE
-                v_roles AS (
-                    SELECT pr.oid AS oid, r.rolname, ARRAY[r.rolname] AS roles
-                      FROM public.roles r
-                      JOIN pg_catalog.pg_roles pr ON (r.rolname = pr.rolname)
-                     WHERE r.rolname = $1
-                    UNION ALL
-                    SELECT pa.oid, v.rolname, v.roles || pa.rolname
-                      FROM v_roles v
-                      JOIN pg_auth_members am ON (am.member = v.oid)
-                      JOIN pg_roles pa ON (am.roleid = pa.oid)
-                     WHERE NOT pa.rolname::name = ANY(v.roles)
-                ),
-                acl AS (
-                    SELECT id, hostname, warehouse, service, last_modified,
-                        creation_ts, servalid, (aclexplode(seracl)).*
-                    FROM services
-                    WHERE array_length(seracl, 1) IS NOT NULL
-                )
-                SELECT id, hostname, warehouse, service,
-                    last_modified, creation_ts, servalid
-                FROM acl
-                WHERE grantee IN (SELECT oid FROM v_roles)' USING session_user;
-    END IF;
+    RETURN QUERY SELECT s.id, s.id_server, s.warehouse, s.service,
+            s.last_modified, s.creation_ts, s.servalid
+            FROM (SELECT * FROM public.list_servers() ) ls
+            JOIN public.services s ON ls.id = s.id_server;
+
 END;
 $$ LANGUAGE plpgsql
 STABLE
