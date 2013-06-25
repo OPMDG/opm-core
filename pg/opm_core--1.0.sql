@@ -885,7 +885,7 @@ BEGIN
             FROM public.servers s
             LEFT JOIN public.roles r ON s.id_role = r.id;
     ELSE
-        RETURN QUERY EXECUTE s.id, s.hostname, r.rolname
+        RETURN QUERY SELECT s.id, s.hostname, r.rolname
             FROM public.servers s
             JOIN public.roles r ON s.id_role = r.id
             WHERE pg_has_role(session_user, r.rolname, 'MEMBER') ;
