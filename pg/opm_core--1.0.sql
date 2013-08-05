@@ -88,7 +88,7 @@ CREATE TABLE public.services (
     last_cleanup timestamp with time zone DEFAULT now() NOT NULL,
     servalid interval
 );
-CREATE UNIQUE INDEX idx_services_service_label
+CREATE UNIQUE INDEX idx_services_service
     ON services USING btree (service);
 ALTER TABLE public.services OWNER TO pgfactory;
 REVOKE ALL ON TABLE public.services FROM public ;
