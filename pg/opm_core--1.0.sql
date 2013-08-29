@@ -381,19 +381,29 @@ CREATE OR REPLACE FUNCTION public.list_users(p_account name DEFAULT NULL)
 AS $$
 DECLARE
     query text := $q$
-        SELECT u.id, a.rolname, u.rolname
-        FROM public.roles AS u
-            JOIN pg_catalog.pg_roles AS r ON (u.rolname = r.rolname)
-            JOIN pg_auth_members AS m ON (r.oid = m.member)
-            JOIN pg_roles AS a ON (a.oid = m.roleid)
-        WHERE a.rolname <> r.rolname
-            AND a.rolname <> 'pgf_roles'
-            AND r.rolcanlogin
+        WITH all_roles (id,rolname) AS (
+            SELECT u.id, u.rolname
+            FROM roles u
+            JOIN pg_roles r ON u.rolname = r.rolname
+            WHERE rolcanlogin
+        ), assigned AS (
+            SELECT u.id, a.rolname as accname, u.rolname
+            FROM public.roles AS u
+                JOIN pg_catalog.pg_roles AS r ON (u.rolname = r.rolname)
+                JOIN pg_auth_members AS m ON (r.oid = m.member)
+                JOIN pg_roles AS a ON (a.oid = m.roleid)
+            WHERE a.rolname <> r.rolname
+                AND a.rolname <> 'pgf_roles'
+                AND r.rolcanlogin
+        )
+        SELECT ar.id, a.accname, ar.rolname
+        FROM all_roles ar
+            LEFT JOIN assigned a ON ar.rolname = a.rolname
     $q$;
 BEGIN
     IF p_account IS NOT NULL THEN
         query := format(
-            query || ' AND a.rolname = %L',
+            query || ' WHERE a.accname = %L',
             p_account
         );
     END IF;
