@@ -1,0 +1,11 @@
+% layout 'table';
+% my @files = @{stash 'files'};
+
+<% if (scalar(@files)) { %>
+    <tr><th>Open PostgreSQL Monitoring unit tests</th></tr>
+    <% foreach my $f (@files) { %>
+        <tr><td><a href="/tests/src/<%= $f %>"><%= $f %></a></td></tr>
+    <% } %>
+<% } else { %>
+    <tr><td colspan="3"><%=l 'No test file found'%>.</td></tr>
+<% } %>

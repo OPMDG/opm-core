@@ -1,0 +1,38 @@
+% layout config 'layout';
+% my @servers = @{stash 'servers'};
+% my $previous;
+% my $first = 1;
+
+<div class="row">
+  <div class="span6">
+    <div class="box" id="server_list">
+        <b><%=l 'List of servers' %> :</b><br />
+        <% if (scalar(@servers)) { %>
+          <ul>
+            <% foreach my $s (@servers) { %>
+              <%   my %line = %{$s}; %>
+              <% if ( ($first) || ($previous ne $line{rolname}) ){ %>
+                <% $previous = $line{rolname}; %>
+                <% if (! $first) { %>
+                  </ul>
+                <% } else {%>
+                  <% $first = 0; %>
+                <% } %>
+                <li>
+                <% if ($line{rolname} eq '') { %>
+                  <i><%=l 'Unassigned' %></i>
+                <% } else{ %>
+                  <%= $line{rolname} %></li>
+                <% } %>
+                <ul>
+              <% } %>
+              <li><%= link_to server_host => { id => $line{id} } => begin %><%= $line{hostname} %><% end %> </li>
+            <% } %>
+            </ul>
+          </ul>
+        <% } else { %>
+        <p>No server found.</p>
+        <% } %>
+    </div>
+  </div>
+</div>

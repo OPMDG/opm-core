@@ -1,0 +1,55 @@
+% layout config 'layout';
+% my @roles = @{stash 'roles'};
+% my @acc = @{stash 'acc'};
+
+<div class="row">
+  <div class="span6">
+    <div class="box" id="user_list">
+        <b><%=l 'List of users' %> :</b><br />
+        <ul>
+          <% foreach my $r (@roles) { %>
+            <%   my %line = %{$r}; %>
+            <li>
+            <% if ($line{rolname} ne (session 'user_username')) {
+              <%= link_to user_delete => {rolname => $line{rolname}} => ( onclick => "return confirmDel('user','$line{rolname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
+            <% } %>
+              <%= link_to user_edit => { rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
+              </li>
+          <% } %>
+        </ul>
+    </div>
+  </div>
+  <div class="span4 box" id="user_create">
+    <%= form_for user_list => (method => 'POST') => begin %>
+      <fieldset>
+        <b><%=l 'Add a user' %></b><br /><br />
+        <div class="control-group">
+          <label class="control-label" for="username"><%=l 'Username' %>:</label>
+          <div class="controls">
+            <%= text_field 'username', type => 'text', class => 'span3', id => 'username' %>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="accname"><%=l 'Account name' %>:</label>
+          <div class="controls">
+            <select name="accname" id="accname" class="span3">
+              <% foreach my $a (@acc) { %>
+                <%   my %line = %{$a}; %>
+                <option value="<%= $line{accname} %>"><%= $line{accname} %></option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="password"><%=l 'Password' %>:</label>
+          <div class="controls">
+            <%= text_field 'password', type => 'text', class => 'span3', id => 'password' %>
+          </div>
+        </div>
+        <div class="btn-group pull-left">
+          <%= submit_button l('Create'), name => 'create', class => 'btn btn-primary' %>
+        </div>
+      </fieldset>
+    <% end %>
+  </div>
+</div>

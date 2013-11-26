@@ -1,0 +1,88 @@
+% layout config 'layout';
+% content_for header => begin
+  <script type="text/javascript" src="<%= url_for '/js/show.js' %>"></script>
+% end
+% my %graph = %{stash 'graph'};
+% my @server_list = @{stash 'server_list'};
+% my @graph_list = @{stash 'graph_list'};
+
+<% if (scalar $graph->{id_server}) { %>
+<%= link_to server_host => { id => $graph->{id_server} } => begin %> « <%=l 'Back to server' %> <%= stash 'hostname' %><% end %>
+  <br />
+<% } %>
+<div class="row-fluid">
+  <div class="span16">
+    <div class="btn-toolbar">
+      <p class="btn-group scales">
+        <input type="button" id="sel_year"  class="btn" value="<%=l 'Year' %>" />
+        <input type="button" id="sel_month" class="btn" value="<%=l 'Month' %>" />
+        <input type="button" id="sel_week"  class="btn" value="<%=l 'Week' %>" />
+        <input type="button" id="sel_day"   class="btn" value="<%=l 'Day' %>" />
+      </p>
+
+      <% if (scalar $graph->{id_server}) { %>
+        <p class="btn-group">
+          <% if (@server_list > 0){ %>
+            <select id="server_list">
+              <option value=""><%=l 'Change server' %></option>
+            <% foreach my $s (@server_list) { %>
+              <% my %line = %{$s}; %>
+              <option value="<%= $line{'id'} %>"><%= $line{'hostname'} %></option>
+            <% } %>
+            </select>
+          <% } %>
+          <% if (@graph_list > 0){ %>
+            <select id="graph_list">
+              <option value=""><%=l 'Change graph' %></option>
+            <% foreach my $s (@graph_list) { %>
+              <% my %line = %{$s}; %>
+              <option value="<%= $line{'id'} %>"><%= $line{'graphname'} %></option>
+            <% } %>
+            </select>
+          <% } %>
+        </p>
+        <% } %>
+    </div>
+
+    <p class="scales">
+      <span class="input-append date datepick" id="fromdatepick">
+        <label for="fromdate"><%=l 'From' %>:&nbsp;</label>
+        <input id="fromdate" type="text" class="dateinput" />
+        <span class="add-on">
+          <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
+        </span>
+      </span>
+
+      <span class="input-append date datepick" id="todatepick">
+        <label for="todate">&nbsp;<%=l 'to' %>:&nbsp;</label>
+        <input id="todate" type="text" class="dateinput" />
+        <span class="add-on">
+          <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
+        </span>
+      </span>&nbsp;
+      <input type="button" id="sel_custom" class="btn" style="margin-bottom:10px" value="<%=l 'Custom' %>" />
+    </p>
+  </div>
+
+  <div class="box-content">
+
+    <div class="pull-right">
+      <div class="btn-group">
+        <a href="#" offon-series="<%= $id %>" class="btn btn-mini"><%=l 'Show/Hide series' %></a>
+        <a href="#" invert-series="<%= $id %>" class="btn btn-mini"><%=l 'Invert Sel.' %></a>
+        <a href="#" export-graph="<%= $id %>" class="btn btn-mini save"><%=l 'Export' %></a>
+      </div>
+      % if (stash 'is_admin') {
+      <div class="btn-group">
+        <%= link_to graphs_edit => { id => $id } => (class => "btn btn-mini") => begin %><%=l 'Edit' %><% end %>
+      </div>
+      %}
+      </div>
+    </div>
+
+    <div class="row graph_container">
+      <div class="graph" id-graph="<%= $id %>" />
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,26 @@
+{
+    "title" : "Open PostgreSQL Monitoring",
+
+    "rewrite": 0,
+    "base_url" : "http://www.example.com/opm/",
+
+    "secret" : "|Erp--Wjgb)+eiB/|H=|V7!#+M|L{a8=J2|gd+P1=M|&pJWq|M&,f3q^XS",
+
+    "database" : {
+	"dsn"	  : "dbi:Pg:database=opm;host=127.0.0.1;port=5432",
+	"options"  : {
+	    "AutoCommit" : 0,
+	    "pg_enable_utf8" : 1
+	}
+    },
+
+    "languages" : {
+	"en" : "english",
+	"fr" : "français"
+    },
+
+    "allow_register" : 0,
+    "layout" : "default",
+
+    "modules" : [ "grapher" ]
+}

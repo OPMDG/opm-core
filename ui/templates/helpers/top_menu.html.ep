@@ -1,0 +1,33 @@
+% my $cr = current_route;
+<ul class="nav">
+  % if (($user_level eq "user" ) or ($user_level eq "admin")){
+  <li <% if ( ($cr =~ m!^server_!) || ($cr =~ m!^site_home$!) ) { %>class="active"<% } %>><%= link_to server_list => begin %><%=l 'Servers' %><% end %></li>
+  % }
+
+  % if ($user_level eq "admin") {
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><%=l 'Graphs' %> <b class="caret"></b></a>
+    <ul class="dropdown-menu">
+      <li><%= link_to graphs_list => begin %><%=l 'Graphs' %><% end %></li>
+      <li><%= link_to categories_list => begin %><%=l 'Categories' %><% end %></li>
+      <li><%= link_to properties_defaults => begin %><%=l 'Properties' %><% end %></li>
+    </ul>
+  </li>
+  % }
+  % if (($user_level eq "user" ) or ($user_level eq "admin")){
+  <form class="navbar-search pull-left">
+    <input type="text" class="search-query" placeholder="<%=l 'Search' %>" id="search" autocomplete="off">
+  </form>
+  % }
+
+  % if ($user_level eq "admin") {
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><%=l 'Admin' %><b class="caret"></b></a>
+    <ul class="dropdown-menu">
+      <li><%= link_to user_list => begin %><%=l 'Users' %><% end %></li>
+      <li><%= link_to account_list => begin %><%=l 'Accounts' %><% end %></li>
+      <li class="divider"></li>
+    </ul>
+  </li>
+  % }
+</ul>

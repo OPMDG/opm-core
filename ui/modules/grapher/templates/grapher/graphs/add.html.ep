@@ -1,0 +1,183 @@
+% layout config 'layout';
+<div class="row-fluid">
+  <h2>Add a new graph</h2>
+
+  <div class="btn-group pull-right">
+    <%= link_to graphs_list => (class => "btn") => begin %>Back to list<% end %>
+  </div>
+
+  <div id="form" class="box-content">
+    <%= form_for graphs_add => (method => 'POST', class => 'form-horizontal') => begin %>
+    <fieldset id="datasource">
+      <legend>Graph details</legend>
+
+      <div class="control-group">
+	<label class="control-label" for="name"><strong>Graph name:</strong></label>
+	<div class="controls">
+	  <%= text_field 'graph', type => 'text', class => 'span6', id => 'name' %>
+	</div>
+      </div>
+
+      <div class="control-group">
+	<label class="control-label" for="desc">Description:</label>
+	<div class="controls">
+	  <%= text_area description => (rows => 3, id => 'desc', class => 'span6') => begin %><% end %>
+	</div>
+      </div>
+      
+      <div class="control-group">
+	<label class="control-label" for="query1"><strong>Query:</strong></label>
+	<div class="controls">
+	  <%= text_area y1_query => (rows => 7, id => 'query1', class => 'span6 code-font') => begin %><% end %>
+	</div>
+      </div>
+      
+      <div class="control-group">
+	<label class="control-label" for="query2">Second Y axis query:</label>
+	<div class="controls">
+	  <%= text_area y2_query => (rows => 7, id => 'query2', class => 'span6 code-font') => begin %><% end %>
+	</div>
+      </div>
+
+    </fieldset>
+
+    <fieldset>
+      <legend>Preview</legend>
+
+      <div class="graph">
+	<div class="pull-right">
+	  <div class="btn-group">
+	    <a href="#" class="btn btn-mini save">Save</a>
+	  </div>
+	</div>
+
+	<div class="row graph_container">
+	  <div class="plot span9"></div>
+	  <div class="legend span3"></div>
+	</div>
+      </div>
+    </fieldset>
+
+    <fieldset id="properties">
+	
+      <legend>Graph properties</legend>
+
+      <div class="row-fluid">
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Type:</strong></label>
+	  <div class="controls">
+	    <label class="radio"><%= radio_button type => 'bars' %> Bars</label>
+	    <label class="radio"><%= radio_button type => 'lines' %> Lines</label>
+	    <label class="radio"><%= radio_button type => 'points' %> Points</label>
+	    <label class="radio"><%= radio_button type => 'pie' %> Pie</label>
+	  </div>
+	</div>
+
+	<div class="control-group span4">
+	  <label class="control-label"><strong>X axis:</strong></label>
+	  <div class="controls">
+	    <label class="checkbox"><%= check_box 'xaxis_showLabels' => 1 %> Show labels</label>
+	    <label>Labels angle: <%= text_field 'xaxis_labelsAngle', type => 'text', class => 'span2' %></label>
+	    <label>Title: <%= text_field 'xaxis_title', type => 'text' %></label>
+	    <label>Title angle: <%= text_field 'xaxis_titleAngle', type => 'text', class => 'span2' %></label>
+	    <label>Time format: <%= text_field 'xaxis_timeFormat', type => 'text' %></label>
+	    Mode: <%= select_field xaxis_mode => ['time', 'normal'] %>
+	  </div>
+	</div>
+
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Y axis:</strong></label>
+	  <div class="controls">
+	    <label class="checkbox"><%= check_box 'yaxis_showLabels' => 1 %> Show labels</label>
+	    <label>Labels angle: <%= text_field 'yaxis_labelsAngle', type => 'text', class => 'span2' %></label>
+	    <label>Title: <%= text_field 'yaxis_title', type => 'text' %></label>
+	    <label>Title angle: <%= text_field 'yaxis_titleAngle', type => 'text', class => 'span2' %></label>
+	  </div>
+	</div>
+
+      </div>
+
+      <div class="row-fluid">
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Second Y axis:</strong></label>
+	  <div class="controls">
+	    <label class="checkbox"><%= check_box 'y2axis_showLabels' => 1 %> Show labels</label>
+	    <label>Labels angle: <%= text_field 'y2axis_labelsAngle', type => 'text', class => 'span2' %></label>
+	    <label>Title: <%= text_field 'y2axis_title', type => 'text' %></label>
+	    <label>Title angle: <%= text_field 'y2axis_titleAngle', type => 'text', class => 'span2' %></label>
+	  </div>
+	</div>
+
+
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Series:</strong></label>
+	  <div class="controls">
+	    <label>Colors: <%= text_field 'colors', type => 'text' %></label>
+	    <label class="checkbox"><%= check_box 'show_legend' => 1 %> Show legend in graph</label>
+	  </div>
+	</div>
+
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Bars:</strong></label>
+	  <div class="controls">
+	    <label>Line width: <%= text_field 'bars_lineWidth', type => 'text', class => 'span2' %></label>
+	    <label>Bar width: <%= text_field 'bars_barWidth', type => 'text', class => 'span2' %></label>
+	    <label class="checkbox"><%= check_box bars_stacked => 1 %> Stacked</label>
+	    <label class="checkbox"><%= check_box bars_filled => 1 %> Filled</label>
+	    <label class="checkbox"><%= check_box bars_grouped => 1 %> Grouped</label>
+	  </div>
+	</div>
+      </div>
+
+      <div class="row-fluid">
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Lines:</strong></label>
+	  <div class="controls">
+	    <label>Line width: <%= text_field 'lines_lineWidth', type => 'text', class => 'span2' %></label>
+	    <label class="checkbox"><%= check_box lines_stacked => 1 %> Stacked</label>
+	    <label class="checkbox"><%= check_box lines_filled => 1 %> Filled</label>
+	  </div>
+	</div>
+
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Points:</strong></label>
+	  <div class="controls">
+	    <label>Line width: <%= text_field 'points_lineWidth', type => 'text', class => 'span2' %></label>
+	    <label>Radius: <%= text_field 'points_radius', type => 'text', class => 'span2' %></label>
+	    <label class="checkbox"><%= check_box points_filled => 1 %> Filled</label>
+	  </div>
+	</div>
+
+	<div class="control-group span4">
+	  <label class="control-label"><strong>Pie:</strong></label>
+	  <div class="controls">
+	    <label>Line width: <%= text_field 'pie_lineWidth', type => 'text', class => 'span2' %></label>
+	    <label class="checkbox"><%= check_box pie_filled => 1 %> Filled</label>
+	  </div>
+	</div>
+      </div>
+
+
+    </fieldset>
+
+    <div class="form-actions">
+      <button type="button" name="preview" class="btn">Preview</button>
+      <%= submit_button 'Save', name => 'save', class => 'btn btn-primary' %>
+      <%= submit_button 'Cancel', name => 'cancel', class => 'btn' %>
+    </div>
+
+    <% end %>
+  </div>
+</div>
+
+<script>
+$(document).ready(function () {
+  $('.graph').grapher({ datasource: "#datasource", properties: "#properties", draw: false, url: "/grapher/graphs/data" });
+
+  // Draw when the preview button is clicked
+  $('button[name=preview]').click(function (e) {
+    e.preventDefault();
+    $('.graph').grapher('draw');
+  });
+});
+</script>

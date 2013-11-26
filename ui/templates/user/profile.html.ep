@@ -1,0 +1,40 @@
+% layout config 'layout';
+% my @acc = @{stash 'acc'};
+
+<h2><%=l 'Profile of' %> <%= session 'user_username' %></h2>
+  <div class="row">
+    <div class="span6">
+      <div class="box">
+        <b><%=l 'Member of' %> :</b><br />
+          <ul>
+            <% foreach my $a (@acc) { %>
+            <%   my %line = %{$a}; %>
+            <li><%= $line{acc} %></li>
+            <% } %>
+          </ul>
+        </div>
+    </div>
+    <div class="span4">
+      <div class="box">
+        <%= form_for user_profile => (method => 'POST') => begin %>
+          <fieldset>
+            <b><%=l 'Change password' %> :</b><br />
+            <div class="control-group" align="right">
+              <label class="control-label" for="current_password"><%=l 'Current password' %>:
+                <%= password_field 'current_password', type => 'password', class => 'span2', id => 'currrent_password' %><br/>
+              </label>
+              <label class="control-label" for="new_password"><%=l 'New password' %>:
+                <%= password_field 'new_password', type => 'password', class => 'span2', id => 'new_password' %><br/>
+              </label>
+              <label class="control-label" for="repeat_password"><%=l 'Repeat password' %>:
+                <%= password_field 'repeat_password', type => 'password', class => 'span2', id => 'repeat_password' %><br/>
+              </label>
+            </div>
+            <div class="btn-group pull-right">
+              <%= submit_button l('Change'), name => 'change_password', class => 'btn btn-primary' %>
+            </div>
+          </fieldset>
+        <% end %>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,149 @@
+% layout config 'layout';
+% my @categories = @{stash 'categories'};
+<div class="row-fluid">
+  <h2>Update a  graph category</h2>
+
+  <div class="btn-group pull-right">
+    <%= link_to categories_list => (class => "btn") => begin %>Back to list<% end %>
+    <%= link_to categories_remove => { id => $id } => (class => "btn") => begin %>Remove<% end %>
+    <%= link_to categories_add => (class => "btn") => begin %>Add<% end %>
+  </div>
+
+  <div id="form" class="box-content">
+    <%= form_for categories_edit => (method => 'POST', class => 'form-horizontal') => begin %>
+    <fieldset>
+      <legend>Category details</legend>
+
+      <div class="control-group">
+	<label class="control-label strong" for="name">Name:</label>
+	<div class="controls">
+	  <%= text_field 'category', type => 'text', class => 'span6', id => 'name' %>
+	</div>
+      </div>
+
+      <div class="control-group">
+	<label class="control-label" for="desc">Description:</label>
+	<div class="controls">
+	  <%= text_area description => (rows => 3, id => 'desc', class => 'span6') => begin %><% end %>
+	</div>
+      </div>
+
+    </fieldset>
+
+    <% if (scalar(@categories)) { %>
+    <div class="row-fluid">
+      <div class="span6">
+    <fieldset>
+      <legend>Parent categories</legend>
+
+      <% my $d = 1; %>
+      <ul style="list-style: none;">
+	<% foreach my $c (@categories) { %>
+	<%   my %line = %{$c}; %>
+	<%   if ($line{distance} > $d) { %>
+	<li>
+	  <ul style="list-style: none;">
+	    <li>
+	      <label class="checkbox">
+		<%= check_box parents => $line{id} %> <%= $line{category} %>
+	      </label>
+	    </li>
+	<%   } elsif ($line{distance} == $d) { %>
+	    <li>
+	      <label class="checkbox">
+		<%= check_box parents => $line{id} %> <%= $line{category} %>
+	      </label>
+	    </li>
+	<%   } else { %>
+	<%     my $i = $d; %>
+	<%     while ($i-- != $line{distance}) { %>
+	  </ul>
+	</li>
+	<%     } %>
+	<li>
+	  <label class="checkbox">
+	    <%= check_box parents => $line{id} %> <%= $line{category} %>
+	  </label>
+	</li>
+	<%   } %>
+	<%   $d = $line{distance}; %>
+	<% } %>
+      </ul>
+
+    </fieldset>
+    </div>
+
+      <div class="span6">
+    <fieldset>
+      <legend>Children categories</legend>
+
+      <% $d = 1; %>
+      <ul style="list-style: none;">
+	<% foreach my $c (@categories) { %>
+	<%   my %line = %{$c}; %>
+	<%   if ($line{distance} > $d) { %>
+	<li>
+	  <ul style="list-style: none;">
+	    <li>
+	      <label class="checkbox">
+		<%= check_box children => $line{id} %> <%= $line{category} %>
+	      </label>
+	    </li>
+	<%   } elsif ($line{distance} == $d) { %>
+	    <li>
+	      <label class="checkbox">
+		<%= check_box children => $line{id} %> <%= $line{category} %>
+	      </label>
+	    </li>
+	<%   } else { %>
+	<%     my $i = $d; %>
+	<%     while ($i-- != $line{distance}) { %>
+	  </ul>
+	</li>
+	<%     } %>
+	<li>
+	  <label class="checkbox">
+	    <%= check_box children => $line{id} %> <%= $line{category} %>
+	  </label>
+	</li>
+	<%   } %>
+	<%   $d = $line{distance}; %>
+	<% } %>
+      </ul>
+
+    </fieldset>
+    </div>
+
+
+      </div>
+    <% } %>
+
+    <div class="form-actions">
+      <%= submit_button 'Save', name => 'save', class => 'btn btn-primary' %>
+      <%= submit_button 'Cancel', name => 'cancel', class => 'btn' %>
+    </div>
+
+    <% end %>
+  </div>
+</div>
+
+
+<script>
+$(document).ready(function () {
+  $('#form').find('input[type=checkbox]').each(function () {
+     if ($(this).val() == <%= $id %>) {
+       $(this).prop("disabled", true);
+     } else {
+       $(this).click(function (e) {
+         // invert the checked property of the clicked checkbox
+         $(this).prop("checked", !$(this).prop("checked"));
+
+         // search for all the same checkboxes in the same fieldset and invert their checked property
+         $(this).parents('fieldset').find('input[type=checkbox][value='+ $(this).val()+']').each(function () {
+           $(this).prop("checked", !$(this).prop("checked"));
+         });
+       });
+     }
+  });
+});
+</script>

@@ -1,0 +1,37 @@
+% layout config 'layout';
+<div class="row-fluid">
+  <h2>Remove a graph category</h2>
+
+  <div class="btn-group pull-right">
+    <%= link_to categories_list => (class => "btn") => begin %>Back to list<% end %>
+    <%= link_to categories_edit => { id => $id } => (class => "btn") => begin %>Edit<% end %>
+    <%= link_to categories_add => (class => "btn") => begin %>Add<% end %>
+  </div>
+
+  <div id="form" class="box-content">
+    <%= form_for categories_remove => { id => $id } => (method => 'POST', class => 'form-horizontal') => begin %>
+    <fieldset>
+      <div class="control-group">
+        <label class="control-label">Name:</label>
+        <div class="controls"><p><%= $category %></p></div>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Description:</label>
+        <div class="controls"><p><%= $description %></p></div>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Parents categories:</label>
+        <div class="controls"><p><%= $parents %></p></div>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Children categories:</label>
+        <div class="controls"><p><%= $children %></p></div>
+      </div>
+    </fieldset>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" name="remove">Remove</button>
+      <button type="submit" class="btn" name="cancel">Cancel</button>
+    </div>
+    <% end %>
+  </div>
+</div>

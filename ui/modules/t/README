@@ -1,0 +1,13 @@
+Make sure to launch "init.sql" before launching functional tests.
+"clean.sql" will remove all test-specific data.
+
+These test are provided as a plugin. To enable them, you must add it in the
+OPM configuration file (opm.conf) :
+
+"modules" : [ "grapher", "t" ];
+
+Then open the "http://host:port/t/test" page. It will detect every *.html file in the
+"modules/t/public/tests/src/" directory.
+If your server doesn't listen on port 4000, you have to change the 5th line in
+the "01_acl.html" file.
+

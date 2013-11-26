@@ -1,0 +1,285 @@
+<table border="1">
+  <tr><td colspan="3"><b>ACL tests</b></td></tr>
+
+  <tr><td colspan="3">Check login form...</td></tr>
+  <tr><td>open</td><td>http://127.0.0.1:4000</td><td></td></tr>
+  <tr><td>assertText</td><td>//form[@action='/login']/fieldset/legend</td><td>Login</td></tr>
+  <tr><td>assertText</td><td>//form[@action='/login']/fieldset/div[1]/label</td><td>Username:</td></tr>
+  <tr><td>assertText</td><td>//form[@action='/login']/fieldset/div[2]/label</td><td>Password:</td></tr>
+  <tr><td>assertValue</td><td>//form[@action='/login']/fieldset/div[3]/input</td><td>Login</td></tr>
+
+  <tr><td colspan="3">Check wrong login...</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>notthegoodpassword</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Wrong username or password.</td></tr>
+
+  <tr><td colspan="3">Check simple user...</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>verifyXpathCount</td><td>//a[text()='Admin']</td><td>0</td></tr>
+  <tr><td>verifyXpathCount</td><td>//a[text()='Users']</td><td>0</td></tr>
+  <tr><td>verifyXpathCount</td><td>//a[text()='Accounts']</td><td>0</td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>assertText</td><td>//body/div[1]/div[1]/div[1]/ul[@class='nav']/li/a</td><td>Servers</td></tr>
+  <tr><td>assertAttribute</td><td>//body/div[1]/div[1]/div[1]/ul[@class='nav']/li/a@href</td><td>/server</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']/div[1]/div[1]/div[1]/p</td><td>No server found.</td></tr>
+  <tr><td>assertAttribute</td><td>//form[@class='navbar-search pull-left']/input@placeholder</td><td>Search</td></tr>
+
+  <tr><td colspan="3">Check simple user profile...</td></tr>
+  <tr><td>clickAndWait</td><td>link=Profile</td><td></td></tr>
+  <tr><td>assertText</td><td>//li[text()='selenium_acc']</td><td>selenium_acc</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form/fieldset/div[1]/label[1]</td><td>Current password:</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form/fieldset/div[1]/label[2]</td><td>New password:</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form/fieldset/div[1]/label[3]</td><td>Repeat password:</td></tr>
+
+  <tr><td colspan="3">Check simple user password modification...</td></tr>
+  <tr><td>type</td><td>//input[@name='current_password']</td><td>password</td></tr>
+  <tr><td>type</td><td>//input[@name='new_password']</td><td>newpassword</td></tr>
+  <tr><td>type</td><td>//input[@name='repeat_password']</td><td>newpassword</td></tr>
+  <tr><td>clickAndWait</td><td>change_password</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Wrong username or password.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>newpassword</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>clickAndWait</td><td>link=Profile</td><td></td></tr>
+  <tr><td>type</td><td>//input[@name='current_password']</td><td>newpassword</td></tr>
+  <tr><td>type</td><td>//input[@name='new_password']</td><td>password</td></tr>
+  <tr><td>type</td><td>//input[@name='repeat_password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>change_password</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+
+  <tr><td colspan="3">Check super user...</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_superuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_superuser</td></tr>
+  <tr><td>assertText</td><td>//body/div[1]/div[1]/div[1]/ul[@class='nav']/li/a</td><td>Servers</td></tr>
+  <tr><td>assertAttribute</td><td>//body/div[1]/div[1]/div[1]/ul[@class='nav']/li/a@href</td><td>/server</td></tr>
+  <tr><td>assertAttribute</td><td>//form[@class='navbar-search pull-left']/input@placeholder</td><td>Search</td></tr>
+  <tr><td>assertText</td><td>//a[text()='selenium_server_1']</td><td>selenium_server_1</td></tr>
+  <tr><td>assertText</td><td>//a[text()='Admin']</td><td>Admin</td></tr>
+  <tr><td>assertAttribute</td><td>//a[text()='Users']@href</td><td>/user</td></tr>
+  <tr><td>assertAttribute</td><td>//a[text()='Accounts']@href</td><td>/account</td></tr>
+
+  <tr><td colspan="3">Check super user profile...</td></tr>
+  <tr><td>clickAndWait</td><td>link=Profile</td><td></td></tr>
+  <tr><td>assertText</td><td>//li[text()='opm_admins']</td><td>opm_admins</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form/fieldset/div[1]/label[1]</td><td>Current password:</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form/fieldset/div[1]/label[2]</td><td>New password:</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form/fieldset/div[1]/label[3]</td><td>Repeat password:</td></tr>
+
+  <tr><td colspan="3">Check super user password modification...</td></tr>
+  <tr><td>type</td><td>//input[@name='current_password']</td><td>password</td></tr>
+  <tr><td>type</td><td>//input[@name='new_password']</td><td>newpassword</td></tr>
+  <tr><td>type</td><td>//input[@name='repeat_password']</td><td>newpassword</td></tr>
+  <tr><td>clickAndWait</td><td>change_password</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_superuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Wrong username or password.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_superuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>newpassword</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_superuser</td></tr>
+  <tr><td>clickAndWait</td><td>link=Profile</td><td></td></tr>
+  <tr><td>type</td><td>//input[@name='current_password']</td><td>newpassword</td></tr>
+  <tr><td>type</td><td>//input[@name='new_password']</td><td>password</td></tr>
+  <tr><td>type</td><td>//input[@name='repeat_password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>change_password</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_superuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_superuser</td></tr>
+
+  <tr><td colspan="3">Check super user user management...</td></tr>
+  <tr><td>clickAndWait</td><td>link=Users</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_simpleuser']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_superuser']</td><td>selenium_superuser</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/user/delete/selenium_simpleuser']</td><td>X</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//a[@href='/user/delete/selenium_superuser']</td><td>0</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//label[@for='username']</td><td>Username:</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//form//input[@name='username']</td><td>1</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//label[@for='accname']</td><td>Account name:</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//form//select[@name='accname']</td><td>1</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//label[@for='password']</td><td>Password:</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//form//input[@name='password']</td><td>1</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//select[@name='accname']/option[@value='selenium_acc']</td><td>selenium_acc</td></tr>
+
+  <tr><td colspan="3"></i>test user removal</i></td></tr>
+  <tr><td>chooseCancelOnNextConfirmation</td><td></td><td></td></tr>
+  <tr><td>click</td><td>//a[@href='/user/delete/selenium_simpleuser']</td><td></td></tr>
+  <tr><td>assertConfirmationPresent</td><td></td><td>true</td></tr>
+  <tr><td>assertConfirmation</td><td>Do you really want to delete the user "selenium_simpleuser" ?</td><td>Do you really want to delete the user "selenium_simpleuser" ?</td></tr>
+  <tr><td>refreshAndWait</td><td></td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_simpleuser']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>click</td><td>//a[@href='/user/delete/selenium_simpleuser']</td><td></td></tr>
+  <tr><td>assertConfirmationPresent</td><td></td><td>true</td></tr>
+  <tr><td>assertConfirmation</td><td>Do you really want to delete the user "selenium_simpleuser" ?</td><td>Do you really want to delete the user "selenium_simpleuser" ?</td></tr>
+  <tr><td>refreshAndWait</td><td></td><td></td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//a[text()='selenium_simpleuser']</td><td>0</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>select</td><td>//select[@name='accname']</td><td>selenium_acc</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>create</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_simpleuser']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>select</td><td>//select[@name='accname']</td><td>selenium_acc</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>create</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Could not add user</td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_superuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_superuser</td></tr>
+  <tr><td>clickAndWait</td><td>link=Users</td><td></td></tr>
+
+  <tr><td colspan="3"></i>test account addition</i></td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[@href='/user/selenium_superuser']</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/user/delacc/opm_admins/selenium_superuser']</td><td>X</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='opm_admins']</td><td>opm_admins</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//label[@for='name']</td><td>Account name:</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//form//select[@id='accname']@name</td><td>accname</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//select[@id='accname']/option[@value='selenium_acc']</td><td>selenium_acc</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//form//input[@name='add']@value</td><td>Add</td></tr>
+  <tr><td>select</td><td>//div[@id='main']//form//select[@name='accname']</td><td>selenium_acc</td></tr>
+  <tr><td>clickAndWait</td><td>add</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Account added to user</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/user/delacc/selenium_acc/selenium_superuser']</td><td>X</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_acc']</td><td>selenium_acc</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//form//select[@id='accname']/option[@value='selenium_acc']</td><td>0</td></tr>
+
+  <tr><td colspan="3"></i>test account removal</i></td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[@href='/user/delacc/selenium_acc/selenium_superuser']</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Account removed from user</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//select[@id='accname']/option[@value='selenium_acc']</td><td>selenium_acc</td></tr>
+
+  <tr><td colspan="3">Check super user account management...</td></tr>
+  <tr><td>clickAndWait</td><td>link=Accounts</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='opm_admins']</td><td>opm_admins</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_acc']</td><td>selenium_acc</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/account/delete/selenium_acc']</td><td>X</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//a[@href='/account/delete/opm_admins']</td><td>0</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//label[@for='name']</td><td>Account name:</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//form//input[@id='accname']@name</td><td>accname</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//form//input[@type='submit' and @name='create']@value</td><td>Create</td></tr>
+
+  <tr><td colspan="3"></i>test account creation</i></td></tr>
+  <tr><td>type</td><td>//input[@name='accname']</td><td>selenium_acc2</td></tr>
+  <tr><td>clickAndWait</td><td>create</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_acc2']</td><td>selenium_acc2</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/account/delete/selenium_acc2']</td><td>X</td></tr>
+  <tr><td>clickAndWait</td><td>link=Users</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>//a[@href='/user/selenium_simpleuser']</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//form//select[@id='accname']//option[@value='selenium_acc2']</td><td>selenium_acc2</td></tr>
+  <tr><td>select</td><td>//select[@name='accname']</td><td>selenium_acc2</td></tr>
+  <tr><td>clickAndWait</td><td>add</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Account added to user</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/account/selenium_acc2']</td><td>selenium_acc2</td></tr>
+
+  <tr><td colspan="3"></i>test account removal</i></td></tr>
+  <tr><td>clickAndWait</td><td>link=Accounts</td><td></td></tr>
+  <tr><td>chooseCancelOnNextConfirmation</td><td></td><td></td></tr>
+  <tr><td>click</td><td>//div[@id='main']//a[@href='/account/delete/selenium_acc2']</td><td></td></tr>
+  <tr><td>assertConfirmationPresent</td><td></td><td>true</td></tr>
+  <tr><td>assertConfirmation</td><td>Do you really want to delete the account "selenium_acc2" ?</td><td>Do you really want to delete the account "selenium_acc2" ?</td></tr>
+  <tr><td>refreshAndWait</td><td></td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[@href='/account/delete/selenium_acc2']</td><td>X</td></tr>
+  <tr><td>click</td><td>//div[@id='main']//a[@href='/account/delete/selenium_acc2']</td><td></td></tr>
+  <tr><td>assertConfirmationPresent</td><td></td><td>true</td></tr>
+  <tr><td>assertConfirmation</td><td>Do you really want to delete the account "selenium_acc2" ?</td><td>Do you really want to delete the account "selenium_acc2" ?</td></tr>
+  <tr><td>refreshAndWait</td><td></td><td></td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//a[@href='/account/delete/selenium_acc2']</td><td>0</td></tr>
+  <tr><td>clickAndWait</td><td>link=Users</td><td></td></tr>
+  <tr><td>click</td><td>//a[@href='/user/selenium_simpleuser']</td><td></td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//a[text()='selenium_acc2']</td><td>0</td></tr>
+
+  <tr><td colspan="3"></i>test account detail</i></td></tr>
+  <tr><td>clickAndWait</td><td>link=Accounts</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[@href='/account/selenium_acc']</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_userlist']//a[@href='/user/selenium_simpleuser']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_userlist']//a[@href='/account/delrol/selenium_acc/selenium_simpleuser']</td><td>X</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//div[@id='acc_serverlist']//li</td><td>0</td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//div[@id='acc_edit']/form</td><td>3</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_edit']//label[@for='username']</td><td>Username:</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//div[@id='acc_edit']//input[@id='new_username']@name</td><td>new_username</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_edit']//label[@for='password']</td><td>Password:</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//div[@id='acc_edit']//input[@id='password']@name</td><td>password</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//div[@id='acc_edit']//input[@type='submit' and @name='create']@value</td><td>Create</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_edit']//label[@for='existing_user']</td><td>Existing user :</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_edit']//select[@id='existing_username']/option[@value='selenium_superuser']</td><td>selenium_superuser</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//div[@id='acc_edit']//input[@type='submit' and @name='add']@value</td><td>Add</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_edit']//label[@for='hostname']</td><td>Unassigned servers :</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_edit']//select[@id='existing_hostname']/option[text()='selenium_server_1']</td><td>selenium_server_1</td></tr>
+  <tr><td>assertAttribute</td><td>//div[@id='main']//div[@id='acc_edit']//input[@type='submit' and @value='Assign']@name</td><td>add</td></tr>
+  <tr><td colspan="3"></i>test account detail forms</i></td></tr>
+  <tr><td>type</td><td>//input[@id='new_username']</td><td>selenium_newuser</td></tr>
+  <tr><td>type</td><td>//input[@id='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//div[@id='acc_edit']//input[@type='submit' and @name='create']</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>User added</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='acc_userlist']//a[@href='/user/selenium_newuser']</td><td>selenium_newuser</td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[@href='/account/delrol/selenium_acc/selenium_newuser']</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Account removed from user</td></tr>
+  <tr><td>clickAndWait</td><td>link=Users</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//a[text()='selenium_newuser']</td><td>selenium_newuser</td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[text()='selenium_newuser']</td><td></td></tr>
+  <tr><td>verifyXpathCount</td><td>//div[@id='main']//div[@id='user_memberof']//li</td><td>0</td></tr>
+  <tr><td>goBackAndWait</td><td></td><td></td></tr>
+  <tr><td>click</td><td>//a[@href='/user/delete/selenium_newuser']</td><td></td></tr>
+  <tr><td>assertConfirmationPresent</td><td></td><td>true</td></tr>
+  <tr><td>assertConfirmation</td><td>Do you really want to delete the user "selenium_newuser" ?</td><td>Do you really want to delete the user "selenium_newuser" ?</td></tr>
+  <tr><td>refreshAndWait</td><td></td><td></td></tr>
+  <tr><td>clickAndWait</td><td>link=Accounts</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[@href='/account/selenium_acc']</td><td></td></tr>
+  <tr><td>select</td><td>//select[@id='existing_username']</td><td>selenium_superuser</td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//div[@id='acc_edit']//input[@type='submit' and @name='add']</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>User added</td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//div[@id='acc_userlist']//a[@href='/account/delrol/selenium_acc/selenium_superuser']</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Account removed from user</td></tr>
+  <tr><td>select</td><td>//select[@id='existing_hostname']</td><td>selenium_server_1</td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//div[@id='acc_edit']//input[@type='submit' and @value='Assign']</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Server granted</td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_simpleuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='server_list']//li[contains(text(),'selenium_acc')]</td><td>selenium_acc</td></tr>
+  <tr><td>assertText</td><td>//div[@id='main']//div[@id='server_list']//a[text()='selenium_server_1']</td><td>selenium_server_1</td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+  <tr><td>type</td><td>//input[@name='username']</td><td>selenium_superuser</td></tr>
+  <tr><td>type</td><td>//input[@name='password']</td><td>password</td></tr>
+  <tr><td>clickAndWait</td><td>login</td><td></td></tr>
+  <tr><td>assertText</td><td>//a[@class='btn dropdown-toggle']</td><td>selenium_superuser</td></tr>
+  <tr><td>clickAndWait</td><td>link=Accounts</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//a[@href='/account/selenium_acc']</td><td></td></tr>
+  <tr><td>clickAndWait</td><td>//div[@id='main']//div[@id='acc_serverlist']//a</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>Server revoked</td></tr>
+
+  <tr><td colspan="3">Logout...</td></tr>
+  <tr><td>clickAndWait</td><td>link=Sign Out</td><td></td></tr>
+  <tr><td>assertText</td><td>//ul[@class='unstyled']</td><td>You have logged out.</td></tr>
+
+  <tr><td colspan="3"><b>End</b></td></tr>
+</table>
