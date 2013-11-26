@@ -271,7 +271,7 @@ DECLARE
         p_role record;
 BEGIN
 
-    IF p_account = 'pm_admins' THEN
+    IF p_account = 'opm_admins' THEN
       RAISE EXCEPTION 'Account "opm_admins" can not be deleted!';
     END IF;
 
