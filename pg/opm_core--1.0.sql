@@ -397,17 +397,18 @@ DECLARE
         SELECT ar.id, a.accname, ar.rolname
         FROM all_roles ar
             LEFT JOIN assigned a ON ar.rolname = a.rolname
+        WHERE TRUE
     $q$;
 BEGIN
     IF p_account IS NOT NULL THEN
         query := format(
-            query || ' WHERE a.accname = %L',
+            query || ' AND a.accname = %L',
             p_account
         );
     END IF;
 
     IF NOT pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
-        query := query || $q$ AND pg_has_role(session_user, a.rolname, 'MEMBER')$q$;
+        query := query || $q$ AND pg_has_role(session_user, a.accname, 'MEMBER')$q$;
     END IF;
 
     RETURN QUERY EXECUTE query;
