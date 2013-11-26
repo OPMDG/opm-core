@@ -11,17 +11,17 @@ SET search_path = public, pg_catalog;
 
 /*
 \c postgres
-DROP DATABASE IF EXISTS pgfactory;
-DROP ROLE IF EXISTS pgfactory;
-DROP ROLE IF EXISTS pgf_admins;
-DROP ROLE IF EXISTS pgf_roles;
+DROP DATABASE IF EXISTS opm;
+DROP ROLE IF EXISTS opm;
+DROP ROLE IF EXISTS opm_admins;
+DROP ROLE IF EXISTS opm_roles;
 */
 
-CREATE ROLE pgfactory CREATEROLE;
-CREATE ROLE pgf_admins CREATEROLE;
-CREATE ROLE pgf_roles;
-GRANT pgfactory TO pgf_admins;
-GRANT pgf_roles TO pgf_admins;
+CREATE ROLE opm CREATEROLE;
+CREATE ROLE opm_admins CREATEROLE;
+CREATE ROLE opm_roles;
+GRANT opm TO opm_admins;
+GRANT opm_roles TO opm_admins;
 
 DO LANGUAGE plpgsql
 $$
@@ -30,14 +30,14 @@ DECLARE
 BEGIN
     SELECT current_database() INTO v_dbname;
     EXECUTE format('REVOKE ALL ON DATABASE %I FROM public',v_dbname);
-    EXECUTE format('GRANT ALL ON DATABASE %I TO pgfactory',v_dbname);
-    EXECUTE format('GRANT CONNECT ON DATABASE %I TO pgf_roles',v_dbname);
+    EXECUTE format('GRANT ALL ON DATABASE %I TO opm',v_dbname);
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO opm_roles',v_dbname);
 END;
 $$;
 
 /*
-CREATE DATABASE pgfactory OWNER pgfactory;
-\c pgfactory
+CREATE DATABASE opm OWNER opm;
+\c opm
 */
 
 -- Map properties and info between accounts/users and internal pgsql roles
@@ -49,7 +49,7 @@ CREATE TABLE public.roles (
 );
 CREATE UNIQUE INDEX idx_roles_rolname
     ON roles USING btree (rolname);
-ALTER TABLE public.roles OWNER TO pgfactory;
+ALTER TABLE public.roles OWNER TO opm;
 REVOKE ALL ON TABLE public.roles FROM public ;
 
 COMMENT ON TABLE public.roles IS 'Map properties and info between accounts/users and internal pgsql roles';
@@ -60,24 +60,25 @@ COMMENT ON COLUMN public.roles.creation_ts IS 'Role creation date and time';
 COMMENT ON COLUMN public.roles.rolconfig IS 'Specific configuration for a particular role';
 
 
-INSERT INTO public.roles (rolname) VALUES ('pgf_admins');
+INSERT INTO public.roles (rolname) VALUES ('opm_admins');
 
 CREATE TABLE public.servers (
     id bigserial PRIMARY KEY,
     hostname name NOT NULL,
     id_role bigint REFERENCES public.roles (id)
-) ;
+);
+
 CREATE UNIQUE INDEX idx_servers_hostname
     ON public.servers USING btree(hostname) ;
-ALTER TABLE public.servers OWNER TO pgfactory ;
+ALTER TABLE public.servers OWNER TO opm ;
 
 REVOKE ALL ON TABLE public.servers FROM public ;
 
 COMMENT ON COLUMN public.servers.id IS 'Server unique identifier. Is the primary key' ;
 COMMENT ON COLUMN public.servers.hostname IS 'hostname of the server, as referenced by dispatcher. Must be unique' ;
 COMMENT ON COLUMN public.servers.id_role IS 'owner of the server' ;
-
 COMMENT ON TABLE public.servers IS 'Table servers lists all referenced servers' ;
+
 CREATE TABLE public.services (
     id bigserial PRIMARY KEY,
     id_server bigint NOT NULL REFERENCES public.servers (id),
@@ -90,7 +91,7 @@ CREATE TABLE public.services (
 );
 CREATE UNIQUE INDEX idx_services_service
     ON services USING btree (service);
-ALTER TABLE public.services OWNER TO pgfactory;
+ALTER TABLE public.services OWNER TO opm;
 REVOKE ALL ON TABLE public.services FROM public ;
 
 COMMENT ON TABLE public.services IS 'Table services lists all available metrics.
@@ -117,9 +118,9 @@ Create a new account.
 
 It creates a role (NOLOGIN) and register it in the public.accounts table.
 
-TODO: grant the account to pgf_admins and pgfactory ?
+TODO: grant the account to opm_admins and opm ?
 
-Can only be executed by roles pgfactory and pgf_admins.
+Can only be executed by roles opm and opm_admins.
 
 @return id: id of the new account.
 @return name: name of the new account.
@@ -138,8 +139,8 @@ BEGIN
         RETURN;
     END IF;
     EXECUTE format('CREATE ROLE %I', p_account);
-    EXECUTE format('GRANT pgf_roles TO %I', p_account);
-    EXECUTE format('GRANT %I TO pgf_admins WITH ADMIN OPTION', p_account);
+    EXECUTE format('GRANT opm_roles TO %I', p_account);
+    EXECUTE format('GRANT %I TO opm_admins WITH ADMIN OPTION', p_account);
     INSERT INTO public.roles (rolname) VALUES (p_account)
         RETURNING roles.id, roles.rolname
             INTO create_account.id, create_account.accname;
@@ -151,19 +152,19 @@ LEAKPROOF
 SECURITY DEFINER;
 
 ALTER FUNCTION public.create_account(IN text, OUT bigint, OUT text)
-    OWNER TO pgfactory;
+    OWNER TO opm;
 REVOKE ALL ON FUNCTION public.create_account(IN text, OUT bigint, OUT text)
     FROM public;
 GRANT ALL ON FUNCTION public.create_account(IN text, OUT bigint, OUT text)
-    TO pgf_admins;
+    TO opm_admins;
 
 COMMENT ON FUNCTION public.create_account (IN text, OUT bigint, OUT text) IS 'Create a new account.
 
 It creates a role (NOLOGIN) and register it in the public.roles table.
 
-TODO: grant the account to pgf_admins and pgfactory ?
+TODO: grant the account to opm_admins and opm ?
 
-Can only be executed by roles pgfactory and pgf_admins.
+Can only be executed by roles opm and opm_admins.
 
 @return id: id of the new account.
 @return name: name of the new account.';
@@ -177,7 +178,7 @@ public.roles table.
 The p_accounts MUST have at least one account. We don't want user with no
 accounts.
 
-Can only be executed by roles pgfactory and pgf_admins.
+Can only be executed by roles opm and opm_admins.
 
 @return id: id of the new account.
 @return name: name of the new account.
@@ -209,7 +210,7 @@ BEGIN
     INSERT INTO public.roles (rolname) VALUES (p_user) RETURNING roles.id, roles.rolname
         INTO create_user.id, create_user.usename;
 
-    EXECUTE format('GRANT pgf_roles TO %I', p_user);
+    EXECUTE format('GRANT opm_roles TO %I', p_user);
 
     v_err := 0;
     FOREACH p_account IN ARRAY p_accounts
@@ -232,11 +233,11 @@ LEAKPROOF
 SECURITY DEFINER;
 
 ALTER FUNCTION public.create_user(IN text, IN text, IN name[], OUT boolean)
-    OWNER TO pgfactory;
+    OWNER TO opm;
 REVOKE ALL ON FUNCTION public.create_user(IN text, IN text, IN name[], OUT boolean)
     FROM public;
 GRANT ALL ON FUNCTION public.create_user(IN text, IN text, IN name[], OUT boolean)
-    TO pgf_admins;
+    TO opm_admins;
 
 COMMENT ON FUNCTION public.create_user (IN p_user text, IN p_passwd text, IN p_accounts name[],
                     OUT rc boolean) IS 'Create a new user for an account.
@@ -247,7 +248,7 @@ public.roles table.
 The p_accounts MUST have at least one account. We don''t want user with no
 accounts.
 
-Can only be executed by roles pgfactory and pgf_admins.
+Can only be executed by roles opm and opm_admins.
 
 @return id: id of the new account.
 @return name: name of the new account.';
@@ -270,12 +271,12 @@ DECLARE
         p_role record;
 BEGIN
 
-    IF p_account = 'pgf_admins' THEN
-      RAISE EXCEPTION 'Account "pgf_admins" can not be deleted!';
+    IF p_account = 'pm_admins' THEN
+      RAISE EXCEPTION 'Account "opm_admins" can not be deleted!';
     END IF;
 
     IF (is_account(p_account) = false) THEN
-      RAISE EXCEPTION 'Account % is not a pgfactory account!', p_account;
+      RAISE EXCEPTION 'Account % is not a opm account!', p_account;
     END IF;
 
     /* get list of roles to drop with the account.
@@ -289,7 +290,7 @@ BEGIN
                 JOIN pg_catalog.pg_roles AS a ON (a.oid = am.roleid)
             WHERE pg_has_role(u.oid, $1, ''MEMBER'')
                 AND u.rolname NOT IN (''postgres'', $2)
-                AND a.rolname <> ''pgf_roles''
+                AND a.rolname <> ''opm_roles''
             GROUP BY 1
         ) AS t
         WHERE t.count = 1' USING p_account, p_account
@@ -313,30 +314,27 @@ LEAKPROOF
 SECURITY DEFINER;
 
 ALTER FUNCTION public.drop_account (IN name)
-    OWNER TO pgfactory;
+    OWNER TO opm;
 REVOKE ALL ON FUNCTION public.drop_account (IN name)
     FROM public;
 GRANT ALL ON FUNCTION public.drop_account (IN name)
-    TO pgf_admins;
+    TO opm_admins;
 
 COMMENT ON FUNCTION public.drop_account(IN name) IS 'Drop an account.
 
 It drops an account and also roles that are only in this account.';
 
-/*public.drop_account
+/*public.drop_user
 
-Drop an account.
+Drop an user.
 
-Also drop all roles that are connected only to this particular account.
-
-@return rc: return code.
+@return rc: return id and name of the dropped user.
 */
 CREATE OR REPLACE FUNCTION
 public.drop_user(IN p_user name, OUT id bigint, OUT rolname name)
 AS $$
 DECLARE
         p_rolname name;
--- It drops an account and also roles that are only in this account.
 BEGIN
     IF (is_user(p_user) = false) THEN
         /* or do we raise an exception ? */
@@ -366,11 +364,11 @@ LEAKPROOF
 SECURITY DEFINER;
 
 ALTER FUNCTION public.drop_user (IN name)
-    OWNER TO pgfactory;
+    OWNER TO opm;
 REVOKE ALL ON FUNCTION public.drop_user (IN name)
     FROM public;
 GRANT ALL ON FUNCTION public.drop_user (IN name)
-    TO pgf_admins;
+    TO opm_admins;
 
 COMMENT ON FUNCTION public.drop_user(IN name) IS 'Drop a user.';
 
@@ -393,7 +391,7 @@ DECLARE
                 JOIN pg_auth_members AS m ON (r.oid = m.member)
                 JOIN pg_roles AS a ON (a.oid = m.roleid)
             WHERE a.rolname <> r.rolname
-                AND a.rolname <> 'pgf_roles'
+                AND a.rolname <> 'opm_roles'
                 AND r.rolcanlogin
         )
         SELECT ar.id, a.accname, ar.rolname
@@ -408,7 +406,7 @@ BEGIN
         );
     END IF;
 
-    IF NOT pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+    IF NOT pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
         query := query || $q$ AND pg_has_role(session_user, a.rolname, 'MEMBER')$q$;
     END IF;
 
@@ -420,13 +418,13 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_users(name) OWNER TO pgfactory;
+ALTER FUNCTION public.list_users(name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_users(name) FROM public;
 GRANT ALL ON FUNCTION public.list_users(name) TO public;
 
 COMMENT ON FUNCTION public.list_users(name) IS 'List users.
 
-If current user is member of pgf_admins, list all users and account on the system.
+If current user is member of opm_admins, list all users and account on the system.
 
 If current user is not admin, list all users and account who are related to the current user.';
 
@@ -443,7 +441,7 @@ DECLARE
         WHERE NOT r.rolcanlogin
     $q$;
 BEGIN
-    IF NOT pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+    IF NOT pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
         query := query || $q$ AND pg_has_role(session_user, r.rolname, 'MEMBER')$q$;
     END IF;
 
@@ -455,13 +453,13 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_accounts() OWNER TO pgfactory;
+ALTER FUNCTION public.list_accounts() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_accounts() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_accounts() TO public;
 
 COMMENT ON FUNCTION public.list_accounts() IS 'List accounts.
 
-If current user is member of pgf_admins, list all account on the system.
+If current user is member of opm_admins, list all account on the system.
 
 If current user is not admin, list all account who are related to the current user.';
 
@@ -481,7 +479,7 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.is_user(IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.is_user(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_user(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_user(IN name, OUT boolean) TO public;
 
@@ -505,7 +503,7 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.is_account(IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.is_account(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
 
@@ -521,7 +519,7 @@ is_admin(rolname)
 CREATE OR REPLACE FUNCTION public.is_admin(IN p_rolname name, OUT rc boolean)
 AS $$
     BEGIN
-        SELECT CASE pg_has_role(p_rolname,'pgf_admins','MEMBER')
+        SELECT CASE pg_has_role(p_rolname,'opm_admins','MEMBER')
             WHEN true THEN true
             WHEN false THEN false
         END INTO rc;
@@ -535,25 +533,25 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.is_admin(IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.is_admin(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_admin(IN name, OUT boolean) FROM public;
 GRANT EXECUTE ON FUNCTION public.is_admin(IN name, OUT boolean) TO public;
 
 COMMENT ON FUNCTION public.is_admin(IN name, OUT boolean) IS 'Tells if the given rolname is an admin.';
 
 /*
-is_pgf_role(rolname)
+is_opm_role(rolname)
 
-@return: if given role exists as a pgFactory role (account or user), returns its
-oid, id, name and canlogin attributes. NULL if not exists or not a pgFactory
+@return: if given role exists as an OPM role (account or user), returns its
+oid, id, name and canlogin attributes. NULL if not exists or not a OPM
 role.
  */
-CREATE OR REPLACE FUNCTION public.is_pgf_role(IN p_rolname name, OUT boolean)
+CREATE OR REPLACE FUNCTION public.is_opm_role(IN p_rolname name, OUT boolean)
 AS $$
     SELECT bool_or(x)
     FROM (
         SELECT public.is_user($1)
-        UNION
+        UNION ALL
         SELECT public.is_account($1)
     ) t(x);
 $$
@@ -562,12 +560,12 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) OWNER TO pgfactory;
-REVOKE ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO public;
+ALTER FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) OWNER TO opm;
+REVOKE ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) FROM public;
+GRANT ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO public;
 
-COMMENT ON FUNCTION public.is_pgf_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
-'If given role exists as a pgFactory role (account or user), returns true';
+COMMENT ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
+'If given role exists as a OPM role (account or user), returns true';
 
 /*
 wh_exists(wh)
@@ -584,7 +582,7 @@ LANGUAGE SQL
 STABLE
 LEAKPROOF;
 
-ALTER FUNCTION public.wh_exists(IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.wh_exists(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) TO public;
 
@@ -605,7 +603,7 @@ LANGUAGE SQL
 STABLE
 LEAKPROOF;
 
-ALTER FUNCTION public.pr_exists(IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.pr_exists(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) TO public;
 
@@ -666,9 +664,9 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) TO pgf_admins;
+GRANT ALL ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean) TO opm_admins;
 
 COMMENT ON FUNCTION public.grant_dispatcher(IN name, IN name, OUT boolean)
 IS 'Grant a role to dispatch performance data in a warehouse hub table.';
@@ -733,9 +731,9 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) TO pgf_admins;
+GRANT ALL ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) TO opm_admins;
 
 COMMENT ON FUNCTION public.revoke_dispatcher(IN name, IN name, OUT boolean) IS 'Revoke dispatch ability for a give role on a given hub table.';
 
@@ -764,15 +762,15 @@ BEGIN
     END IF;
 
     --Does the role exists ?
-    IF (NOT is_pgf_role(p_rolname)) THEN
-        RAISE WARNING 'Role % is not a pgfactory role.', p_rolname;
+    IF (NOT is_opm_role(p_rolname)) THEN
+        RAISE WARNING 'Role % is not an OPM role.', p_rolname;
         RETURN;
     END IF;
 
     --Is the server already owned ?
     EXECUTE format('SELECT * FROM public.servers WHERE id = %s', p_server_id) INTO v_serversrow;
     IF (v_serversrow.id_role IS NOT NULL) THEN
-        RAISE WARNING 'The server % is already owned by pgfactory role %', v_serversrow.hostname, v_serversrow.id_role;
+        RAISE WARNING 'The server % is already owned by an opm role %', v_serversrow.hostname, v_serversrow.id_role;
         RETURN;
     END IF;
 
@@ -809,9 +807,9 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
-GRANT ALL ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
+GRANT ALL ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) TO opm_admins;
 
 COMMENT ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) IS 'Grant SELECT on a server.';
 
@@ -842,7 +840,7 @@ BEGIN
     --Does the role own the server ?
     EXECUTE format('SELECT COUNT(*) FROM public.servers s JOIN public.roles r ON s.id_role = r.id WHERE s.id = %s AND r.rolname = %L', p_server_id, p_rolname) INTO v_nb;
     IF (v_nb <> 1) THEN
-        RAISE WARNING 'The server % is not owned by pgfactory role %', p_server_id, p_rolname;
+        RAISE WARNING 'The server % is not owned by an OPM role %', p_server_id, p_rolname;
         RETURN;
     END IF;
 
@@ -878,9 +876,9 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO pgfactory;
+ALTER FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) FROM public;
-GRANT ALL ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) TO pgf_admins;
+GRANT ALL ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) TO opm_admins;
 
 COMMENT ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname name, OUT rc boolean) IS 'Revoke SELECT from a server.';
 
@@ -891,7 +889,7 @@ CREATE OR REPLACE FUNCTION public.list_servers()
   RETURNS TABLE (id bigint, hostname name, rolname name)
 AS $$
 BEGIN
-    IF pg_has_role(session_user, 'pgf_admins', 'MEMBER') THEN
+    IF pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
         RETURN QUERY SELECT s.id, s.hostname, r.rolname
             FROM public.servers s
             LEFT JOIN public.roles r ON s.id_role = r.id;
@@ -907,11 +905,11 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_servers() OWNER TO pgfactory;
+ALTER FUNCTION public.list_servers() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_servers() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_servers() TO public;
 
-COMMENT ON FUNCTION public.list_servers() IS 'List services available for the session user.';
+COMMENT ON FUNCTION public.list_servers() IS 'List servers available for the session user.';
 
 /*
 list_services()
@@ -931,7 +929,7 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_services() OWNER TO pgfactory;
+ALTER FUNCTION public.list_services() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_services() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_services() TO public;
 
@@ -950,9 +948,9 @@ DECLARE
     v_grantoption text;
 BEGIN
     -- we use pg_has_role instead of is_user because it can be the first account added
-    -- we cave to catch exception in case role does not exists
+    -- we have to catch exception in case role does not exists
     BEGIN
-        IF ( (NOT pg_has_role(p_rolname, 'pgf_roles', 'MEMBER')) OR (NOT is_account(p_accountname)) ) THEN
+        IF ( (NOT pg_has_role(p_rolname, 'opm_roles', 'MEMBER')) OR (NOT is_account(p_accountname)) ) THEN
             RETURN NULL;
         END IF;
     EXCEPTION
@@ -962,11 +960,11 @@ BEGIN
 
     v_grantoption = '';
     IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
-        IF (p_accountname = 'pgf_admins') THEN
-            -- Allow members of pgf_admins to add new admins
+        IF (p_accountname = 'opm_admins') THEN
+            -- Allow members of opm_admins to add new admins
             v_grantoption = ' WITH ADMIN OPTION';
         END IF;
-        EXECUTE format('GRANT %I TO %I %s',p_accountname, p_rolname, v_grantoption);
+        EXECUTE format('GRANT %I TO %I %s', p_accountname, p_rolname, v_grantoption);
         RETURN true;
     ELSE
         RETURN false;
@@ -981,7 +979,7 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.grant_account(p_rolname name, p_accountname name) OWNER TO pgfactory;
+ALTER FUNCTION public.grant_account(p_rolname name, p_accountname name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.grant_account(p_rolname name, p_accountname name) FROM public;
 GRANT EXECUTE ON FUNCTION public.grant_account(p_rolname name, p_accountname name) TO public;
 
@@ -1014,7 +1012,7 @@ BEGIN
     END IF;
 
     IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
-        EXECUTE format('REVOKE %I FROM %I',p_accountname, p_rolname);
+        EXECUTE format('REVOKE %I FROM %I', p_accountname, p_rolname);
         RETURN true;
     ELSE
         RETURN false;
@@ -1029,7 +1027,7 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.revoke_account(p_rolname name, p_accountname name) OWNER TO pgfactory;
+ALTER FUNCTION public.revoke_account(p_rolname name, p_accountname name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) FROM public;
 GRANT EXECUTE ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) TO public;
 
@@ -1053,7 +1051,7 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_warehouses() OWNER TO pgfactory;
+ALTER FUNCTION public.list_warehouses() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_warehouses() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_warehouses() TO public;
 
@@ -1077,7 +1075,7 @@ STABLE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.list_processes() OWNER TO pgfactory;
+ALTER FUNCTION public.list_processes() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_processes() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_processes() TO public;
 

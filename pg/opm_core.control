@@ -1,7 +1,7 @@
-# wh_nagios extension
-comment = 'pgFactory core'
+# OPM core extension
+comment = 'OPM core'
 default_version = '1.0'
-module_pathname = '$libdir/pgfactore-core'
+module_pathname = '$libdir/opm-core'
 superuser = false
 relocatable = false
 schema = 'public'
