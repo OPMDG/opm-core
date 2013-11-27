@@ -1,4 +1,10 @@
 package OPM::Grapher::Categories;
+
+# This program is open source, licensed under the PostgreSQL License.
+# For license terms, see the LICENSE file.
+#
+# Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
+
 use Mojo::Base 'Mojolicious::Controller';
 
 use Data::Dumper;

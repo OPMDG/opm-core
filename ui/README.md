@@ -19,7 +19,7 @@ The versions showed have been tested, it may work with older versions
 Install
 -------
 
-A PostgreSQL database with a a superuser. Create oppm_core and
+A PostgreSQL database with a superuser. Create opm_core and
 extensions needed (for instance wh_nagios);
 
 

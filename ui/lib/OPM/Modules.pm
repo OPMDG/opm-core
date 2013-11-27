@@ -1,5 +1,10 @@
 package OPM::Modules;
 
+# This program is open source, licensed under the PostgreSQL License.
+# For license terms, see the LICENSE file.
+#
+# Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
+
 use Mojo::Base 'Mojolicious::Plugin';
 use File::Spec::Functions qw(splitdir catdir);
 

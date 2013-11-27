@@ -1,4 +1,11 @@
 % layout config 'layout';
+
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
+
+% # This method will run once at server start
 % my @roles = @{stash 'roles'};
 % my @allroles = @{stash 'allroles'};
 % my @myservers = @{stash 'myservers'};
