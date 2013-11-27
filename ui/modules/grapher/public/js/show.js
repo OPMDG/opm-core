@@ -90,6 +90,11 @@ $(document).ready(function () {
   /* by default, show the week graph by triggering the week button */
   $('#sel_week').click();
 
+  /* confirm on clone */
+  $('.btn_clone_graph').click(function () {
+      return confirm('Do you really want to clone this graph ?');
+  });
+
   /* Handle graph & server selector */
   $('#graph_list').change(function (e) {
     if ( $('#graph_list option:selected').val() != '')

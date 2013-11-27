@@ -23,10 +23,6 @@ $(document).ready(function () {
       return confirm('Do you really want to drop this graph ?');
   });
 
-  $('#btn_clone_graph').click(function () {
-      return confirm('Do you really want to clone this graph ?');
-  });
-
   // Need to call it the first time
   toggleGraphType();
 });

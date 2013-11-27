@@ -83,6 +83,7 @@
       % if (stash 'is_admin') {
       <div class="btn-group">
         <%= link_to graphs_edit => { id => $graph->{id} } => (class => "btn btn-mini") => begin %><%=l 'Edit' %><% end %>
+        <%= link_to graphs_clone => { id => $graph->{id} } => (class => "btn btn-mini btn_clone_graph") => begin %><%=l 'Clone' %><% end %>
       </div>
       % }
       </div>
