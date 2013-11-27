@@ -1,32 +1,25 @@
--- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION wh_nagios" to load this file. \quit
-
 -- This program is open source, licensed under the PostgreSQL License.
 -- For license terms, see the LICENSE file.
 --
 -- Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
 
-SET statement_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SET check_function_bodies = false;
-SET client_min_messages = warning;
-SET escape_string_warning = off;
-SET search_path = public, pg_catalog;
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION wh_nagios" to load this file. \quit
 
-/*
-\c postgres
-DROP DATABASE IF EXISTS opm;
-DROP ROLE IF EXISTS opm;
-DROP ROLE IF EXISTS opm_admins;
-DROP ROLE IF EXISTS opm_roles;
-*/
+SET client_encoding = 'UTF8';
+SET check_function_bodies = false;
 
 CREATE ROLE opm CREATEROLE;
 CREATE ROLE opm_admins CREATEROLE;
 CREATE ROLE opm_roles;
+
+-- default privileges
+ALTER SCHEMA public OWNER TO opm;
+
 GRANT opm TO opm_admins;
 GRANT opm_roles TO opm_admins;
+REVOKE ALL ON SCHEMA public FROM public;
+GRANT USAGE ON SCHEMA public TO opm_roles;
 
 DO LANGUAGE plpgsql
 $$
@@ -39,11 +32,6 @@ BEGIN
     EXECUTE format('GRANT CONNECT ON DATABASE %I TO opm_roles',v_dbname);
 END;
 $$;
-
-/*
-CREATE DATABASE opm OWNER opm;
-\c opm
-*/
 
 -- Map properties and info between accounts/users and internal pgsql roles
 CREATE TABLE public.roles (
@@ -426,7 +414,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_users(name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_users(name) FROM public;
-GRANT ALL ON FUNCTION public.list_users(name) TO public;
+GRANT ALL ON FUNCTION public.list_users(name) TO opm_roles;
 
 COMMENT ON FUNCTION public.list_users(name) IS 'List users.
 
@@ -461,7 +449,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_accounts() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_accounts() FROM public;
-GRANT EXECUTE ON FUNCTION public.list_accounts() TO public;
+GRANT EXECUTE ON FUNCTION public.list_accounts() TO opm_roles;
 
 COMMENT ON FUNCTION public.list_accounts() IS 'List accounts.
 
@@ -487,7 +475,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.is_user(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_user(IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.is_user(IN name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.is_user(IN name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given rolname is a user.';
 
@@ -511,7 +499,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.is_account(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
 
@@ -541,7 +529,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.is_admin(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_admin(IN name, OUT boolean) FROM public;
-GRANT EXECUTE ON FUNCTION public.is_admin(IN name, OUT boolean) TO public;
+GRANT EXECUTE ON FUNCTION public.is_admin(IN name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.is_admin(IN name, OUT boolean) IS 'Tells if the given rolname is an admin.';
 
@@ -568,7 +556,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
 'If given role exists as a OPM role (account or user), returns true';
@@ -590,7 +578,7 @@ LEAKPROOF;
 
 ALTER FUNCTION public.wh_exists(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.wh_exists(IN name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.wh_exists(IN name, OUT boolean) IS 'Returns true if the given warehouse exists.';
 
@@ -611,7 +599,7 @@ LEAKPROOF;
 
 ALTER FUNCTION public.pr_exists(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) FROM public;
-GRANT ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) TO public;
+GRANT ALL ON FUNCTION public.pr_exists(IN name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.pr_exists(IN name, OUT boolean) IS 'Returns true if the given process exists.';
 
@@ -913,7 +901,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_servers() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_servers() FROM public;
-GRANT EXECUTE ON FUNCTION public.list_servers() TO public;
+GRANT EXECUTE ON FUNCTION public.list_servers() TO opm_roles;
 
 COMMENT ON FUNCTION public.list_servers() IS 'List servers available for the session user.';
 
@@ -937,7 +925,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_services() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_services() FROM public;
-GRANT EXECUTE ON FUNCTION public.list_services() TO public;
+GRANT EXECUTE ON FUNCTION public.list_services() TO opm_roles;
 
 COMMENT ON FUNCTION public.list_services() IS 'List services available for the session user.';
 
@@ -987,7 +975,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.grant_account(p_rolname name, p_accountname name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.grant_account(p_rolname name, p_accountname name) FROM public;
-GRANT EXECUTE ON FUNCTION public.grant_account(p_rolname name, p_accountname name) TO public;
+GRANT EXECUTE ON FUNCTION public.grant_account(p_rolname name, p_accountname name) TO opm_admins;
 
 COMMENT ON FUNCTION public.grant_account(p_rolname name, p_accountname name) IS 'Grant an account to a user.';
 
@@ -1035,7 +1023,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.revoke_account(p_rolname name, p_accountname name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) FROM public;
-GRANT EXECUTE ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) TO public;
+GRANT EXECUTE ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) TO opm_roles;
 
 COMMENT ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) IS 'Revoke an account from a user.';
 
@@ -1059,7 +1047,7 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_warehouses() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_warehouses() FROM public;
-GRANT EXECUTE ON FUNCTION public.list_warehouses() TO public;
+GRANT EXECUTE ON FUNCTION public.list_warehouses() TO opm_roles;
 
 COMMENT ON FUNCTION public.list_warehouses() IS 'List all warehouses';
 
@@ -1083,6 +1071,6 @@ SECURITY DEFINER;
 
 ALTER FUNCTION public.list_processes() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_processes() FROM public;
-GRANT EXECUTE ON FUNCTION public.list_processes() TO public;
+GRANT EXECUTE ON FUNCTION public.list_processes() TO opm_roles;
 
 COMMENT ON FUNCTION public.list_processes() IS 'List all processes';
