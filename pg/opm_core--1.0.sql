@@ -400,7 +400,7 @@ BEGIN
         );
     END IF;
 
-    IF NOT pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
+    IF NOT is_admin(session_user) THEN
         query := query || $q$ AND pg_has_role(session_user, a.accname, 'MEMBER')$q$;
     END IF;
 
@@ -435,7 +435,7 @@ DECLARE
         WHERE NOT r.rolcanlogin
     $q$;
 BEGIN
-    IF NOT pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
+    IF NOT is_admin(session_user) THEN
         query := query || $q$ AND pg_has_role(session_user, r.rolname, 'MEMBER')$q$;
     END IF;
 
@@ -883,7 +883,7 @@ CREATE OR REPLACE FUNCTION public.list_servers()
   RETURNS TABLE (id bigint, hostname name, rolname name)
 AS $$
 BEGIN
-    IF pg_has_role(session_user, 'opm_admins', 'MEMBER') THEN
+    IF is_admin(session_user) THEN
         RETURN QUERY SELECT s.id, s.hostname, r.rolname
             FROM public.servers s
             LEFT JOIN public.roles r ON s.id_role = r.id;
