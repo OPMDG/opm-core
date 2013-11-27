@@ -35,8 +35,7 @@ sub validate {
     # Remove empty values to use library/grapher defaults
     foreach my $k (
         qw/xaxis_timeFormat points_lineWidth bars_lineWidth pie_lineWidth
-        lines_lineWidth xaxis_titleAngle xaxis_labelsAngle yaxis_titleAngle
-        yaxis_labelsAngle points_radius bars_barWidth/ )
+        lines_lineWidth xaxis_titleAngle xaxis_labelsAngle/ )
     {
         delete $d{$k} if $d{$k} =~ m/^\s*$/;
     }
@@ -44,9 +43,8 @@ sub validate {
     # Process checkboxes: unchecked ones are in the hashref,
     # checked values are 1 and we want true or false.
     foreach my $c (
-        qw/yaxis_showLabels bars_stacked
-        bars_filled bars_grouped lines_stacked lines_filled points_filled
-        pie_filled show_legend/ )
+        qw/bars_stacked bars_filled bars_grouped lines_stacked
+        lines_filled points_filled pie_filled show_legend/ )
     {
         $d{$c} = ( exists $d{$c} ) ? $json->true : $json->false;
     }
@@ -63,7 +61,7 @@ sub validate {
         lines_lineWidth yaxis_titleAngle/ )
     {
         if ( ( exists $d{$k} ) && ( $d{$k} =~ m!^[\d\.]+$! ) ) {
-        $d{$k} = $d{$k} + 0;
+            $d{$k} = $d{$k} + 0;
         }
     }
 

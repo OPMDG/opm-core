@@ -188,9 +188,6 @@
                   <%= text_field 'yaxis_titleAngle', type => 'text', id => 'yaxistitleangle', placeholder=> l '(default value)' %>
                 </div>
               </div>
-              <div class="controls">
-                <label class="checkbox inline"><%= check_box 'yaxis_showLabels' => 1 %> <%=l 'Show labels' %></label>
-              </div>
             </div>
             <% if ( scalar (stash 'id_server')) { %>
               <div class="tab-pane" id="series">
