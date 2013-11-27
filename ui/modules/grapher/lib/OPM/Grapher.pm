@@ -11,8 +11,7 @@ sub register {
     my ( $self, $app, $config ) = @_;
 
     # Load properties helper
-    $app->plugin( 'properties',
-        file => $config->{home} . '/default_options.json' );
+    $app->plugin( 'properties' );
 
     # Routes
     my $r      = $app->routes->route('/grapher');
@@ -40,10 +39,6 @@ sub register {
         ->name('graphs_showservice');
     $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )->to('grapher-graphs#showserver')
         ->name('graphs_showserver');
-
-    #Properties
-    $r_auth->route('/properties')->to('grapher-properties#defaults')
-        ->name('properties_defaults');
 
     # Categories
     $r_auth->get('/categories')->to('grapher-categories#list')

@@ -14,13 +14,62 @@
         this.$element = $(element);
 
         this.default_props = {
-            shadowSize: 0,
-            legend: { position: 'ne' },
             autoscale: true,
+            bars: {
+              barWidth: 1,
+              filled: true,
+              gropued: false,
+              lineWidth: 2,
+              stacked: false
+            },
             HtmlText: false,
+            legend: {
+              position: 'ne',
+              show: false
+            },
+            lines: {
+              filled: true,
+              lineWidth: 0.5,
+              stacked: false
+            },
+            mouse: {
+                 track: true,
+                 sensibility: 5,
+                 trackFormatter: function (o) {
+                     d = new Date(new Number(o.x));
+                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ o.y;
+                 }
+            },
+            pie: {
+              filled: true,
+              lineWidth: 2
+            },
+            points: {
+              filled: true,
+              lineWidth: 2,
+              radius: 3
+            },
+            selection: {
+                mode : 'x',
+                fps : 30
+            },
+            shadowSize: 0,
+            type: 'line',
+            xaxis: {
+                autoscale: false,
+                autoscaleMargin: 5,
+                labelsAngle: 0,
+                mode: 'time',
+                showLabels: true,
+                timeFormat: '%d/%m/%y %H:%M:%S',
+                titleAngle: 0
+            },
             yaxis: {
                 autoscale: true,
                 autoscaleMargin: 5,
+                labelsAngle: 0,
+                showLabels: true,
+                titleAngle: 90,
                 tickFormatter: function (val, axis) {
                     var unit = this.unit;
 
@@ -77,23 +126,6 @@
                         break;
                     }
                 }
-            },
-            xaxis: {
-                mode: 'time',
-                autoscale: false,
-                autoscaleMargin: 5
-            },
-            selection: {
-                mode : 'x',
-                fps : 30
-            },
-            mouse: {
-                 track: true,
-                 sensibility: 5,
-                 trackFormatter: function (o) {
-                     d = new Date(new Number(o.x));
-                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ o.y;
-                 }
             }
         };
 

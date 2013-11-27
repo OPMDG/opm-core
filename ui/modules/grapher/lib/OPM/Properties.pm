@@ -26,64 +26,25 @@ sub register {
     $app->helper( properties => sub { return $self; } );
 }
 
-sub load {
-    my $self = shift;
-    my $file = shift;
-
-    my $data = $self->data;
-
-    if ( defined $file ) {
-        $data->{file} = $file;
-        $self->data($data);
-    }
-    else {
-        $file = $data->{file};
-    }
-
-    my $c = "";
-    open( FH, $file ) or croak "Could not open default properties file: $!";
-    while (<FH>) {
-        chomp;
-        $c .= $_ . "\n";
-    }
-    close(FH);
-
-    my $json = Mojo::JSON->new;
-    my $d = $json->decode($c);
-    croak "Could not parse default properties file" if !defined $d;
-
-    return $d;
-}
-
-sub save {
-    my ( $self, $c ) = @_;
-
-    my $data = $self->data;
-    my $file = $data->{file};
-    my $json = Mojo::JSON->new;
-
-    my $props_json = $json->encode($c);
-
-    open( FH, "> $file" )
-        or croak "Could not save default properties file: $!";
-    print FH $props_json;
-    close(FH);
-}
-
 sub validate {
     my ( $self, $input ) = @_;
     my $json = Mojo::JSON->new;
 
     my %d = %$input;
 
-    $d{'y2axis_title'}       = '' unless defined $d{'y2axis_title'};
-    $d{'y2axis_titleAngle'}  = '270' unless defined $d{'y2axis_titleAngle'};
-    $d{'y2axis_labelsAngle'} = '0' unless defined $d{'y2axis_labelsAngle'};
+    # Remove empty values to use library/grapher defaults
+    foreach my $k (
+        qw/xaxis_timeFormat points_lineWidth bars_lineWidth pie_lineWidth
+        lines_lineWidth xaxis_titleAngle xaxis_labelsAngle yaxis_titleAngle
+        yaxis_labelsAngle points_radius bars_barWidth/ )
+    {
+        delete $d{$k} if $d{$k} =~ m/^\s*$/;
+    }
 
     # Process checkboxes: unchecked ones are in the hashref,
     # checked values are 1 and we want true or false.
     foreach my $c (
-        qw/xaxis_showLabels yaxis_showLabels y2axis_showLabels bars_stacked
+        qw/yaxis_showLabels bars_stacked
         bars_filled bars_grouped lines_stacked lines_filled points_filled
         pie_filled show_legend/ )
     {
@@ -91,44 +52,25 @@ sub validate {
     }
 
     # Process null fields
-    foreach my $k (qw/xaxis_title yaxis_title y2axis_title/) {
+    foreach my $k (qw/xaxis_title yaxis_title/) {
         $d{$k} = undef if $d{$k} =~ m/^\s*$/;
     }
 
     # Process numbers
     foreach my $k (
-        qw/points_lineWidth bars_lineWidth y2axis_titleAngle yaxis_labelsAngle points_radius
-        y2axis_labelsAngle xaxis_titleAngle xaxis_labelsAngle bars_barWidth pie_lineWidth
+        qw/points_lineWidth bars_lineWidth yaxis_labelsAngle points_radius
+        xaxis_titleAngle xaxis_labelsAngle bars_barWidth pie_lineWidth
         lines_lineWidth yaxis_titleAngle/ )
     {
-        if ( $d{$k} !~ m!^[\d\.]+$! ) {
-            return undef;
-        }
-
+        if ( ( exists $d{$k} ) && ( $d{$k} =~ m!^[\d\.]+$! ) ) {
         $d{$k} = $d{$k} + 0;
+        }
     }
 
     # Process lists
     if ( defined $d{colors} ) {
         my @l = split /[\s\,\;]+/, $d{colors};
         $d{colors} = \@l;
-    }
-
-    return \%d;
-}
-
-sub diff {
-    my ( $self, $from, $to ) = @_;
-
-    my %d;
-    foreach my $k ( keys %$from ) {
-        next if !exists $to->{$k};
-        next if ( !defined $from->{$k} && !defined $to->{$k} );
-        if ( !defined $from->{$k} || !defined $to->{$k} ) {
-            $d{$k} = $to->{$k};
-            next;
-        }
-        $d{$k} = $to->{$k} if $from->{$k} ne $to->{$k};
     }
 
     return \%d;

@@ -127,7 +127,8 @@ our %Lexicon = (
     "Show all"                  => "Afficher tout",
     "Hide all"                  => "Cacher tout",
     "View all"                  => "Tout voir",
-    "Drop"                      => "Supprimer"
+    "Drop"                      => "Supprimer",
+    "(default value)"           => "(valeur par défaut)"
     );
 
 1;

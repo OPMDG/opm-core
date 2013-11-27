@@ -15,7 +15,6 @@
     <ul class="dropdown-menu">
       <li><%= link_to graphs_list => begin %><%=l 'Graphs' %><% end %></li>
       <li><%= link_to categories_list => begin %><%=l 'Categories' %><% end %></li>
-      <li><%= link_to properties_defaults => begin %><%=l 'Properties' %><% end %></li>
     </ul>
   </li>
   % }

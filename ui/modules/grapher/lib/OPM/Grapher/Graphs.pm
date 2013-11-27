@@ -231,7 +231,7 @@ sub add {
     my $self = shift;
 
     my $e          = 0;
-    my $properties = $self->properties->load;
+    my $props = {};
 
     my $method = $self->req->method;
     if ( $method =~ m/^POST$/i ) {
@@ -280,18 +280,17 @@ sub add {
                     : $form->{y2_query};
                 delete $form->{y2_query};
 
-                my $props = $self->properties->validate($form);
+                $props = $self->properties->validate($form);
                 if ( !defined $props ) {
                     $self->msg->error(
                         "Bad input, please double check the options");
                     return $self->render;
                 }
 
-                # Only save the properties with different values from
-                # the defaults
+                # Save the properties actually sent
+                # If a property is missing, library/grapher default value will be used
                 my $json = Mojo::JSON->new;
-                my $config = $json->encode(
-                    $self->properties->diff( $properties, $props ) );
+                my $config = $json->encode( $props );
 
                 my $dbh = $self->database;
                 my $sth = $dbh->prepare(
@@ -318,11 +317,10 @@ sub add {
     }
 
     if ( !$e ) {
-        foreach my $p ( keys %$properties ) {
-            $self->param( $p, $properties->{$p} );
+        foreach my $p ( keys %$props ) {
+            $self->param( $p, $props->{$p} );
         }
     }
-
     $self->render;
 }
 
@@ -331,7 +329,6 @@ sub edit {
 
     my $id         = $self->param('id');
     my $e          = 0;
-    my $properties = $self->properties->load;
 
     my $dbh = $self->database;
 
@@ -431,11 +428,10 @@ sub edit {
                     return $self->render;
                 }
 
-                # Only save the properties with different values from
-                # the defaults
+                # Save the properties actually sent
+                # If a property is missing, library/grapher default value will be used
                 my $json = Mojo::JSON->new;
-                my $config = $json->encode(
-                    $self->properties->diff( $properties, $props ) );
+                my $config = $json->encode( $props );
 
                 $sth = $dbh->prepare(
                     qq{UPDATE pr_grapher.graphs
@@ -540,11 +536,11 @@ sub edit {
         my $config = $json->decode( $graph->{config} );
         delete $graph->{config};
 
-        @$properties{ keys %$config } = values %$config;
-
-        foreach my $p ( keys %$properties ) {
-            $self->param( $p, $properties->{$p} );
+        # Send each configuration value to prefill form
+        foreach my $p ( keys %$config ) {
+            $self->param( $p, $config->{$p} );
         }
+
 
         # Prefill the rest
         foreach my $p ( keys %$graph ) {
@@ -638,7 +634,6 @@ sub data {
     my $id         = $self->param('id');
     my $from       = $self->param("from");
     my $to         = $self->param("to");
-    my $properties = {};
     my $config;
     my $isservice = 0;
     my $data      = [];
@@ -661,11 +656,9 @@ sub data {
         ( $y1_query, $y2_query, $config ) = $sth->fetchrow;
         $sth->finish;
 
-        $properties = $self->properties->load;
         if ( defined $config ) {
             my $json = Mojo::JSON->new;
             $config = $json->decode($config);
-            @$properties{ keys %$config } = values %$config;
         }
 
         #Is the graph linked to a service ?
@@ -756,8 +749,8 @@ sub data {
         $sth->execute($id);
         my ($graphtitle,$graphsubtitle) = $sth->fetchrow();
         $sth->finish();
-        $properties->{'title'} = $graphtitle;
-        $properties->{'subtitle'} = $graphsubtitle;
+        $config->{'title'} = $graphtitle;
+        $config->{'subtitle'} = $graphsubtitle;
 
         $sth = $dbh->prepare(qq{
             SELECT id_label, label, unit
@@ -785,7 +778,7 @@ sub data {
             push @{$data}, { data => $series->{$label}, label => $label };
 
             # Buggy with multiple units!
-            $properties->{'yaxis_unit'} = $unit
+            $config->{'yaxis_unit'} = $unit
         }
         $sth->finish;
 
@@ -800,7 +793,7 @@ sub data {
     return $self->render(
         'json' => {
             series     => $data,
-            properties => $self->properties->to_plot($properties)
+            properties => $self->properties->to_plot($config)
         } );
 }
 
