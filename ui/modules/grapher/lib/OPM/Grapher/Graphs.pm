@@ -450,24 +450,7 @@ sub edit {
                 }
                 $sth->finish;
 
-                ## We delete all labels for this graph before inserting the one
-                ## validated in the form.
-                # 1. delete
-                $sth = $dbh->prepare(qq{
-                    DELETE FROM pr_grapher.graph_wh_nagios where id_graph=?
-                });
-                if ( !defined $sth->execute( $id ) ) {
-                    $self->render_exception( $dbh->errstr );
-                    $sth->finish;
-                    $dbh->rollback;
-                    $dbh->disconnect;
-                    return;
-                }
-                $sth->finish;
-                # 2. insert
-                $sth = $dbh->prepare(qq{
-                    INSERT INTO pr_grapher.graph_wh_nagios VALUES (?,?)
-                });
+                ## Set labels for this graph
                 my @labels = ( );
                 if (ref $form->{'labels'} eq 'ARRAY') {
                     @labels = @{ $form->{'labels'} };
@@ -476,14 +459,16 @@ sub edit {
                     push @labels => $form->{'labels'};
                 }
 
-                foreach my $id_label ( @labels ) {
-                    if ( !defined $sth->execute( $id, $id_label ) ) {
-                        $self->render_exception( $dbh->errstr );
-                        $sth->finish;
-                        $dbh->rollback;
-                        $dbh->disconnect;
-                        return;
-                    }
+                $sth = $dbh->prepare(qq{
+                    SELECT pr_grapher.update_graph_labels(?, ?)
+                });
+
+                if ( !defined $sth->execute( $id, \@labels) ) {
+                    $self->render_exception( $dbh->errstr );
+                    $sth->finish;
+                    $dbh->rollback;
+                    $dbh->disconnect;
+                    return;
                 }
                 $sth->finish;
 
