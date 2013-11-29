@@ -4,9 +4,39 @@
 % # Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
 
 % my $cr = current_route;
+% my $class_active = ( ($cr =~ m!^server_!)
+%  or ($cr =~ m!^site_home$!) ) ? 'active' : '';
+% my @servers = @{stash 'servers'};
+
 <ul class="nav">
-  % if (($user_level eq "user" ) or ($user_level eq "admin")){
-  <li <% if ( ($cr =~ m!^server_!) || ($cr =~ m!^site_home$!) ) { %>class="active"<% } %>><%= link_to server_list => begin %><%=l 'Servers' %><% end %></li>
+  % if (($user_level eq "user" ) or ($user_level eq "admin")) {
+  <li class="dropdown <%= $class_active %>">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+      <%=l 'Servers' %><b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <%= link_to server_list => begin %><%=l 'All Servers' %><% end %>
+      </li>
+      % if ( scalar @servers ) {
+      <li class="divider"></li>
+      <% foreach my $a ( @servers ) { %>
+      <li class="dropdown-submenu">
+        <a href="#"><%= $a->{'rolname'} %></a>
+        <ul class="dropdown-menu">
+          <% foreach my $s ( @{ $a->{'servers'} } ) { %>
+          <li>
+            <%= link_to server_host => { id => $s->{'id'} } => begin %>
+              <%= $s->{'hostname'} %>
+            <% end %>
+          </li>
+          <% } %>
+        </ul>
+      </li>
+      <% } %>
+      % }
+    </ul>
+  </li>
   % }
 
 
@@ -16,7 +46,6 @@
     <ul class="dropdown-menu">
       <li><%= link_to user_list => begin %><%=l 'Users' %><% end %></li>
       <li><%= link_to account_list => begin %><%=l 'Accounts' %><% end %></li>
-      <li class="divider"></li>
     </ul>
   </li>
   % }

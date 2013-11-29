@@ -20,18 +20,6 @@
         <input type="button" id="sel_week"  class="btn" value="<%=l 'Week' %>" />
         <input type="button" id="sel_day"   class="btn" value="<%=l 'Day' %>" />
       </p>
-
-      <p class="btn-group">
-        <% if (@server_list > 0){ %>
-          <select id="serverall_list">
-            <option value=""><%=l 'Change server' %></option>
-          <% foreach my $s (@server_list) { %>
-            <% my %line = %{$s}; %>
-            <option value="<%= $line{'id'} %>"><%= $line{'hostname'} %></option>
-          <% } %>
-          </select>
-        <% } %>
-      </p>
     </div>
 
     <p class="scales">

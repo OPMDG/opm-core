@@ -33,12 +33,58 @@ sub register {
         top_menu => sub {
             my $self = shift;
             my $html;
-
             my $level = "guest";
+            my $dbh  = $self->database();
+            my $sql;
+            my @servers;
+            my $curr_account = {
+                'servers' => []
+            };
+
             $level = "user"  if ( $self->session('user_username') );
             $level = "admin" if ( $self->session('user_admin') );
 
-            $self->stash( user_level => $level );
+
+
+
+
+            $sql = $dbh->prepare(
+                "SELECT id, hostname, COALESCE(rolname,'') AS rolname
+                FROM public.list_servers()
+                ORDER BY rolname;");
+            $sql->execute();
+
+            while ( my $row = $sql->fetchrow_hashref() ) {
+
+                if ( not exists $curr_account->{'rolname'}
+                    or $curr_account->{'rolname'} ne $row->{'rolname'}
+                ) {
+                    push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
+
+                    $curr_account = {
+                        'rolname'  => $row->{'rolname'},
+                        'servers'  => []
+                    };
+                }
+
+                push @{ $curr_account->{'servers'} }, {
+                    'id'       => $row->{'id'},
+                    'hostname' => $row->{'hostname'}
+                };
+            }
+            push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
+
+            $sql->finish();
+            $dbh->disconnect();
+
+
+
+
+
+            $self->stash(
+                user_level => $level,
+                servers    => \@servers
+            );
             $html =
                 $self->render( template => 'helpers/top_menu', partial => 1 );
 

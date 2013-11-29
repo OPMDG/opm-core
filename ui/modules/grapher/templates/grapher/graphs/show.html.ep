@@ -27,15 +27,6 @@
 
       <% if (scalar $graph->{id_server}) { %>
         <p class="btn-group">
-          <% if (@server_list > 0){ %>
-            <select id="server_list">
-              <option value=""><%=l 'Change server' %></option>
-            <% foreach my $s (@server_list) { %>
-              <% my %line = %{$s}; %>
-              <option value="<%= $line{'id'} %>"><%= $line{'hostname'} %></option>
-            <% } %>
-            </select>
-          <% } %>
           <% if (@graph_list > 0){ %>
             <select id="graph_list">
               <option value=""><%=l 'Change graph' %></option>
