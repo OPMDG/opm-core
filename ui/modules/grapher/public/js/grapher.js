@@ -232,7 +232,6 @@
             var $legend    = this.$element.find('.legend'),
                 legend_opt = this.flotr.legend.options,
                 series     = this.flotr.series,
-                fragments  = [],
                 i, label, color,
                 itemCount  = $.grep(series, function (e) {
                         return (e.label && !e.hide) }
@@ -242,27 +241,26 @@
                 for(i = 0; i < series.length; ++i) {
                     if(!series[i].label) continue;
 
-                    var s = series[i],
-                        boxWidth = legend_opt.labelBoxWidth,
-                        boxHeight = legend_opt.labelBoxHeight;
+                    var s = series[i];
 
                     label = legend_opt.labelFormatter(s.label);
-                    color = 'background-color:' + ((s.bars && s.bars.show && s.bars.fillColor && s.bars.fill) ? s.bars.fillColor : s.color) + ';';
+                    color = ((s.bars && s.bars.show && s.bars.fillColor && s.bars.fill) ? s.bars.fillColor : s.color);
 
-                    var $cells = $(
-                        '<td class="flotr-legend-color-box">'+
-                            '<div id="legendcolor'+i+'" style="border:1px solid '+ legend_opt.labelBoxBorderColor+ ';padding:1px">'+
-                                '<div style="width:'+ (boxWidth-1) +'px;height:'+ (boxHeight-1) +'px;border:1px solid '+ series[i].color +'">'+ // Border
-                                    '<a style="display:block;width:'+ boxWidth +'px;height:'+ boxHeight +'px;'+ color +'"></a>'+ // Background
-                                '</div>'+
-                            '</div>'+
-                        '</td>'+
-                        '<td class="flotr-legend-label">'+
-                            '<label>'+ label +'</label>'+
-                        '</td>'
-                    );
+                    var $cell = $(
+                        '<div class="flotr-legend-color-box" style="" />'
+                    )
+                    .css({
+                        'margin' : '0 10px 0 0',
+                        'float'  : 'left',
+                        'border' : '1px solid '+ legend_opt.labelBoxBorderColor,
+                        'width'  : '1.4em',
+                        'height' : '1.2em',
+                        'background-color': color
+                    })
+                    .attr('id', 'legendcolor'+i)
+                    .add('<label>'+ label +'</label>');
 
-                    $cells.find('a, label')
+                    $('<div />').prepend($cell)
                         .data('i', i)
                         .click(function () {
                             var $this   = $(this),
@@ -270,34 +268,16 @@
                                 s       = grapher.fetched.series[$this.data('i')];
 
                             s.hide = ! s.hide;
-                            if (s.hide)
-                                $this.parents('tr')
-                                    .find('td.flotr-legend-color-box > div')
-                                    .hide();
-                            else
-                                $this.parents('tr')
-                                    .find('td.flotr-legend-color-box > div')
-                                    .show();
+
+                            $this.find('div.flotr-legend-color-box')
+                                .css('opacity', s.hide?0.2:0.9);
 
                             grapher.refresh();
-                        });
-
-                    fragments.push($cells);
+                        })
+                        .appendTo($legend);
                 }
 
-                var $table = $('<table style="font-size:smaller;color:'+ this.flotr.options.grid.color +'" />');
-                var $tr = $('<tr />');
-
-                for(i = 0; i < fragments.length; i++) {
-                    if((i !== 0) && (i % legend_opt.noColumns === 0)) {
-                        $table.append($tr);
-                        $tr = $('<tr />');
-                    }
-                    $tr.append(fragments[i]);
-                }
-                $table.append($tr);
-                $legend.append($table)
-                    .css({
+                $legend.css({
                         height: this.flotr.canvasHeight,
                         overflow: 'auto'
                     });
@@ -343,7 +323,8 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = false;
 
-            this.$element.find('.legend .flotr-legend-color-box > div').show();
+            this.$element.find('.legend div div.flotr-legend-color-box')
+                .css('opacity', 0.9);
 
             this.refresh();
         },
@@ -355,7 +336,8 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = true;
 
-            this.$element.find('.legend .flotr-legend-color-box > div').hide();
+            this.$element.find('.legend div div.flotr-legend-color-box')
+                .css('opacity', 0.2);
 
             this.refresh();
         },
@@ -363,16 +345,14 @@
         invertActivatedSeries: function () {
             var series      = this.fetched.series,
                 legendItems = this.$element
-                    .find('.legend .flotr-legend-color-box > div'),
+                    .find('.legend div div.flotr-legend-color-box'),
                 i;
 
             for(i = 0; i < series.length; ++i) {
                 series[i].hide = ! series[i].hide;
 
-                if (series[i].hide)
-                    $(legendItems[i]).hide();
-                else
-                    $(legendItems[i]).show();
+                $(legendItems[i])
+                    .css('opacity', series[i].hide?0.2:0.9);
             }
 
             this.refresh();
