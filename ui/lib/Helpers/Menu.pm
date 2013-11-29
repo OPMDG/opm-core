@@ -56,6 +56,8 @@ sub register {
 
             while ( my $row = $sql->fetchrow_hashref() ) {
 
+                $row->{'rolname'} = 'Unassigned' unless $row->{'rolname'};
+
                 if ( not exists $curr_account->{'rolname'}
                     or $curr_account->{'rolname'} ne $row->{'rolname'}
                 ) {
