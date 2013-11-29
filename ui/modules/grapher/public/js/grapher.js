@@ -283,7 +283,8 @@
                     });
 
                 series.map(function(s, i) {
-                    if (s.hide) $legend.find('#legendcolor'+i).hide()
+                    if (s.hide) $legend.find('#legendcolor'+i)
+                        .css('opacity', 0.2)
                 });
             }
         },
