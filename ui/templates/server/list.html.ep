@@ -4,40 +4,59 @@
 % # Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
 
 % layout config 'layout';
+% content_for header => begin
+  <link   type="text/css" href="<%= url_for '/css/servers.css' %>" media="all" rel="stylesheet" />
+  <script type="text/javascript" src="<%= url_for '/js/servers.js' %>"></script>
+% end
 % my @servers = @{stash 'servers'};
 % my $previous;
 % my $first = 1;
 
+
+
+
 <div class="row">
-  <div class="span6">
-    <div class="box" id="server_list">
-        <b><%=l 'List of servers' %> :</b><br />
-        <% if (scalar(@servers)) { %>
-          <ul>
-            <% foreach my $s (@servers) { %>
-              <%   my %line = %{$s}; %>
-              <% if ( ($first) || ($previous ne $line{rolname}) ){ %>
-                <% $previous = $line{rolname}; %>
-                <% if (! $first) { %>
-                  </ul>
-                <% } else {%>
-                  <% $first = 0; %>
-                <% } %>
-                <li>
-                <% if ($line{rolname} eq '') { %>
-                  <i><%=l 'Unassigned' %></i>
-                <% } else{ %>
-                  <%= $line{rolname} %></li>
-                <% } %>
-                <ul>
+
+  <div class="box" id="server_list">
+    <h1 class="page-header"><%=l 'List of servers per accounts' %></u></h1>
+    <% if (scalar(@servers)) { %>
+
+      <div class="btn-toolbar">
+        <div class="btn-group">
+          <a class="show-all btn btn-mini"><%=l 'Show all' %></a>
+          <a class="hide-all btn btn-mini"><%=l 'Hide all' %></a>
+        </div>
+      </div>
+      <div class="accordion span6" id="accordion2">
+        <% foreach my $s ( @servers ) { %>
+          <div class="accordion-group">
+            <div class="accordion-heading">
+              <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $s->{'servers'}[0]{'id'} %>">
+              <i class="icon-plus"></i>
+              <% if ($s->{'rolname'} eq '') { %>
+                <%=l 'Unassigned' %>
+              <% } else { %>
+                <%= $s->{'rolname'} %>
               <% } %>
-              <li><%= link_to server_host => { id => $line{id} } => begin %><%= $line{hostname} %><% end %> </li>
-            <% } %>
-            </ul>
-          </ul>
-        <% } else { %>
-        <p>No server found.</p>
+              </a>
+            </div>
+            <div id="account_<%= $s->{'servers'}[0]{'id'} %>" class="accordion-body collapse">
+              <div class="accordion-inner">
+                <ul>
+                <% foreach my $ser (@{ $s->{'servers'} }) { %>
+                  <li>
+                  <%= link_to server_host => { id => $ser->{'id'} } => begin %><%= $ser->{'hostname'} %><% end %>
+                  </li>
+                <% } %>
+                </ul>
+              </div>
+            </div>
+          </div>
         <% } %>
-    </div>
+      </div>
+    <% } else { %>
+      <p>No server found.</p>
+    <% } %>
+  <div class="clearfix"></div>
   </div>
 </div>

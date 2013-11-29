@@ -14,17 +14,39 @@ sub list {
     my $self = shift;
     my $dbh  = $self->database();
     my $sql;
+    my @servers;
+    my $curr_role = {
+        'servers' => []
+    };
 
     $sql = $dbh->prepare(
-        "SELECT id, hostname, COALESCE(rolname,'') FROM public.list_servers() ORDER BY rolname;");
+        "SELECT id, hostname, COALESCE(rolname,'') AS rolname
+        FROM public.list_servers()
+        ORDER BY rolname;");
     $sql->execute();
-    my $servers = [];
-    while ( my ( $id, $hostname, $rolname ) = $sql->fetchrow() ) {
-        push @{$servers}, { id => $id, hostname => $hostname, rolname => $rolname };
+
+    while ( my $row = $sql->fetchrow_hashref() ) {
+
+        if ( not exists $curr_role->{'rolname'}
+            or $curr_role->{'rolname'} ne $row->{'rolname'}
+        ) {
+            push @servers, \%{ $curr_role } if exists $curr_role->{'rolname'};
+
+            $curr_role = {
+                'rolname'  => $row->{'rolname'},
+                'servers'  => []
+            };
+        }
+
+        push @{ $curr_role->{'servers'} }, {
+            'id'       => $row->{'id'},
+            'hostname' => $row->{'hostname'}
+        };
     }
+    push @servers, \%{ $curr_role } if exists $curr_role->{'rolname'};
     $sql->finish();
 
-    $self->stash( servers => $servers );
+    $self->stash( servers => \@servers );
 
     $dbh->disconnect();
     $self->render();

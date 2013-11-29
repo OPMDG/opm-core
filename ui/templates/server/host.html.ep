@@ -31,7 +31,7 @@
               <div class="accordion-group">
                 <div class="accordion-heading">
                   <a class="graphs-toggle" data-toggle="collapse" href="#graphs_<%= $s->{id} %>">
-                    <i class="icon-th-list"></i>
+                    <i class="icon-plus"></i>
                   </a>
                   <%= link_to graphs_showservice => { id => $s->{id} } => ( class => "$s->{state}" ) => begin %><%= $s->{service} %><% end %>
                 </div>
