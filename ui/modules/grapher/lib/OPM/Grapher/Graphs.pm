@@ -9,28 +9,6 @@ use Mojo::Base 'Mojolicious::Controller';
 
 use Data::Dumper;
 
-sub list {
-    my $self = shift;
-
-    my $dbh = $self->database;
-
-    my $sth = $dbh->prepare(
-        qq{SELECT g.id, g.graph, g.description, s.hostname FROM pr_grapher.list_graph() g LEFT JOIN public.list_servers() s ON s.id = g.id_server ORDER BY hostname, graph}
-    );
-    $sth->execute;
-    my $graphs = [];
-    while ( my $row = $sth->fetchrow_hashref ) {
-        push @{$graphs}, $row;
-    }
-    $sth->finish;
-    $dbh->commit;
-    $dbh->disconnect;
-
-    $self->stash( graphs => $graphs );
-
-    $self->render;
-}
-
 sub show {
     my $self = shift;
 
@@ -225,103 +203,6 @@ sub showserver {
 
     $self->render;
 
-}
-
-sub add {
-    my $self = shift;
-
-    my $e          = 0;
-    my $props = {};
-
-    my $method = $self->req->method;
-    if ( $method =~ m/^POST$/i ) {
-
-        # process the input data
-        my $form = $self->req->params->to_hash;
-
-        # Action depends on the name of the button pressed
-        if ( exists $form->{cancel} ) {
-            return $self->redirect_to('graphs_list');
-        }
-
-        if ( exists $form->{save} ) {
-            if ( $form->{graph} =~ m!^\s*$! ) {
-                $self->msg->error("Missing graph name");
-                $e = 1;
-            }
-            if (   $form->{y1_query} =~ m!^\s*$!
-                && $form->{y2_query} =~ m!^\s*$! )
-            {
-                $self->msg->error("Missing query");
-                $e = 1;
-            }
-
-            if ( !$e ) {
-
-                # Prepare the configuration: save and clean the $form
-                # hashref to keep only the properties, so that we can
-                # use the plugin
-                delete $form->{save};
-                my $graph = $form->{graph};
-                delete $form->{graph};
-                my $description =
-                    ( $form->{description} =~ m!^\s*$! )
-                    ? undef
-                    : $form->{description};
-                delete $form->{description};
-                my $y1_query =
-                    ( $form->{y1_query} =~ m!^\s*$! )
-                    ? undef
-                    : $form->{y1_query};
-                delete $form->{y1_query};
-                my $y2_query =
-                    ( $form->{y2_query} =~ m!^\s*$! )
-                    ? undef
-                    : $form->{y2_query};
-                delete $form->{y2_query};
-
-                $props = $self->properties->validate($form);
-                if ( !defined $props ) {
-                    $self->msg->error(
-                        "Bad input, please double check the options");
-                    return $self->render;
-                }
-
-                # Save the properties actually sent
-                # If a property is missing, library/grapher default value will be used
-                my $json = Mojo::JSON->new;
-                my $config = $json->encode( $props );
-
-                my $dbh = $self->database;
-                my $sth = $dbh->prepare(
-                    qq{INSERT INTO pr_grapher.graphs (graph, description, y1_query, y2_query, config) VALUES (?, ?, ?, ?, ?)}
-                );
-                if (
-                    !defined $sth->execute(
-                        $graph,    $description, $y1_query,
-                        $y2_query, $config ) )
-                {
-                    $self->render_exception( $dbh->errstr );
-                    $sth->finish;
-                    $dbh->rollback;
-                    $dbh->disconnect;
-                    return;
-                }
-                $sth->finish;
-                $self->msg->info("Graph saved");
-                $dbh->commit;
-                $dbh->disconnect;
-                return $self->redirect_to('graphs_list');
-            }
-        }
-    }
-
-    if ( !$e ) {
-        foreach my $p ( keys %$props ) {
-            $self->param( $p, $props->{$p} );
-        }
-    }
-    $self->render;
 }
 
 sub edit {

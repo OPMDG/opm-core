@@ -19,36 +19,28 @@ sub register {
     my $r_adm  = $r_auth->bridge->to('user#check_admin');
 
     # Graphs
-    $r_auth->route('/graphs')->to('grapher-graphs#list')->name('graphs_list');
-    $r_auth->route('/graphs/add')->to('grapher-graphs#add')
-        ->name('graphs_add');
-    $r_auth->route( '/graphs/:id', id => qr/\d+/ )->to('grapher-graphs#show')
-        ->name('graphs_show');
+    $r_auth->route( '/graphs/:id', id => qr/\d+/ )->name('graphs_show')
+        ->to('grapher-graphs#show');
     $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )
-        ->to('grapher-graphs#edit')->name('graphs_edit');
+        ->name('graphs_edit')
+        ->to('grapher-graphs#edit');
     $r_adm->route( ':id_server/graphs/:id/remove',
-        id => qr/\d+/,
-        id_server => qr/\d+/
-    )->to('grapher-graphs#remove')->name('graphs_remove');
-    $r_adm->route( '/graphs/:id/clone',
-        id => qr/\d+/,
-    )->to('grapher-graphs#clone')->name('graphs_clone');
-    $r_auth->post('/graphs/data')->to('grapher-graphs#data')
-        ->name('graphs_data');
-    $r_auth->route( '/graphs/showservice/:id', id => qr/\d+/ )->to('grapher-graphs#showservice')
-        ->name('graphs_showservice');
-    $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )->to('grapher-graphs#showserver')
-        ->name('graphs_showserver');
-
-    # Categories
-    $r_auth->get('/categories')->to('grapher-categories#list')
-        ->name('categories_list');
-    $r_auth->route('/categories/add')->to('grapher-categories#add')
-        ->name('categories_add');
-    $r_auth->route( '/categories/:id/edit', id => qr/\d+/ )
-        ->to('grapher-categories#edit')->name('categories_edit');
-    $r_auth->route( '/categories/:id/remove', id => qr/\d+/ )
-        ->to('grapher-categories#remove')->name('categories_remove');
+            id => qr/\d+/,
+            id_server => qr/\d+/ )
+        ->name('graphs_remove')
+        ->to('grapher-graphs#remove');
+    $r_adm->route( '/graphs/:id/clone', id => qr/\d+/ )
+        ->name('graphs_clone')
+        ->to('grapher-graphs#clone');
+    $r_auth->post('/graphs/data')->name('graphs_data')
+        ->to('grapher-graphs#data');
+    $r_auth->route( '/graphs/showservice/:id', id => qr/\d+/ )
+        ->name('graphs_showservice')
+        ->to('grapher-graphs#showservice');
+    $r_auth->route( '/graphs/showserver/:idserver',
+            idserver => qr/\d+/ )
+        ->name('graphs_showserver')
+        ->to('grapher-graphs#showserver');
 
 }
 
