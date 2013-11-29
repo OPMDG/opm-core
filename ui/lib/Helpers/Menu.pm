@@ -34,7 +34,7 @@ sub register {
             my $self = shift;
             my $html;
             my $level = "guest";
-            my $dbh  = $self->database();
+            my $dbh;
             my $sql;
             my @servers;
             my $curr_account = {
@@ -44,44 +44,39 @@ sub register {
             $level = "user"  if ( $self->session('user_username') );
             $level = "admin" if ( $self->session('user_admin') );
 
+            if ($level ne "guest" ) {
+                $dbh  = $self->database();
+                $sql = $dbh->prepare(
+                    "SELECT id, hostname, COALESCE(rolname,'') AS rolname
+                    FROM public.list_servers()
+                    ORDER BY rolname;");
+                $sql->execute();
 
+                while ( my $row = $sql->fetchrow_hashref() ) {
 
+                    $row->{'rolname'} = 'Unassigned' unless $row->{'rolname'};
 
+                    if ( not exists $curr_account->{'rolname'}
+                            or $curr_account->{'rolname'} ne $row->{'rolname'}
+                       ) {
+                        push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
 
-            $sql = $dbh->prepare(
-                "SELECT id, hostname, COALESCE(rolname,'') AS rolname
-                FROM public.list_servers()
-                ORDER BY rolname;");
-            $sql->execute();
+                        $curr_account = {
+                            'rolname'  => $row->{'rolname'},
+                            'servers'  => []
+                        };
+                    }
 
-            while ( my $row = $sql->fetchrow_hashref() ) {
-
-                $row->{'rolname'} = 'Unassigned' unless $row->{'rolname'};
-
-                if ( not exists $curr_account->{'rolname'}
-                    or $curr_account->{'rolname'} ne $row->{'rolname'}
-                ) {
-                    push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
-
-                    $curr_account = {
-                        'rolname'  => $row->{'rolname'},
-                        'servers'  => []
+                    push @{ $curr_account->{'servers'} }, {
+                        'id'       => $row->{'id'},
+                            'hostname' => $row->{'hostname'}
                     };
                 }
+                push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
 
-                push @{ $curr_account->{'servers'} }, {
-                    'id'       => $row->{'id'},
-                    'hostname' => $row->{'hostname'}
-                };
+                $sql->finish();
+                $dbh->disconnect();
             }
-            push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
-
-            $sql->finish();
-            $dbh->disconnect();
-
-
-
-
 
             $self->stash(
                 user_level => $level,
