@@ -22,4 +22,7 @@ $(document).ready(function (){
     $('.hide-all').click(function (e) {
         $('.collapse').collapse('hide');
     });
+
+    if ( $('.accordion-group').length == 1 )
+        $('.collapse').collapse('show');
 });
