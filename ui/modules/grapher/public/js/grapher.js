@@ -12,6 +12,16 @@
     var Grapher = function (element, options) {
         this.config = options;
         this.$element = $(element);
+        this.legend_box = this.config.legend_box ?
+            this.config.legend_box
+            : $('<div class="legend" />');
+
+        this.$element.append('<div class="plot">');
+        this.legend_box
+            .data('id-graph', this.$element.attr('id-graph'));
+
+        if (! this.config.legend_box)
+            this.$element.append(this.legend_box);
 
         this.default_props = {
             autoscale: true,
@@ -128,9 +138,6 @@
                 }
             }
         };
-
-        this.$element.append('<div class="plot span9">')
-            .append('<div class="legend span3"></div>');
     }
 
     Grapher.prototype = {
@@ -183,7 +190,7 @@
 
         draw: function () {
             var $plot   = this.$element.find('.plot'),
-                $legend = this.$element.find('.legend')
+                $legend = this.legend_box
                 inactiveSeries = null;
 
             // Empty the graph to draw it from scratch
@@ -229,7 +236,7 @@
 
         drawLegend: function() {
 
-            var $legend    = this.$element.find('.legend'),
+            var $legend    = this.legend_box,
                 legend_opt = this.flotr.legend.options,
                 series     = this.flotr.series,
                 i, label, color,
@@ -264,7 +271,8 @@
                         .data('i', i)
                         .click(function () {
                             var $this   = $(this),
-                                grapher = $this.parents('[id-graph]').grapher(),
+                                grapher = $('[id-graph='+ $this.parent().data('id-graph') +']')
+                                    .grapher(),
                                 s       = grapher.fetched.series[$this.data('i')];
 
                             s.hide = ! s.hide;
@@ -324,7 +332,7 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = false;
 
-            this.$element.find('.legend div div.flotr-legend-color-box')
+            this.legend_box.find('div.flotr-legend-color-box')
                 .css('opacity', 0.9);
 
             this.refresh();
@@ -337,7 +345,7 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = true;
 
-            this.$element.find('.legend div div.flotr-legend-color-box')
+            this.legend_box.find('div.flotr-legend-color-box')
                 .css('opacity', 0.2);
 
             this.refresh();
@@ -345,8 +353,8 @@
 
         invertActivatedSeries: function () {
             var series      = this.fetched.series,
-                legendItems = this.$element
-                    .find('.legend div div.flotr-legend-color-box'),
+                legendItems = this.legend_box
+                    .find('div.flotr-legend-color-box'),
                 i;
 
             for(i = 0; i < series.length; ++i) {
