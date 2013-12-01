@@ -37,22 +37,8 @@ sub show {
 
     my $hostname = $graph->{'hostname'};
 
-    my $server_list = [];
     my $graph_list = [];
     if (scalar $hostname){
-        $sth = $dbh->prepare(
-            qq{SELECT min(g.id), s.hostname
-                FROM public.list_servers() s
-                JOIN pr_grapher.list_wh_nagios_graphs() g ON s.id = g.id_server
-                WHERE s.hostname <> ?
-                GROUP BY 2
-                ORDER BY 2}
-        );
-        $sth->execute($hostname);
-        while(my ($k,$v) = $sth->fetchrow){
-            push @{$server_list}, { id => $k, hostname => $v };
-        }
-        $sth->finish;
         $sth = $dbh->prepare(
             qq{SELECT g.id,g.graph
             FROM public.list_servers() s
@@ -72,7 +58,6 @@ sub show {
     $self->stash(
         graph       => $graph,
         hostname    => $hostname,
-        server_list => $server_list,
         graph_list  => $graph_list,
         is_admin    => $self->session('user_admin')
     );
@@ -86,7 +71,6 @@ sub showservice {
     my $self       = shift;
     my $id_service = $self->param('id');
     my $dbh        = $self->database;
-    my $server_list;
     my $graph_list;
     my @graphs;
     my $hostname;
@@ -117,17 +101,6 @@ sub showservice {
     $hostname = $graphs[0]{'hostname'};
 
     if (scalar $hostname) {
-
-        # fetch data for the "jump to server" list
-        $sth = $dbh->prepare(qq{
-            SELECT s.id, s.hostname
-            FROM public.list_servers() s
-            WHERE s.hostname <> ?
-        });
-        $sth->execute($hostname);
-        $server_list = $sth->fetchall_hashref([ 1 ]);
-        $sth->finish;
-
         $sth = $dbh->prepare(
             qq{SELECT g.id,g.graph
             FROM public.list_servers() s
@@ -138,7 +111,6 @@ sub showservice {
         $sth->execute($hostname, $id_service);
         $graph_list = $sth->fetchall_hashref([ 1 ]);
         $sth->finish;
-
     }
 
     $dbh->disconnect;
@@ -146,13 +118,11 @@ sub showservice {
     $self->stash(
         graphs      => \@graphs,
         hostname    => $hostname,
-        server_list => $server_list,
         graph_list  => $graph_list,
         is_admin    => $self->session('user_admin')
     );
 
     $self->render;
-
 }
 
 sub showserver {
@@ -178,26 +148,11 @@ sub showserver {
     }
     $sth->finish;
 
-    my $server_list = [];
-    $sth = $dbh->prepare(
-        qq{SELECT id, hostname
-            FROM public.list_servers() s
-            WHERE hostname <> ?
-            ORDER BY 2}
-    );
-    $sth->execute($hostname);
-    while(my ($k,$v) = $sth->fetchrow){
-        push @{$server_list}, { id => $k, hostname => $v };
-    }
-    $sth->finish;
-
-    $dbh->commit;
     $dbh->disconnect;
 
     $self->stash(
         graphs      => $graphs,
         hostname    => $hostname,
-        server_list => $server_list,
         is_admin    => $self->session('user_admin')
     );
 

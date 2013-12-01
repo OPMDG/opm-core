@@ -12,7 +12,13 @@ $(document).ready(function () {
     format: 'dd/MM/yyyy hh:mm:ss'
   });
 
-  $('[id-graph]').grapher({url: "/grapher/graphs/data"});
+  $('[id-graph]').each(function (i, elt) {
+      $(this).grapher({
+        url: "/grapher/graphs/data",
+        legend_box: $('#legend-' + $(this).attr('id-graph'))
+    });
+   });
+
 
   $('.scales .btn').click(function (e) {
     var fromDate = new Date();
@@ -99,13 +105,5 @@ $(document).ready(function () {
   $('#graph_list').change(function (e) {
     if ( $('#graph_list option:selected').val() != '')
       window.location = '/grapher/graphs/'+$('#graph_list option:selected').val();
-  });
-  $('#server_list').change(function (e) {
-    if ( $('#server_list option:selected').val() != '')
-      window.location = '/server/'+$('#server_list option:selected').val();
-  });
-  $('#serverall_list').change(function (e) {
-    if ( $('#serverall_list option:selected').val() != '')
-      window.location = '/grapher/graphs/showserver/'+$('#serverall_list option:selected').val();
   });
 });

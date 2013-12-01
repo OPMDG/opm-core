@@ -1,0 +1,30 @@
+/* Graphs
+--------------------------------------------------- */
+.graph_container {
+    background-color: #fff;
+    margin-bottom: 30px;
+    clear: right;
+    border: 1px solid #e5e5e5;
+    padding: 10px 10px;
+}
+
+.plot {
+    height: 300px;
+}
+
+.input-daterange-to {
+  display: inline-block;
+  min-width: 16px;
+  height: 18px;
+  padding: 4px 5px;
+  font-weight: normal;
+  line-height: 18px;
+  text-align: center;
+  text-shadow: 0 1px 0 #ffffff;
+  vertical-align: middle;
+  background-color: #eeeeee;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  margin-left: -5px;
+  margin-right: -5px;
+}

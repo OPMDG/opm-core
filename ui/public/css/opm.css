@@ -6,6 +6,7 @@ body {
 #main {
     min-height: 400px;
 }
+
 /* Box
 -------------------------------------------------- */
 .box {
@@ -24,10 +25,10 @@ body {
     line-height: 30px;
 }
 
-.box-content {
+/*.box-content {
     clear: both;
     padding-top: 0px;
-}
+}*/
 
 /* Tables for key value descriptions
 -------------------------------------------------- */
@@ -71,20 +72,6 @@ body {
 --------------------------------------------------- */
 .code-font {
 	font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-}
-
-/* Graphs
---------------------------------------------------- */
-.graph_container {
-    background-color: #fff;
-    padding: 10px;
-    margin: 10px;
-    margin-bottom: 30px;
-    clear: right;
-}
-
-.plot {
-    height: 300px;
 }
 
 /* Messages
