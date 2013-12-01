@@ -101,9 +101,15 @@ $(document).ready(function () {
       return confirm('Do you really want to clone this graph ?');
   });
 
-  /* Handle graph & server selector */
+  /* Handle graph selector */
   $('#graph_list').change(function (e) {
     if ( $('#graph_list option:selected').val() != '')
       window.location = '/grapher/graphs/'+$('#graph_list option:selected').val();
+  });
+
+  /* Handle service selector */
+  $('#service_list').change(function (e) {
+    if ( $('#service_list option:selected').val() != '')
+      window.location = '/grapher/graphs/showservice/'+$('#service_list option:selected').val();
   });
 });

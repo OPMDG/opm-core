@@ -17,21 +17,6 @@
 <%= link_to server_host => { id => $graph->{id_server} } => begin %> « <%=l 'Back to server' %> <%= stash 'hostname' %><% end %>
   <br />
 <% } %>
-<div class="btn-toolbar">
-  <% if (scalar $graph->{id_server}) { %>
-    <p class="btn-group">
-      <% if (@graph_list > 0){ %>
-        <select id="graph_list">
-          <option value=""><%=l 'Change graph' %></option>
-        <% foreach my $s (@graph_list) { %>
-          <% my %line = %{$s}; %>
-          <option value="<%= $line{'id'} %>"><%= $line{'graphname'} %></option>
-        <% } %>
-        </select>
-      <% } %>
-    </p>
-  <% } %>
-</div>
 
 <div class="navbar">
   <div class="navbar-inner">
@@ -57,6 +42,22 @@
         </span>
       </div>
       <input type="button" id="sel_custom" class="btn" style="" value="<%=l 'Custom' %>" />
+
+      <div class="pull-right">
+        <% if (scalar $graph->{id_server}) { %>
+          <% if (scalar @graph_list){ %>
+            <select id="graph_list">
+              <option value="" disabled="disabled" selected="selected">
+                <%=l('Change graph').'...' %>
+              </option>
+            <% foreach my $s (@graph_list) { %>
+              <% my %line = %{$s}; %>
+              <option value="<%= $line{'id'} %>"><%= $line{'graphname'} %></option>
+            <% } %>
+            </select>
+          <% } %>
+        <% } %>
+      </div>
 
     </form>
   </div>
