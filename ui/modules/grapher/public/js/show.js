@@ -112,4 +112,10 @@ $(document).ready(function () {
     if ( $('#service_list option:selected').val() != '')
       window.location = '/grapher/graphs/showservice/'+$('#service_list option:selected').val();
   });
+
+  /* Handle server selector */
+  $('#server_list').change(function (e) {
+    if ( $('#server_list option:selected').val() != '')
+      window.location = '/grapher/graphs/showserver/'+$('#server_list option:selected').val();
+  });
 });

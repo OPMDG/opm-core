@@ -98,12 +98,15 @@ sub showservice {
 
     $sth->finish;
 
+    $hostname = $graphs[0]{'hostname'};
+
     if ( $graphs[0]{'id_server'} ) {
         # Get other available services from the same server
         my $sth = $dbh->prepare(qq{
             SELECT id, service
             FROM wh_nagios.list_services()
             WHERE id_server = ? AND id <> ?
+            ORDER BY service
         });
 
         $sth->execute($graphs[0]{'id_server'}, $id_service);
@@ -124,12 +127,11 @@ sub showservice {
 }
 
 sub showserver {
-    my $self = shift;
-
+    my $self     = shift;
     my $idserver = $self->param('idserver');
-    my $period = $self->param('period');
-
-    my $dbh = $self->database;
+    my $period   = $self->param('period');
+    my $dbh      = $self->database;
+    my @servers;
 
     # Get the graphs
     my $sth = $dbh->prepare(
@@ -146,12 +148,25 @@ sub showserver {
     }
     $sth->finish;
 
+    # Get other available servers
+    $sth = $dbh->prepare(qq{
+        SELECT id, hostname
+        FROM public.list_servers()
+        WHERE id <> ?
+        ORDER BY hostname
+    });
+
+    $sth->execute($idserver);
+    push @servers => $_ while $_ = $sth->fetchrow_hashref();
+    $sth->finish;
+
     $dbh->disconnect;
 
     $self->stash(
-        graphs      => $graphs,
-        hostname    => $hostname,
-        is_admin    => $self->session('user_admin')
+        graphs   => $graphs,
+        hostname => $hostname,
+        servers  => \@servers,
+        is_admin => $self->session('user_admin')
     );
 
     $self->render;

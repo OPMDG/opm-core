@@ -11,6 +11,7 @@
   <script type="text/javascript" src="<%= url_for '/js/show.js' %>"></script>
 % end
 % my @graphs = @{stash 'graphs'};
+% my @servers = @{ stash 'servers' };
 
 <%= link_to server_host => { id => $idserver } => begin %> « <%=l 'Back to server' %> <%= stash 'hostname' %><% end %>
 
@@ -38,6 +39,19 @@
         </span>
       </div>
       <input type="button" id="sel_custom" class="btn" style="" value="<%=l 'Custom' %>" />
+
+      <% if ( scalar @servers ) { %>
+        <div class="pull-right">
+          <select id="server_list">
+            <option value="" disabled="disabled" selected="selected">
+              <%=l('All graphs for server') .'...' %>
+            </option>
+          <% foreach my $s ( @servers ) { %>
+            <option value="<%= $s->{'id'} %>"><%= $s->{'hostname'} %></option>
+          <% } %>
+          </select>
+        </div>
+      <% } %>
 
     </form>
   </div>
