@@ -41,18 +41,18 @@
       <input type="button" id="sel_custom" class="btn" style="" value="<%=l 'Custom' %>" />
 
       <% if ( scalar @servers ) { %>
-        <div class="pull-right">
-          <select id="server_list">
-            <option value="" disabled="disabled" selected="selected">
-              <%=l('All graphs for server') .'...' %>
-            </option>
-          <% foreach my $s ( @servers ) { %>
-            <option value="<%= $s->{'id'} %>"><%= $s->{'hostname'} %></option>
-          <% } %>
-          </select>
+        <div class="btn-group pull-right">
+          <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+            <%=l('All graphs for server') .'...' %>
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <% foreach my $s ( @servers ) { %>
+            <li><a href="/grapher/graphs/showserver/<%= $s->{'id'} %>"><%= $s->{'hostname'} %></a></li>
+            <% } %>
+          </ul>
         </div>
       <% } %>
-
     </form>
   </div>
 </div>
@@ -64,7 +64,7 @@
     <div class="pull-right">
       <div class="btn-group">
         <a href="#" offon-series="<%= $graph->{id} %>" class="btn btn-mini"><%=l 'Show/Hide series' %></a>
-        <a href="#" invert-series="<%= $graph->{id} %>" class="btn btn-mini save"><%=l 'Invert Sel.' %></a>
+        <a href="#" invert-series="<%= $graph->{id} %>" class="btn btn-mini"><%=l 'Invert Sel.' %></a>
         <a href="#" export-graph="<%= $graph->{id} %>" class="btn btn-mini save"><%=l 'Export' %></a>
       </div>
 

@@ -20,7 +20,7 @@ $(document).ready(function () {
    });
 
 
-  $('.scales .btn').click(function (e) {
+  $('.scales input[type=button]').click(function (e) {
     var fromDate = new Date();
     var toDate = new Date();
     var frompick = $('#fromdatepick').data('datetimepicker');
@@ -99,23 +99,5 @@ $(document).ready(function () {
   /* confirm on clone */
   $('.btn_clone_graph').click(function () {
       return confirm('Do you really want to clone this graph ?');
-  });
-
-  /* Handle graph selector */
-  $('#graph_list').change(function (e) {
-    if ( $('#graph_list option:selected').val() != '')
-      window.location = '/grapher/graphs/'+$('#graph_list option:selected').val();
-  });
-
-  /* Handle service selector */
-  $('#service_list').change(function (e) {
-    if ( $('#service_list option:selected').val() != '')
-      window.location = '/grapher/graphs/showservice/'+$('#service_list option:selected').val();
-  });
-
-  /* Handle server selector */
-  $('#server_list').change(function (e) {
-    if ( $('#server_list option:selected').val() != '')
-      window.location = '/grapher/graphs/showserver/'+$('#server_list option:selected').val();
   });
 });

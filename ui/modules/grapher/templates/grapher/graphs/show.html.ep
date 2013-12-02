@@ -43,26 +43,24 @@
       </div>
       <input type="button" id="sel_custom" class="btn" style="" value="<%=l 'Custom' %>" />
 
-      <div class="pull-right">
-        <% if (scalar $graph->{id_server}) { %>
-          <% if (scalar @graph_list){ %>
-            <select id="graph_list">
-              <option value="" disabled="disabled" selected="selected">
-                <%=l('Change graph').'...' %>
-              </option>
-            <% foreach my $s (@graph_list) { %>
-              <% my %line = %{$s}; %>
-              <option value="<%= $line{'id'} %>"><%= $line{'graphname'} %></option>
-            <% } %>
-            </select>
-          <% } %>
-        <% } %>
-      </div>
-
+      <% if (scalar $graph->{id_server} and scalar @graph_list) { %>
+        <div class="pull-right">
+          <div class="btn-group pull-right">
+            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+              <%=l('Change graph') .'...' %>
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <% foreach my $s ( @graph_list ) { %>
+              <li><a href="/grapher/graphs/<%= $s->{'id'} %>"><%= $s->{'graphname'} %></a></li>
+              <% } %>
+            </ul>
+          </div>
+        </div>
+      <% } %>
     </form>
   </div>
 </div>
-
 
 <div class="graph_container">
   <div class="row-fluid" style="margin-bottom: 5px">
@@ -84,6 +82,6 @@
 
   <div class="row-fluid">
     <div class="span9" id-graph="<%= $id %>"></div>
-    <div class="span3" id="legend-<%= $id %>" /></div>
+    <div class="span3" style="padding-top: 5px" id="legend-<%= $id %>" /></div>
   </div>
 </div>
