@@ -367,7 +367,11 @@ sub edit {
         }
 
         # Is the graph associated with a service ?
-        $self->stash( id_server => $id_server, labels => \@labels );
+        $self->stash(
+            'id_server' => $id_server,
+            'labels'    => \@labels,
+            'graph'     => $graph->{'graph'}
+        );
     }
 
     $dbh->disconnect;
