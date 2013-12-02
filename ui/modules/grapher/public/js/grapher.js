@@ -286,8 +286,7 @@
                 }
 
                 $legend.css({
-                        height: this.flotr.canvasHeight,
-                        overflow: 'auto'
+                        height: this.flotr.canvasHeight
                     });
 
                 series.map(function(s, i) {

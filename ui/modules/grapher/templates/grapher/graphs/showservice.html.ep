@@ -84,7 +84,7 @@
 
   <div class="row-fluid">
     <div class="span9" id-graph="<%= $graph->{id} %>"></div>
-    <div class="span3" style="padding-top: 5px" id="legend-<%= $graph->{id} %>" /></div>
+    <div class="span3 graph-legend" id="legend-<%= $graph->{id} %>"></div>
   </div>
 </div>
 
