@@ -12,51 +12,48 @@
 % my $previous;
 % my $first = 1;
 
+<div class="box" id="server_list">
+  <h1 class="page-header"><%=l 'List of servers per accounts' %></u></h1>
+  <% if ( scalar @servers ) { %>
 
-
-
-<div class="row">
-
-  <div class="box" id="server_list">
-    <h1 class="page-header"><%=l 'List of servers per accounts' %></u></h1>
-    <% if (scalar(@servers)) { %>
-
+    <div class="container span6">
       <div class="btn-toolbar">
         <div class="btn-group">
           <a class="show-all btn btn-mini"><%=l 'Show all' %></a>
           <a class="hide-all btn btn-mini"><%=l 'Hide all' %></a>
         </div>
       </div>
-      <div class="accordion span6" id="accordion2">
-        <% foreach my $s ( @servers ) { %>
-          <div class="accordion-group">
-            <div class="accordion-heading">
-              <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $s->{'servers'}[0]{'id'} %>">
-              <i class="icon-plus"></i>
-              <% if ($s->{'rolname'} eq '') { %>
-                <%=l 'Unassigned' %>
-              <% } else { %>
-                <%= $s->{'rolname'} %>
+
+      <div class="accordion" id="accordion2">
+      <% foreach my $s ( @servers ) { %>
+        <div class="accordion-group">
+          <div class="accordion-heading">
+            <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $s->{'servers'}[0]{'id'} %>">
+            <i class="icon-plus"></i>
+            <% if ($s->{'rolname'} eq '') { %>
+              <%=l 'Unassigned' %>
+            <% } else { %>
+              <%= $s->{'rolname'} %>
+            <% } %>
+            </a>
+          </div>
+          <div id="account_<%= $s->{'servers'}[0]{'id'} %>" class="accordion-body collapse">
+            <div class="accordion-inner">
+              <ul>
+              <% foreach my $ser (@{ $s->{'servers'} }) { %>
+                <li>
+                <%= link_to server_host => { id => $ser->{'id'} } => begin %><%= $ser->{'hostname'} %><% end %>
+                </li>
               <% } %>
-              </a>
-            </div>
-            <div id="account_<%= $s->{'servers'}[0]{'id'} %>" class="accordion-body collapse">
-              <div class="accordion-inner">
-                <ul>
-                <% foreach my $ser (@{ $s->{'servers'} }) { %>
-                  <li>
-                  <%= link_to server_host => { id => $ser->{'id'} } => begin %><%= $ser->{'hostname'} %><% end %>
-                  </li>
-                <% } %>
-                </ul>
-              </div>
+              </ul>
             </div>
           </div>
-        <% } %>
+        </div>
+      <% } %>
       </div>
-    <% } else { %>
-      <p>No server found.</p>
-    <% } %>
+    </div>
+  <% } else { %>
+    <p><%=l 'No server found' %>.</p>
+  <% } %>
   <div class="clearfix"></div>
-  </div>
 </div>

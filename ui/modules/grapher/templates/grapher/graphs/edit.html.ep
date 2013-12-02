@@ -11,245 +11,244 @@
 % my $rowid        = 0;
 % my $curr_service = -1;
 
-<h1><%=l 'Update graph '%><u><%=  stash 'graph' %></u></h1>
+<div class="box">
+  <h1><%=l 'Update graph '%><u><%=  stash 'graph' %></u></h1>
+  <%= form_for graphs_edit => (method => 'POST', class => 'form-horizontal') => begin %>
 
-<%= form_for graphs_edit => (method => 'POST', class => 'form-horizontal') => begin %>
-
-  <div class="row-fluid">
-    <div class="tabbable">
-      <ul class="nav nav-tabs">
-        <li class="active"><a href="#general" data-toggle="tab"><%=l 'General' %></a></li>
-        <li><a href="#xaxis" data-toggle="tab"><%=l 'X axis' %></a></li>
-        <li><a href="#yaxis" data-toggle="tab"><%=l 'Y axis' %></a></li>
-        <% if ( scalar (stash 'id_server')) { %>
-          <li><a href="#series" data-toggle="tab"><%=l 'Series' %></a></li>
-        <% } else { %>
-          <li><a href="#y2axis" data-toggle="tab"><%=l 'Second Y axis' %></a></li>
-        <% } %>
-      </ul>
-      <div class="tab-content">
-        <div class="tab-pane active" id="general">
-          <div class="control-group">
-            <label class="control-label" for="name"><strong><%=l 'Graph name' %></strong></label>
-            <div class="controls">
-              <%= text_field 'graph', type => 'text', class => 'span6', id => 'name' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="desc"><%=l 'Description' %></label>
-            <div class="controls">
-              <%= text_area description => (rows => 1, id => 'desc', class => 'span6') => begin %><% end %>
-            </div>
-          </div>
-          <div class="control-group">
-            <div class="controls">
-              <label class="checkbox"><%= check_box 'show_legend' => 1 %> <%=l 'Show legend in graph' %></label>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">Type</label>
-            <div class="controls">
-              <%= select_field type => [[ l('Bars') => 'bars'], [ l('Lines') => 'lines'], [ l('Points') => 'points'], [ l('Pie') => 'pie']], id => 'graph_type_select' %>
-            </div>
-          </div>
-
-          <% unless ( scalar (stash 'id_server')) { %>
-          <div class="control-group">
-            <label class="control-label" for="query1">Query</label>
-            <div class="controls">
-              <%= text_area y1_query => (rows => 7, id => 'query1', class => 'span6 code-font') => begin %><% end %>
-            </div>
-          </div>
-
-          <div class="control-group">
-            <label class="control-label" for="query2">Second Y axis query:</label>
-            <div class="controls">
-              <%= text_area y2_query => (rows => 7, id => 'query2', class => 'span6 code-font') => begin %><% end %>
-            </div>
-          </div>
-          <% } %>
-
-          <div class="graph_type" id="type_bars">
-            <div class="control-group">
-              <label class="control-label" for="barslinewidth"><%=l 'Line width' %></label>
-              <div class="controls">
-                <%= text_field 'bars_lineWidth', type => 'text', class => 'span2', id => 'barslinewidth', placeholder=> l '(default value)' %>
-              </div>
-            </div>
-            <div class="control-group">
-              <label class="control-label" for="name"><%=l 'Bar width' %></label>
-              <div class="controls">
-                <%= text_field 'bars_barWidth', type => 'text', class => 'span2', id => 'barsbarwidth', placeholder=> l '(default value)' %>
-              </div>
-            </div>
-            <div class="controls">
-              <label class="checkbox inline"><%= check_box 'bars_stacked' => 1 %> <%=l 'Stacked' %></label>
-              <label class="checkbox inline"><%= check_box 'bars_filled' => 1 %> <%=l 'Filled' %></label>
-              <label class="checkbox inline"><%= check_box 'bars_grouped' => 1 %> <%=l 'Grouped' %></label>
-            </div>
-          </div>
-
-          <div class="graph_type" id="type_lines">
-            <div class="control-group">
-              <label class="control-label" for="lineslinewidth"><%=l 'Line width' %></label>
-              <div class="controls">
-                <%= text_field 'lines_lineWidth', type => 'text', class => 'span3', id => 'lineslinewidth', placeholder=> l '(default value)' %>
-              </div>
-            </div>
-            <div class="controls">
-              <label class="checkbox inline"><%= check_box 'lines_stacked' => 1 %> <%=l 'Stacked' %></label>
-              <label class="checkbox inline"><%= check_box 'lines_filled' => 1 %> <%=l 'Filled' %></label>
-            </div>
-          </div>
-
-          <div class="graph_type" id="type_points">
-            <div class="control-group">
-              <label class="control-label" for="pointslinewidth"><%=l 'Line width' %></label>
-              <div class="controls">
-                <%= text_field 'points_lineWidth', type => 'text', class => 'span3', id => 'pointslinewidth', placeholder=> l '(default value)' %>
-              </div>
-            </div>
-            <div class="control-group">
-              <label class="control-label" for="pointsradius"><%=l 'Radius' %></label>
-              <div class="controls">
-                <%= text_field 'points_radius', type => 'text', class => 'span3', id => 'pointsradius', placeholder=> l '(default value)' %>
-              </div>
-            </div>
-            <div class="controls">
-              <label class="checkbox inline"><%= check_box 'points_filled' => 1 %> <%=l 'Filled' %></label>
-            </div>
-          </div>
-
-          <div class="graph_type" id="type_pie">
-            <div class="control-group">
-              <label class="control-label" for="pielinewidth"><%=l 'Line width' %></label>
-              <div class="controls">
-                <%= text_field 'pie_lineWidth', type => 'text', class => 'span3', id => 'pielinewidth', placeholder=> l '(default value)' %>
-              </div>
-            </div>
-            <div class="controls">
-              <label class="checkbox inline"><%= check_box 'pie_filled' => 1 %> <%=l 'Filled' %></label>
-            </div>
-          </div>
-        </div>
-
-        <div class="tab-pane" id="xaxis">
-          <div class="control-group">
-            <label class="control-label" for="xaxislabelsangle"><%=l 'Labels angle' %></label>
-            <div class="controls">
-              <%= text_field 'xaxis_labelsAngle', type => 'text', id => 'xaxislabelsangle', placeholder=> l '(default value)' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="xaxistitle"><%=l 'Title' %></label>
-            <div class="controls">
-              <%= text_field 'xaxis_title', type => 'text', id => 'xaxistitle' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="xaxistitleangle"><%=l 'Title angle' %></label>
-            <div class="controls">
-              <%= text_field 'xaxis_titleAngle', type => 'text', id => 'xaxistitleangle', placeholder=> l '(default value)' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="xaxistimeformat"><%=l 'Time format' %></label>
-            <div class="controls">
-              <%= text_field 'xaxis_timeFormat', type => 'text', id => 'xaxistimeformat', placeholder=> l '(default value)' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="xaxistimeformat"><%=l 'Mode' %></label>
-            <div class="controls">
-              <%= select_field xaxis_mode => ['time', 'normal'], id => 'xaxismode' %>
-            </div>
-          </div>
-        </div>
-
-        <div class="tab-pane" id="yaxis">
-          <div class="control-group">
-            <label class="control-label" for="yaxislabelsangle"><%=l 'Labels angle' %></label>
-            <div class="controls">
-              <%= text_field 'yaxis_labelsAngle', type => 'text', id => 'yaxislabelsangle', placeholder=> l '(default value)' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="yaxistitle"><%=l 'Title' %></label>
-            <div class="controls">
-              <%= text_field 'yaxis_title', type => 'text', id => 'yaxistitle' %>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="yaxistitleangle"><%=l 'Title angle' %></label>
-            <div class="controls">
-              <%= text_field 'yaxis_titleAngle', type => 'text', id => 'yaxistitleangle', placeholder=> l '(default value)' %>
-            </div>
-          </div>
-        </div>
-        <% if ( scalar (stash 'id_server')) { %>
-          <div class="tab-pane" id="series">
-%             foreach my $l (@labels) {
-%               if ($curr_service != $l->{'id_service'}) {
-%                 $curr_service = $l->{'id_service'};
-%                 if ($rowid > 0) {
-              </div>
-%                 }
-%                 $rowid = 0;
-              <strong><%= $l->{'service'} %></strong>
-%               }
-%               if ($rowid%4 == 0) {
-              <div class="row-fluid">
-%               }
-                <label class="checkbox span3" >
-                  <%= check_box "labels" => $l->{'id_label'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
-                </label>
-
-%               if ($rowid%4 == 3) {
-              </div>
-%               }
-%               $rowid++;
-%             }
-
-%             if ($rowid%4 != 3) {
-              </div>
-%             }
-
-          </div>
-        <% } else { %>
-          <div class="tab-pane" id="y2axis">
-            <div class="controls">
-              <div class="control-group">
-                <label class="control-label" for="y2axislabelsangle"><%=l 'Labels angle' %></label>
-                <div class="controls">
-                  <%= text_field 'y2axis_labelsAngle', type => 'text', id => 'y2axislabelsangle' %>
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label" for="y2axistitle"><%=l 'Title' %></label>
-                <div class="controls">
-                  <%= text_field 'y2axis_title', type => 'text', id => 'y2axistitle' %>
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label" for="y2axistitleangle"><%=l 'Title angle' %></label>
-                <div class="controls">
-                  <%= text_field 'y2axis_titleAngle', type => 'text', id => 'y2axistitleangle' %>
-                </div>
-              </div>
-              <div class="controls">
-                <label class="checkbox inline"><%= check_box 'y2axis_showLabels' => 1 %> <%=l 'Show labels' %></label>
-              </div>
-            </div>
-          </div>
-        <% } %>
-      </div>
-    </div>
-  </div>
-
-  <div class="form-actions">
+    <hr />
     <%= submit_button l('Save'), name => 'save', class => 'btn btn-primary' %>
     <%= submit_button l('Drop'), name => 'drop', id => 'btn_drop_graph', class => 'btn btn-danger' %>
     <%= submit_button l('Cancel'), name => 'cancel', class => 'btn' %>
-  </div>
+    <hr />
 
-<% end %>
+      <div class="tabbable">
+        <ul class="nav nav-tabs">
+          <li class="active"><a href="#general" data-toggle="tab"><%=l 'General' %></a></li>
+          <li><a href="#xaxis" data-toggle="tab"><%=l 'X axis' %></a></li>
+          <li><a href="#yaxis" data-toggle="tab"><%=l 'Y axis' %></a></li>
+          <% if ( scalar (stash 'id_server')) { %>
+            <li><a href="#series" data-toggle="tab"><%=l 'Series' %></a></li>
+          <% } else { %>
+            <li><a href="#y2axis" data-toggle="tab"><%=l 'Second Y axis' %></a></li>
+          <% } %>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="general">
+            <div class="control-group">
+              <label class="control-label" for="name"><strong><%=l 'Graph name' %></strong></label>
+              <div class="controls">
+                <%= text_field 'graph', type => 'text', class => 'span4', id => 'name' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="desc"><%=l 'Description' %></label>
+              <div class="controls">
+                <%= text_area description => (rows => 1, id => 'desc', class => 'span4') => begin %><% end %>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="controls">
+                <label class="checkbox"><%= check_box 'show_legend' => 1 %> <%=l 'Show legend in graph' %></label>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Type</label>
+              <div class="controls">
+                <%= select_field type => [[ l('Bars') => 'bars'], [ l('Lines') => 'lines'], [ l('Points') => 'points'], [ l('Pie') => 'pie']], id => 'graph_type_select', class => 'span2' %>
+              </div>
+            </div>
+
+            <% unless ( scalar (stash 'id_server')) { %>
+            <div class="control-group">
+              <label class="control-label" for="query1">Query</label>
+              <div class="controls">
+                <%= text_area y1_query => (rows => 7, id => 'query1', class => 'span6 code-font') => begin %><% end %>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="query2">Second Y axis query:</label>
+              <div class="controls">
+                <%= text_area y2_query => (rows => 7, id => 'query2', class => 'span6 code-font') => begin %><% end %>
+              </div>
+            </div>
+            <% } %>
+
+            <div class="graph_type" id="type_bars">
+              <div class="control-group">
+                <label class="control-label" for="barslinewidth"><%=l 'Line width' %></label>
+                <div class="controls">
+                  <%= text_field 'bars_lineWidth', type => 'text', class => 'span2', id => 'barslinewidth', placeholder=> l '(default value)' %>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="name"><%=l 'Bar width' %></label>
+                <div class="controls">
+                  <%= text_field 'bars_barWidth', type => 'text', class => 'span2', id => 'barsbarwidth', placeholder=> l '(default value)' %>
+                </div>
+              </div>
+              <div class="controls">
+                <label class="checkbox inline"><%= check_box 'bars_stacked' => 1 %> <%=l 'Stacked' %></label>
+                <label class="checkbox inline"><%= check_box 'bars_filled' => 1 %> <%=l 'Filled' %></label>
+                <label class="checkbox inline"><%= check_box 'bars_grouped' => 1 %> <%=l 'Grouped' %></label>
+              </div>
+            </div>
+
+            <div class="graph_type" id="type_lines">
+              <div class="control-group">
+                <label class="control-label" for="lineslinewidth"><%=l 'Line width' %></label>
+                <div class="controls">
+                  <%= text_field 'lines_lineWidth', type => 'text', class => 'span2', id => 'lineslinewidth', placeholder=> l '(default value)' %>
+                </div>
+              </div>
+              <div class="controls">
+                <label class="checkbox inline"><%= check_box 'lines_stacked' => 1 %> <%=l 'Stacked' %></label>
+                <label class="checkbox inline"><%= check_box 'lines_filled' => 1 %> <%=l 'Filled' %></label>
+              </div>
+            </div>
+
+            <div class="graph_type" id="type_points">
+              <div class="control-group">
+                <label class="control-label" for="pointslinewidth"><%=l 'Line width' %></label>
+                <div class="controls">
+                  <%= text_field 'points_lineWidth', type => 'text', class => 'span2', id => 'pointslinewidth', placeholder=> l '(default value)' %>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="pointsradius"><%=l 'Radius' %></label>
+                <div class="controls">
+                  <%= text_field 'points_radius', type => 'text', class => 'span2', id => 'pointsradius', placeholder=> l '(default value)' %>
+                </div>
+              </div>
+              <div class="controls">
+                <label class="checkbox inline"><%= check_box 'points_filled' => 1 %> <%=l 'Filled' %></label>
+              </div>
+            </div>
+
+            <div class="graph_type" id="type_pie">
+              <div class="control-group">
+                <label class="control-label" for="pielinewidth"><%=l 'Line width' %></label>
+                <div class="controls">
+                  <%= text_field 'pie_lineWidth', type => 'text', class => 'span2', id => 'pielinewidth', placeholder=> l '(default value)' %>
+                </div>
+              </div>
+              <div class="controls">
+                <label class="checkbox inline"><%= check_box 'pie_filled' => 1 %> <%=l 'Filled' %></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane" id="xaxis">
+            <div class="control-group">
+              <label class="control-label" for="xaxislabelsangle"><%=l 'Labels angle' %></label>
+              <div class="controls">
+                <%= text_field 'xaxis_labelsAngle', type => 'text', id => 'xaxislabelsangle', placeholder=> l '(default value)' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="xaxistitle"><%=l 'Title' %></label>
+              <div class="controls">
+                <%= text_field 'xaxis_title', type => 'text', id => 'xaxistitle' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="xaxistitleangle"><%=l 'Title angle' %></label>
+              <div class="controls">
+                <%= text_field 'xaxis_titleAngle', type => 'text', id => 'xaxistitleangle', placeholder=> l '(default value)' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="xaxistimeformat"><%=l 'Time format' %></label>
+              <div class="controls">
+                <%= text_field 'xaxis_timeFormat', type => 'text', id => 'xaxistimeformat', placeholder=> l '(default value)' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="xaxistimeformat"><%=l 'Mode' %></label>
+              <div class="controls">
+                <%= select_field xaxis_mode => ['time', 'normal'], id => 'xaxismode' %>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane" id="yaxis">
+            <div class="control-group">
+              <label class="control-label" for="yaxislabelsangle"><%=l 'Labels angle' %></label>
+              <div class="controls">
+                <%= text_field 'yaxis_labelsAngle', type => 'text', id => 'yaxislabelsangle', placeholder=> l '(default value)' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="yaxistitle"><%=l 'Title' %></label>
+              <div class="controls">
+                <%= text_field 'yaxis_title', type => 'text', id => 'yaxistitle' %>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="yaxistitleangle"><%=l 'Title angle' %></label>
+              <div class="controls">
+                <%= text_field 'yaxis_titleAngle', type => 'text', id => 'yaxistitleangle', placeholder=> l '(default value)' %>
+              </div>
+            </div>
+          </div>
+          <% if ( scalar (stash 'id_server')) { %>
+            <div class="tab-pane" id="series">
+  %             foreach my $l (@labels) {
+  %               if ($curr_service != $l->{'id_service'}) {
+  %                 $curr_service = $l->{'id_service'};
+  %                 if ($rowid > 0) {
+                </div>
+  %                 }
+  %                 $rowid = 0;
+                <strong><%= $l->{'service'} %></strong>
+  %               }
+  %               if ($rowid%4 == 0) {
+                <div class="row-fluid">
+  %               }
+                  <label class="checkbox span3" >
+                    <%= check_box "labels" => $l->{'id_label'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
+                  </label>
+
+  %               if ($rowid%4 == 3) {
+                </div>
+  %               }
+  %               $rowid++;
+  %             }
+
+  %             if ($rowid%4 != 3) {
+                </div>
+  %             }
+
+            </div>
+          <% } else { %>
+            <div class="tab-pane" id="y2axis">
+              <div class="controls">
+                <div class="control-group">
+                  <label class="control-label" for="y2axislabelsangle"><%=l 'Labels angle' %></label>
+                  <div class="controls">
+                    <%= text_field 'y2axis_labelsAngle', type => 'text', id => 'y2axislabelsangle' %>
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="y2axistitle"><%=l 'Title' %></label>
+                  <div class="controls">
+                    <%= text_field 'y2axis_title', type => 'text', id => 'y2axistitle' %>
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="y2axistitleangle"><%=l 'Title angle' %></label>
+                  <div class="controls">
+                    <%= text_field 'y2axis_titleAngle', type => 'text', id => 'y2axistitleangle' %>
+                  </div>
+                </div>
+                <div class="controls">
+                  <label class="checkbox inline"><%= check_box 'y2axis_showLabels' => 1 %> <%=l 'Show labels' %></label>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+  <% end %>
+</div>
