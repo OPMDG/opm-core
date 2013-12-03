@@ -386,6 +386,7 @@ DECLARE
             WHERE a.rolname <> r.rolname
                 AND a.rolname <> 'opm_roles'
                 AND r.rolcanlogin
+                AND pg_has_role(a.rolname,'opm_roles','MEMBER')
         )
         SELECT ar.id, a.accname, ar.rolname
         FROM all_roles ar
