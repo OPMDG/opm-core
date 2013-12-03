@@ -128,7 +128,14 @@ our %Lexicon = (
     "Hide all"                  => "Cacher tout",
     "View all"                  => "Tout voir",
     "Drop"                      => "Supprimer",
-    "(default value)"           => "(valeur par défaut)"
+    "(default value)"           => "(valeur par défaut)",
+    "Page not found"            => "Page non trouvée",
+    "Please continue to the"    => "Veuillez continuez sur la",
+    "home page"                 => "page d'accueil",
+    "User not found"            => "Utilisateur non trouvé",
+    "This user does not exists" => "Cet utilisateur n'existe pas",
+    "Server not found"          => "Serveur non trouvé",
+    "This server does not exists" => "Ce serveur n'existe pas"
     );
 
 1;

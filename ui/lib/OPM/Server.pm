@@ -86,6 +86,10 @@ sub host {
 
     if (! $found){
         $dbh->disconnect();
+        $self->stash(
+            message => 'Server not found',
+            detail => 'This server does not exists'
+        );
         return $self->render_not_found;
     }
 

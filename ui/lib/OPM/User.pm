@@ -88,6 +88,10 @@ sub edit {
     $sql->finish();
     if ( !$user_exists ){
         $dbh->disconnect();
+        $self->stash(
+            message => 'User not found',
+            detail => $self->l('This user does not exists') . ' : "' . $rolname . '"'
+        );
         return $self->render_not_found;
     }
 
