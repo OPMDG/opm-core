@@ -82,11 +82,11 @@ sub edit {
     my $sql;
 
     $sql = $dbh->prepare(
-        "SELECT COUNT(*) FROM public.list_users() WHERE rolname = ?");
+        "SELECT COUNT(*) > 0 FROM public.list_users() WHERE rolname = ?");
     $sql->execute($rolname);
-    my $found = ( $sql->fetchrow() == 1);
+    my $user_exists = ( $sql->fetchrow() );
     $sql->finish();
-    if ( !$found ){
+    if ( !$user_exists ){
         $dbh->disconnect();
         return $self->render_not_found;
     }
