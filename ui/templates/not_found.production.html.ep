@@ -14,4 +14,4 @@
   <%= l $detail %>
 </div>
 
-<p>Please continue to the <%= link_to site_home => begin %>home page<% end %>.</p>
+<p><%= l 'Please continue to the' %> <%= link_to site_home => begin %><%= l 'home page' %><% end %>.</p>
