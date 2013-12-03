@@ -47,7 +47,7 @@
                  sensibility: 5,
                  trackFormatter: function (o) {
                      d = new Date(new Number(o.x));
-                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ o.y;
+                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ o.series.data[o.index][1];
                  }
             },
             pie: {
