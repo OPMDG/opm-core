@@ -234,6 +234,24 @@
             this.flotr = Flotr.draw(container, series, properties);
         },
 
+        _activateSerie: function($e) {
+            with ($e) {
+                find('.flotr-legend-color-box')
+                    .css('opacity', 0.9);
+                find('label')
+                    .removeClass('deactivated');
+            }
+        },
+
+        _deactivateSerie: function($e) {
+            with ($e) {
+                find('.flotr-legend-color-box')
+                    .css('opacity', 0.1);
+                find('label')
+                    .addClass('deactivated');
+            }
+        },
+
         drawLegend: function() {
 
             var $legend    = this.legend_box,
@@ -254,20 +272,20 @@
                     color = ((s.bars && s.bars.show && s.bars.fillColor && s.bars.fill) ? s.bars.fillColor : s.color);
 
                     var $cell = $(
-                        '<div class="flotr-legend-color-box" style="" />'
+                        '<div class="flotr-legend-color-box" />'
                     )
-                    .css({
-                        'margin' : '0 10px 0 0',
-                        'float'  : 'left',
-                        'border' : '1px solid '+ legend_opt.labelBoxBorderColor,
-                        'width'  : '1.4em',
-                        'height' : '1.2em',
-                        'background-color': color
-                    })
-                    .attr('id', 'legendcolor'+i)
-                    .add('<label>'+ label +'</label>');
+                        .css({
+                            'margin' : '0 10px 0 0',
+                            'float'  : 'left',
+                            'border' : '1px solid '+ legend_opt.labelBoxBorderColor,
+                            'width'  : '1.4em',
+                            'height' : '1.2em',
+                            'background-color': color
+                        })
+                        .attr('id', 'legendcolor'+i)
+                        .add('<label>'+ label +'</label>');
 
-                    $('<div />').prepend($cell)
+                    var $label = $('<div class="label-'+ i +'" />').prepend($cell)
                         .data('i', i)
                         .click(function () {
                             var $this   = $(this),
@@ -275,23 +293,21 @@
                                     .grapher(),
                                 s       = grapher.fetched.series[$this.data('i')];
 
-                            s.hide = ! s.hide;
-
-                            $this.find('div.flotr-legend-color-box')
-                                .css('opacity', s.hide?0.2:0.9);
+                            if ( (s.hide = ! s.hide) )
+                                grapher._deactivateSerie($this);
+                            else
+                                grapher._activateSerie($this);
 
                             grapher.refresh();
                         })
                         .appendTo($legend);
+
+                    if (s.hide)
+                        this._deactivateSerie( $label );
                 }
 
                 $legend.css({
-                        height: this.flotr.canvasHeight
-                    });
-
-                series.map(function(s, i) {
-                    if (s.hide) $legend.find('#legendcolor'+i)
-                        .css('opacity', 0.2)
+                    height: this.flotr.canvasHeight
                 });
             }
         },
@@ -331,8 +347,7 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = false;
 
-            this.legend_box.find('div.flotr-legend-color-box')
-                .css('opacity', 0.9);
+            this._activateSerie( this.legend_box.find('> div') );
 
             this.refresh();
         },
@@ -344,24 +359,23 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = true;
 
-            this.legend_box.find('div.flotr-legend-color-box')
-                .css('opacity', 0.2);
+            this._deactivateSerie( this.legend_box.find('> div') );
 
             this.refresh();
         },
 
         invertActivatedSeries: function () {
-            var series      = this.fetched.series,
-                legendItems = this.legend_box
-                    .find('div.flotr-legend-color-box'),
+            var series  = this.fetched.series,
+                $legend = this.legend_box,
+                $hidden = $legend.find('label.deactivated').parent(),
+                $showed = $legend.find('label:not(.deactivated)').parent(),
                 i;
 
-            for(i = 0; i < series.length; ++i) {
+            for(i = 0; i < series.length; ++i)
                 series[i].hide = ! series[i].hide;
 
-                $(legendItems[i])
-                    .css('opacity', series[i].hide?0.2:0.9);
-            }
+            if ($showed.length) this._deactivateSerie($showed);
+            if ($hidden.length) this._activateSerie($hidden);
 
             this.refresh();
         }
