@@ -284,7 +284,7 @@ sub profile {
             } elsif ( $form_data->{current_password} ne $self->session->{user_password} ){
                 $self->msg->error("Wrong password supplied");
                 $e = 1;
-            } elsif ( length($form_data->{current_password}) < 6 ){
+            } elsif ( length($form_data->{new_password}) < 6 ){
                 $self->msg->error("Password must be longer than 5 characters");
                 $e = 1;
             }
