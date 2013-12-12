@@ -603,11 +603,13 @@ sub data {
         my $sql;
         $from = substr $from, 0, -3;
         $to = substr $to, 0, -3;
+
+        #FIXME: handle wh_nagios as a module
+        $sql = $dbh->prepare(
+            "SELECT pr_grapher.js_time(timet), value FROM wh_nagios.get_sampled_label_data(?, to_timestamp(?), to_timestamp(?), ?);"
+        );
+
         while ( my ( $id_label, $label, $unit ) = $sth->fetchrow() ) {
-            #FIXME: handle wh_nagios as a module
-            $sql = $dbh->prepare(
-                "SELECT pr_grapher.js_time(timet), value FROM wh_nagios.get_sampled_label_data(?, to_timestamp(?), to_timestamp(?), ?);"
-            );
             $sql->execute( $id_label, $from, $to,
                 sprintf( "%.0f", ( $to - $from ) / 700 ) );
             $series->{$label} = [];
