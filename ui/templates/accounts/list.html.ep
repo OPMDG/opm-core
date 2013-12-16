@@ -17,9 +17,9 @@
           <%   my %line = %{$a}; %>
           <li>
           <% if ($line{accname} ne 'opm_admins'){ %>
-            <%= link_to account_delete => {accname => $line{accname}} => ( onclick => "return confirmDel('account','$line{accname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
+            <%= link_to accounts_delete => {accname => $line{accname}} => ( onclick => "return confirmDel('account','$line{accname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
           <% } %>
-          <%= link_to account_edit => { accname => $line{accname} } => begin %><%= $line{accname} %><% end %>
+          <%= link_to accounts_edit => { accname => $line{accname} } => begin %><%= $line{accname} %><% end %>
           </li>
         <% } %>
       </ul>
@@ -28,7 +28,7 @@
 
   <div class="span4" id="acc_create">
     <div class="box">
-      <%= form_for account_list => (method => 'POST') => begin %>
+      <%= form_for accounts_list => (method => 'POST') => begin %>
         <fieldset>
           <b><%=l 'Create an account' %> :</b><br /><br />
           <div class="control-group">

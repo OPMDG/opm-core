@@ -1,4 +1,4 @@
-package OPM::User;
+package OPM::Users;
 
 # This program is open source, licensed under the PostgreSQL License.
 # For license terms, see the LICENSE file.
@@ -172,7 +172,7 @@ sub delete {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('user_list');
+    $self->redirect_to('users_list');
 }
 
 sub delacc {
@@ -199,7 +199,7 @@ sub delacc {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('user_edit');
+    $self->redirect_to('users_edit');
 }
 
 sub login {
@@ -343,7 +343,7 @@ sub check_auth {
     }
     $self->flash('saved_route' => $self->current_route);
     $self->flash('stack' => $self->match->stack->[1]);
-    $self->redirect_to('user_login');
+    $self->redirect_to('users_login');
     return 0;
 }
 

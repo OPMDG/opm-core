@@ -21,7 +21,7 @@
     </div>
     <div class="span4">
       <div class="box">
-        <%= form_for user_profile => (method => 'POST') => begin %>
+        <%= form_for users_profile => (method => 'POST') => begin %>
           <fieldset>
             <b><%=l 'Change password' %> :</b><br />
             <div class="control-group" align="right">

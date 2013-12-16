@@ -16,16 +16,16 @@
             <%   my %line = %{$r}; %>
             <li>
             <% if ($line{rolname} ne (session 'user_username')) {
-              <%= link_to user_delete => {rolname => $line{rolname}} => ( onclick => "return confirmDel('user','$line{rolname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
+              <%= link_to users_delete => {rolname => $line{rolname}} => ( onclick => "return confirmDel('user','$line{rolname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
             <% } %>
-              <%= link_to user_edit => { rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
+              <%= link_to users_edit => { rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
               </li>
           <% } %>
         </ul>
     </div>
   </div>
   <div class="span4 box" id="user_create">
-    <%= form_for user_list => (method => 'POST') => begin %>
+    <%= form_for users_list => (method => 'POST') => begin %>
       <fieldset>
         <b><%=l 'Add a user' %></b><br /><br />
         <div class="control-group">

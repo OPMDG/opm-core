@@ -15,8 +15,8 @@ sub register {
 
     # Routes
     my $r      = $app->routes->route('/grapher');
-    my $r_auth = $r->bridge->to('user#check_auth');
-    my $r_adm  = $r_auth->bridge->to('user#check_admin');
+    my $r_auth = $r->bridge->to('users#check_auth');
+    my $r_adm  = $r_auth->bridge->to('users#check_admin');
 
     # Graphs
     $r_auth->route( '/graphs/:id', id => qr/\d+/ )->name('graphs_show')

@@ -18,15 +18,15 @@
           <% foreach my $a (@acc) { %>
             <%   my %line = %{$a}; %>
             <li>
-            <%= link_to user_delacc => {rolname => $rolname, accname => $line{accname}} => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
-            <%= link_to account_edit => {accname => $line{accname} } => begin %><%= $line{accname} %><% end %>
+            <%= link_to users_delacc => {rolname => $rolname, accname => $line{accname}} => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
+            <%= link_to accounts_edit => {accname => $line{accname} } => begin %><%= $line{accname} %><% end %>
             </li>
           <% } %>
         </ul>
     </div>
   </div>
   <div class="span4 box" id="user_addtoacc">
-    <%= form_for user_edit => (method => 'POST') => begin %>
+    <%= form_for users_edit => (method => 'POST') => begin %>
       <fieldset>
         <b><%=l 'Add to an account' %></b><br /><br />
         <div class="control-group">

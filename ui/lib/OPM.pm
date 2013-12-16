@@ -56,8 +56,8 @@ sub startup {
 
     # Routes
     my $r      = $self->routes;
-    my $r_auth = $r->bridge->to('user#check_auth');
-    my $r_adm  = $r_auth->bridge->to('user#check_admin');
+    my $r_auth = $r->bridge->to('users#check_auth');
+    my $r_adm  = $r_auth->bridge->to('users#check_admin');
 
     # Home page
     $r_auth->route('/')->to('server#list')->name('site_home');
@@ -67,34 +67,34 @@ sub startup {
     $r->route('/lang/:code')->to('lang#set')->name('lang_set');
 
     # User stuff
-    $r->route('/login')->to('user#login')->name('user_login');
-    $r_auth->route('/profile')->to('user#profile')->name('user_profile');
-    $r_auth->route('/logout')->to('user#logout')->name('user_logout');
+    $r->route('/login')->to('users#login')->name('users_login');
+    $r_auth->route('/profile')->to('users#profile')->name('users_profile');
+    $r_auth->route('/logout')->to('users#logout')->name('users_logout');
     if ( $config->{allow_register} ) {
-        $r->route('/register')->to('user#register')->name('user_register');
+        $r->route('/register')->to('users#register')->name('users_register');
     }
 
     # User management
-    $r_adm->route('/user')->to('user#list')->name('user_list');
-    $r_adm->route('/user/create')->to('user#create')->name('user_create');
-    $r_adm->route('/user/:rolname')->to('user#edit')->name('user_edit');
-    $r_adm->route('/user/delete/:rolname')->to('user#delete')
-        ->name('user_delete');
-    $r_adm->route('/user/delacc/:accname/:rolname')->to('user#delacc')
-        ->name('user_delacc');
+    $r_adm->route('/users')->to('users#list')->name('users_list');
+    $r_adm->route('/users/create')->to('users#create')->name('users_create');
+    $r_adm->route('/users/:rolname')->to('users#edit')->name('users_edit');
+    $r_adm->route('/users/delete/:rolname')->to('users#delete')
+        ->name('users_delete');
+    $r_adm->route('/users/delacc/:accname/:rolname')->to('users#delacc')
+        ->name('users_delacc');
 
     # Account management
-    $r_adm->route('/account')->to('account#list')->name('account_list');
-    $r_adm->route('/account/create')->to('account#create')
-        ->name('account_create');
-    $r_adm->route('/account/:accname')->to('account#edit')
-        ->name('account_edit');
-    $r_adm->route('/account/delete/:accname')->to('account#delete')
-        ->name('account_delete');
-    $r_adm->route('/account/delrol/:accname/:rolname')->to('account#delrol')
-        ->name('account_delrol');
-    $r_adm->route('/account/revokeserver/:accname/:idserver')->to('account#revokeserver')
-        ->name('account_revokeserver');
+    $r_adm->route('/accounts')->to('accounts#list')->name('accounts_list');
+    $r_adm->route('/accounts/create')->to('accounts#create')
+        ->name('accounts_create');
+    $r_adm->route('/accounts/:accname')->to('accounts#edit')
+        ->name('accounts_edit');
+    $r_adm->route('/accounts/delete/:accname')->to('accounts#delete')
+        ->name('accounts_delete');
+    $r_adm->route('/accounts/delrol/:accname/:rolname')->to('accounts#delrol')
+        ->name('accounts_delrol');
+    $r_adm->route('/accounts/revokeserver/:accname/:idserver')->to('accounts#revokeserver')
+        ->name('accounts_revokeserver');
 
     # Server management
     $r_auth->route('/server')->to('server#list')->name('server_list');

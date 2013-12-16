@@ -44,8 +44,8 @@
   <li class="dropdown">
     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><%=l 'Admin' %><b class="caret"></b></a>
     <ul class="dropdown-menu">
-      <li><%= link_to user_list => begin %><%=l 'Users' %><% end %></li>
-      <li><%= link_to account_list => begin %><%=l 'Accounts' %><% end %></li>
+      <li><%= link_to users_list => begin %><%=l 'Users' %><% end %></li>
+      <li><%= link_to accounts_list => begin %><%=l 'Accounts' %><% end %></li>
     </ul>
   </li>
   % }

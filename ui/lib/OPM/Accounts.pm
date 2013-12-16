@@ -1,4 +1,4 @@
-package OPM::Account;
+package OPM::Accounts;
 
 # This program is open source, licensed under the PostgreSQL License.
 # For license terms, see the LICENSE file.
@@ -73,7 +73,7 @@ sub delete {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('account_list');
+    $self->redirect_to('accounts_list');
 }
 
 sub delrol {
@@ -93,7 +93,7 @@ sub delrol {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('account_edit');
+    $self->redirect_to('accounts_edit');
 }
 
 sub revokeserver {
@@ -119,7 +119,7 @@ sub revokeserver {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('account_edit');
+    $self->redirect_to('accounts_edit');
 }
 
 sub edit {

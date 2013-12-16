@@ -12,7 +12,7 @@
 
 
   <div class="box span3">
-    <%= form_for user_login => (method => 'POST') => begin %>
+    <%= form_for users_login => (method => 'POST') => begin %>
       <fieldset>
 	<legend><%=l 'Login'%></legend>
 	<div class="control-group">

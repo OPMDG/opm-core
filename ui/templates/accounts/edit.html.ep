@@ -21,8 +21,8 @@
           <% foreach my $r (@roles) { %>
             <%   my %line = %{$r}; %>
             <li>
-            <%= link_to account_delrol => {rolname => $line{rolname}, accname => $accname} => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
-            <%= link_to user_edit => {rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
+            <%= link_to accounts_delrol => {rolname => $line{rolname}, accname => $accname} => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
+            <%= link_to users_edit => {rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
             </li>
           <% } %>
         </ul>
@@ -33,7 +33,7 @@
           <% foreach my $s (@myservers) { %>
             <%   my ($k,$v) = each %{$s}; %>
             <li>
-            <%= link_to account_revokeserver => {accname => $accname, idserver => $k} => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
+            <%= link_to accounts_revokeserver => {accname => $accname, idserver => $k} => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
             <%= $v %>
             </li>
           <% } %>
@@ -42,7 +42,7 @@
   </div>
   <div class="span4 box" id="acc_edit">
     <b><%=l 'Add a user to account' %> <%= param 'accname' %></b><br /><br />
-    <%= form_for account_edit => (method => 'POST') => begin %>
+    <%= form_for accounts_edit => (method => 'POST') => begin %>
       <fieldset>
         <div class="control-group">
           <label class="control-label" for="username"><%=l 'Username' %>:</label>
@@ -63,7 +63,7 @@
       </fieldset>
     <% end %>
 
-    <%= form_for account_edit => (method => 'POST') => begin %>
+    <%= form_for accounts_edit => (method => 'POST') => begin %>
       <fieldset>
         <div class="control-group">
           <label class="control-label" for="existing_user"><%=l 'Existing user' %> :</label>
@@ -80,7 +80,7 @@
       </fieldset>
     <% end %>
 
-    <%= form_for account_edit => (method => 'POST') => begin %>
+    <%= form_for accounts_edit => (method => 'POST') => begin %>
       <fieldset>
         <div class="control-group">
           <label class="control-label" for="hostname"><%=l 'Unassigned servers' %> :</label>
