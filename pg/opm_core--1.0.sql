@@ -58,7 +58,7 @@ INSERT INTO public.roles (rolname) VALUES ('opm_admins');
 CREATE TABLE public.servers (
     id bigserial PRIMARY KEY,
     hostname name NOT NULL,
-    id_role bigint REFERENCES public.roles (id)
+    id_role bigint REFERENCES public.roles (id) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 CREATE UNIQUE INDEX idx_servers_hostname
@@ -74,7 +74,7 @@ COMMENT ON TABLE public.servers IS 'Table servers lists all referenced servers' 
 
 CREATE TABLE public.services (
     id bigserial PRIMARY KEY,
-    id_server bigint NOT NULL REFERENCES public.servers (id),
+    id_server bigint NOT NULL REFERENCES public.servers (id) ON UPDATE CASCADE ON DELETE CASCADE,
     warehouse name NOT NULL,
     service text NOT NULL,
     last_modified date DEFAULT (now())::date NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE public.services (
     servalid interval
 );
 CREATE UNIQUE INDEX idx_services_service
-    ON services USING btree (service);
+    ON services USING btree (id_server,service);
 ALTER TABLE public.services OWNER TO opm;
 REVOKE ALL ON TABLE public.services FROM public ;
 
