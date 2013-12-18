@@ -45,12 +45,12 @@ CREATE UNIQUE INDEX idx_roles_rolname
 ALTER TABLE public.roles OWNER TO opm;
 REVOKE ALL ON TABLE public.roles FROM public ;
 
-COMMENT ON TABLE public.roles IS 'Map properties and info between accounts/users and internal pgsql roles';
+COMMENT ON TABLE public.roles IS 'Map properties and info between accounts/users and internal pgsql roles.' ;
 
-COMMENT ON COLUMN public.roles.id IS 'Role uniquer identier. Is the primary key of table roles';
-COMMENT ON COLUMN public.roles.rolname IS 'rolname, same as rolname from table pg_roles';
-COMMENT ON COLUMN public.roles.creation_ts IS 'Role creation date and time';
-COMMENT ON COLUMN public.roles.rolconfig IS 'Specific configuration for a particular role';
+COMMENT ON COLUMN public.roles.id IS 'Role uniquer identier. Is the primary key of table roles.' ;
+COMMENT ON COLUMN public.roles.rolname IS 'Rolname, same as rolname from table pg_roles.' ;
+COMMENT ON COLUMN public.roles.creation_ts IS 'Role creation date and time.';
+COMMENT ON COLUMN public.roles.rolconfig IS 'Specific configuration for a particular role.' ;
 
 
 INSERT INTO public.roles (rolname) VALUES ('opm_admins');
@@ -67,10 +67,10 @@ ALTER TABLE public.servers OWNER TO opm ;
 
 REVOKE ALL ON TABLE public.servers FROM public ;
 
-COMMENT ON COLUMN public.servers.id IS 'Server unique identifier. Is the primary key' ;
-COMMENT ON COLUMN public.servers.hostname IS 'hostname of the server, as referenced by dispatcher. Must be unique' ;
-COMMENT ON COLUMN public.servers.id_role IS 'owner of the server' ;
-COMMENT ON TABLE public.servers IS 'Table servers lists all referenced servers' ;
+COMMENT ON COLUMN public.servers.id IS 'Server unique identifier. Is the primary key.' ;
+COMMENT ON COLUMN public.servers.hostname IS 'Hostname of the server, as referenced by dispatcher. Must be unique.' ;
+COMMENT ON COLUMN public.servers.id_role IS 'Owner of the server.' ;
+COMMENT ON TABLE public.servers IS 'Table servers lists all referenced servers.' ;
 
 CREATE TABLE public.services (
     id bigserial PRIMARY KEY,
@@ -89,15 +89,16 @@ REVOKE ALL ON TABLE public.services FROM public ;
 
 COMMENT ON TABLE public.services IS 'Table services lists all available metrics.
 
-This table is a master table. Each warehouse have a specific services tables inherited from this master table';
+This table is a master table. Each warehouse have a specific services tables inherited from this master table.';
 
-COMMENT ON COLUMN public.services.id IS 'Service unique identifier. Is the primary key';
-COMMENT ON COLUMN public.services.id_server IS 'Identifier of the server';
-COMMENT ON COLUMN public.services.warehouse IS 'warehouse that stores this specific metric';
-COMMENT ON COLUMN public.services.service IS 'service name that provides a specific metric';
-COMMENT ON COLUMN public.services.last_modified IS 'last day that the dispatcher pushed datas in the warehouse';
-COMMENT ON COLUMN public.services.creation_ts IS 'warehouse creation date and time for this particular service';
-COMMENT ON COLUMN public.services.servalid IS 'data retention time';
+COMMENT ON COLUMN public.services.id IS 'Service unique identifier. Is the primary key.';
+COMMENT ON COLUMN public.services.id_server IS 'Identifier of the server.';
+COMMENT ON COLUMN public.services.warehouse IS 'Warehouse that stores this specific metric.';
+COMMENT ON COLUMN public.services.service IS 'Service name that provides a specific metric.';
+COMMENT ON COLUMN public.services.last_modified IS 'Last day that the dispatcher pushed datas in the warehouse.';
+COMMENT ON COLUMN public.services.creation_ts IS 'Warehouse creation date and time for this particular service.';
+COMMENT ON COLUMN public.services.last_cleanup IS 'Last launch of "warehouse".cleanup_service(). Each warehouse has to implement his own, if needed.';
+COMMENT ON COLUMN public.services.servalid IS 'Data retention time.';
 
 SELECT pg_catalog.pg_extension_config_dump('public.roles', '');
 SELECT pg_catalog.pg_extension_config_dump('public.roles_id_seq', '');
@@ -151,7 +152,7 @@ REVOKE ALL ON FUNCTION public.create_account(IN text, OUT bigint, OUT text)
 GRANT ALL ON FUNCTION public.create_account(IN text, OUT bigint, OUT text)
     TO opm_admins;
 
-COMMENT ON FUNCTION public.create_account (IN text, OUT bigint, OUT text) IS 'Create a new account.
+COMMENT ON FUNCTION public.create_account (IN text, OUT bigint, OUT text) IS 'Create a new OPM account.
 
 It creates a role (NOLOGIN) and register it in the public.roles table.
 
@@ -225,15 +226,15 @@ VOLATILE
 LEAKPROOF
 SECURITY DEFINER;
 
-ALTER FUNCTION public.create_user(IN text, IN text, IN name[], OUT boolean)
+ALTER FUNCTION public.create_user(IN text, IN text, IN name[], OUT bigint, OUT text)
     OWNER TO opm;
-REVOKE ALL ON FUNCTION public.create_user(IN text, IN text, IN name[], OUT boolean)
+REVOKE ALL ON FUNCTION public.create_user(IN text, IN text, IN name[], OUT bigint, OUT text)
     FROM public;
-GRANT ALL ON FUNCTION public.create_user(IN text, IN text, IN name[], OUT boolean)
+GRANT ALL ON FUNCTION public.create_user(IN text, IN text, IN name[], OUT bigint, OUT text)
     TO opm_admins;
 
 COMMENT ON FUNCTION public.create_user (IN p_user text, IN p_passwd text, IN p_accounts name[],
-                    OUT rc boolean) IS 'Create a new user for an account.
+                    OUT rc boolean) IS 'Create a new OPM user for an OPM account.
 
 It creates a role (LOGIN, ENCRYPTED PASSWORD) and register it in the
 public.roles table.
@@ -313,9 +314,9 @@ REVOKE ALL ON FUNCTION public.drop_account (IN name)
 GRANT ALL ON FUNCTION public.drop_account (IN name)
     TO opm_admins;
 
-COMMENT ON FUNCTION public.drop_account(IN name) IS 'Drop an account.
+COMMENT ON FUNCTION public.drop_account(IN name) IS 'Drop an existing OPM account.
 
-It drops an account and also roles that are only in this account.';
+It drops the account and also OPM roles that are only in this account.';
 
 /*public.drop_user
 
@@ -363,7 +364,7 @@ REVOKE ALL ON FUNCTION public.drop_user (IN name)
 GRANT ALL ON FUNCTION public.drop_user (IN name)
     TO opm_admins;
 
-COMMENT ON FUNCTION public.drop_user(IN name) IS 'Drop a user.';
+COMMENT ON FUNCTION public.drop_user(IN name) IS 'Drop an existing OPM user.';
 
 /* public.list_users
 */
@@ -417,7 +418,7 @@ ALTER FUNCTION public.list_users(name) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_users(name) FROM public;
 GRANT ALL ON FUNCTION public.list_users(name) TO opm_roles;
 
-COMMENT ON FUNCTION public.list_users(name) IS 'List users.
+COMMENT ON FUNCTION public.list_users(name) IS 'List OPM users.
 
 If current user is member of opm_admins, list all users and account on the system.
 
@@ -452,7 +453,7 @@ ALTER FUNCTION public.list_accounts() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_accounts() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_accounts() TO opm_roles;
 
-COMMENT ON FUNCTION public.list_accounts() IS 'List accounts.
+COMMENT ON FUNCTION public.list_accounts() IS 'List OPM accounts.
 
 If current user is member of opm_admins, list all account on the system.
 
@@ -478,7 +479,7 @@ ALTER FUNCTION public.is_user(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_user(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_user(IN name, OUT boolean) TO opm_roles;
 
-COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given rolname is a user.';
+COMMENT ON FUNCTION public.is_user(IN name, OUT boolean) IS 'Tells if the given rolname is an OPM user.';
 
 /*
 is_account(rolname)
@@ -502,7 +503,7 @@ ALTER FUNCTION public.is_account(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_account(IN name, OUT boolean) FROM public;
 GRANT ALL ON FUNCTION public.is_account(IN name, OUT boolean) TO opm_roles;
 
-COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an account.';
+COMMENT ON FUNCTION public.is_account(IN name, OUT boolean) IS 'Tells if the given rolname is an OPM account.';
 
 /*
 is_admin(rolname)
@@ -532,7 +533,7 @@ ALTER FUNCTION public.is_admin(IN name, OUT boolean) OWNER TO opm;
 REVOKE ALL ON FUNCTION public.is_admin(IN name, OUT boolean) FROM public;
 GRANT EXECUTE ON FUNCTION public.is_admin(IN name, OUT boolean) TO opm_roles;
 
-COMMENT ON FUNCTION public.is_admin(IN name, OUT boolean) IS 'Tells if the given rolname is an admin.';
+COMMENT ON FUNCTION public.is_admin(IN name, OUT boolean) IS 'Tells if the given rolname is an OPM admin.';
 
 /*
 is_opm_role(rolname)
@@ -560,7 +561,7 @@ REVOKE ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name
 GRANT ALL ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) TO opm_roles;
 
 COMMENT ON FUNCTION public.is_opm_role(IN name, OUT oid, OUT bigint, OUT name, OUT boolean) IS
-'If given role exists as a OPM role (account or user), returns true';
+'If given role exists as an OPM role (account or user), returns true.';
 
 /*
 wh_exists(wh)
@@ -978,7 +979,7 @@ ALTER FUNCTION public.grant_account(p_rolname name, p_accountname name) OWNER TO
 REVOKE ALL ON FUNCTION public.grant_account(p_rolname name, p_accountname name) FROM public;
 GRANT EXECUTE ON FUNCTION public.grant_account(p_rolname name, p_accountname name) TO opm_admins;
 
-COMMENT ON FUNCTION public.grant_account(p_rolname name, p_accountname name) IS 'Grant an account to a user.';
+COMMENT ON FUNCTION public.grant_account(p_rolname name, p_accountname name) IS 'Grant an OPM account to an OPM user.';
 
 
 /*
@@ -1026,7 +1027,7 @@ ALTER FUNCTION public.revoke_account(p_rolname name, p_accountname name) OWNER T
 REVOKE ALL ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) FROM public;
 GRANT EXECUTE ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) TO opm_roles;
 
-COMMENT ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) IS 'Revoke an account from a user.';
+COMMENT ON FUNCTION public.revoke_account(p_rolname name, p_accountname name) IS 'Revoke an OPM account from an OPM user.';
 
 /*
 list_warehouses()
@@ -1050,7 +1051,7 @@ ALTER FUNCTION public.list_warehouses() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_warehouses() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_warehouses() TO opm_roles;
 
-COMMENT ON FUNCTION public.list_warehouses() IS 'List all warehouses';
+COMMENT ON FUNCTION public.list_warehouses() IS 'List all warehouses.';
 
 /*
 list_processes()
@@ -1074,4 +1075,4 @@ ALTER FUNCTION public.list_processes() OWNER TO opm;
 REVOKE ALL ON FUNCTION public.list_processes() FROM public;
 GRANT EXECUTE ON FUNCTION public.list_processes() TO opm_roles;
 
-COMMENT ON FUNCTION public.list_processes() IS 'List all processes';
+COMMENT ON FUNCTION public.list_processes() IS 'List all processes.';
