@@ -38,6 +38,9 @@ sub register {
                 $password = $ctrl->session('user_password');
             }
 
+            # Force AutoCommit to be able to handle transactions if needed.
+            # and avoid unnecessary commit/rollback.
+            $config->{options}->{AutoCommit} = 1;
             # Return a new database connection handle
             my $dbh =
                 DBI->connect( $self->conninfo, $username, $password,

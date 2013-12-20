@@ -27,8 +27,6 @@ sub show {
     my $graph = $sth->fetchrow_hashref;
     $sth->finish;
 
-    $dbh->commit;
-
     # Check if it exists (this can be reach by url)
     if ( !defined $graph ) {
         $dbh->disconnect;
@@ -193,7 +191,6 @@ sub edit {
     $sth->execute($id);
     my $graph = $sth->fetchrow_hashref;
     $sth->finish;
-    $dbh->commit;
 
     # Check if it exists
     if ( !defined $graph ) {
@@ -324,7 +321,6 @@ sub edit {
                 $sth->finish;
 
                 $self->msg->info("Graph saved");
-                $dbh->commit;
                 $dbh->disconnect;
                 return $self->redirect_to('graphs_show', id => $id);
             }
@@ -365,7 +361,6 @@ sub edit {
         }
 
         $sth->finish;
-        $dbh->commit;
 
         # Prepare properties
         my $json = Mojo::JSON->new;
@@ -416,7 +411,6 @@ sub remove {
         return;
     }
     $sth->finish;
-    $dbh->commit;
     $dbh->disconnect;
 
     if ( (defined $self->flash('saved_route')) && (defined $self->flash('stack')) ) {
@@ -458,7 +452,6 @@ sub clone {
 
     ( $new_id ) = $sth->fetchrow;
     $sth->finish;
-    $dbh->commit;
     $dbh->disconnect;
 
     $self->msg->info("Graph cloned, please edit it.");
@@ -624,7 +617,6 @@ sub data {
         }
         $sth->finish;
 
-        $dbh->commit;
         $dbh->disconnect;
 
         if ( !scalar(@$data) ) {

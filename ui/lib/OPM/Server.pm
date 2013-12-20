@@ -97,9 +97,6 @@ sub host {
     $sql = $dbh->prepare("SELECT pr_grapher.create_graph_for_wh_nagios(?)");
     $sql->execute($id);
     $sql->finish();
-    $dbh->commit();
-
-    $dbh = $self->database();
 
     # FIXME: handle pr_grapher and wh_nagios dependancy
     $sql = $dbh->prepare(

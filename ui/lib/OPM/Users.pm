@@ -40,11 +40,9 @@ sub list {
                 $dbh->prepare( "SELECT public.create_user(?, ?, '{" . $form_data->{accname} . "}');");
             if ( $sql->execute($form_data->{username}, $form_data->{password}) ) {
                 $self->msg->info("User added");
-                $dbh->commit() if (!$dbh->{AutoCommit});
             }
             else {
                 $self->msg->error("Could not add user");
-                $dbh->rollback() if (!$dbh->{AutoCommit});
             }
             $sql->finish();
         }
@@ -113,15 +111,12 @@ sub edit {
                 my $rc = $sql->fetchrow();
                 if ( $rc) {
                     $self->msg->info("Account added to user");
-                    $dbh->commit() if (!$dbh->{AutoCommit});
                 } else {
                     $self->msg->error("Could not add account to user");
-                    $dbh->rollback() if (!$dbh->{AutoCommit});
                 }
             }
             else {
                 $self->msg->error("Could not add account to user");
-                $dbh->rollback() if (!$dbh->{AutoCommit});
             }
             $sql->finish();
         }
@@ -164,11 +159,9 @@ sub delete {
     my $sql     = $dbh->prepare("SELECT public.drop_user(?);");
     if ( $sql->execute($rolname) ) {
         $self->msg->info("User deleted");
-        $dbh->commit() if (!$dbh->{AutoCommit});
     }
     else {
         $self->msg->error("Could not delete user");
-        $dbh->rollback() if (!$dbh->{AutoCommit});
     }
     $sql->finish();
     $dbh->disconnect();
@@ -186,16 +179,13 @@ sub delacc {
         my $rc = $sql->fetchrow();
         if ( $rc ){
             $self->msg->info("Account removed from user");
-            $dbh->commit() if (!$dbh->{AutoCommit});
         }
         else {
             $self->msg->error("Could not remove account from user");
-            $dbh->rollback() if (!$dbh->{AutoCommit});
         }
     }
     else {
         $self->msg->error("Could not remove account from user");
-        $dbh->rollback() if (!$dbh->{AutoCommit});
     }
     $sql->finish();
     $dbh->disconnect();
@@ -300,11 +290,9 @@ sub profile {
                 if ( $sql->execute() ) {
                     $self->msg->info("Password changed");
                     $self->session->{user_password} = $form_data->{new_password};
-                    $dbh->commit() if (!$dbh->{AutoCommit});
                 }
                 else {
                     $self->msg->error("Could not change password");
-                    $dbh->rollback() if (!$dbh->{AutoCommit});
                 }
                 $sql->finish();
             }
