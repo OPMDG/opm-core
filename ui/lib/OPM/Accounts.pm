@@ -28,10 +28,8 @@ sub list {
         }
         if ( !$e ) {
             $sql =
-                $dbh->prepare( "SELECT public.create_account('"
-                    . $form_data->{accname}
-                    . "');" );
-            if ( $sql->execute() ) {
+                $dbh->prepare( "SELECT public.create_account(?);" );
+            if ( $sql->execute( $form_data->{accname} ) ) {
                 $self->msg->info("Account created");
             }
             else {
