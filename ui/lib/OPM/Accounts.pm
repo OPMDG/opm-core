@@ -75,10 +75,16 @@ sub delrol {
     my $dbh     = $self->database();
     my $rolname = $self->param('rolname');
     my $accname = $self->param('accname');
+    my $rc;
     my $sql =
-        $dbh->prepare( 'REVOKE "' . $accname . '" FROM "' . $rolname . '"' );
-    if ( $sql->execute() ) {
-        $self->msg->info("Account removed from user");
+        $dbh->prepare( 'SELECT public.revoke_account(?,?);' );
+    if ( $sql->execute($rolname, $accname) ) {
+        my $rc = $sql->fetchrow();
+        if ( $rc ){
+            $self->msg->info("Account removed from user");
+        } else{
+            $self->msg->error("Could not remove account from user");
+        }
     }
     else {
         $self->msg->error("Could not remove account from user");
@@ -115,6 +121,7 @@ sub edit {
     my $self    = shift;
     my $dbh     = $self->database();
     my $accname = $self->param('accname');
+    my $rc;
     my $sql;
 
     $sql = $dbh->prepare(
@@ -139,13 +146,14 @@ sub edit {
 
             # Add existing user to account
             $sql =
-                $dbh->prepare( 'GRANT "' 
-                    . $accname 
-                    . '" TO "'
-                    . $form_data->{existing_username}
-                    . '";' );
-            if ( $sql->execute() ) {
-                $self->msg->info("User added");
+                $dbh->prepare( 'SELECT public.grant_account(?,?);' );
+            if ( $sql->execute( $form_data->{existing_username}, $accname ) ) {
+                my $rc = $sql->fetchrow();
+                if ( $rc ){
+                    $self->msg->info("User added");
+                } else {
+                    $self->msg->error("Could not add user");
+                }
             }
             else {
                 $self->msg->error("Could not add user");
