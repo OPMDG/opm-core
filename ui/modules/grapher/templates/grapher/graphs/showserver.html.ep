@@ -60,7 +60,8 @@
 <% foreach my $graph (@graphs) { %>
 
 <div class="graph_container">
-  <div class="row-fluid" style="margin-bottom: 5px">
+  <div class="grapher-header row-fluid" style="margin-bottom: 5px">
+    <span></span>
     <div class="pull-right">
       <div class="btn-group">
         <a href="#" offon-series="<%= $graph->{id} %>"

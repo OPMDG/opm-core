@@ -13,12 +13,21 @@ $(document).ready(function () {
   });
 
   $('[id-graph]').each(function (i, elt) {
-      $(this).grapher({
-        url: "/grapher/graphs/data",
-        legend_box: $('#legend-' + $(this).attr('id-graph'))
+    $(this).grapher({
+      url: "/grapher/graphs/data",
+      legend_box: $('#legend-' + $(this).attr('id-graph'))
     });
-   });
 
+    $(this).grapher().observe('grapher:zoomed', function (from, to) {
+        var $this = $(this),
+          grapher  = $this.grapher();
+
+        // FIXME: do not use flotr props to get min/max date
+        $(this).parent().siblings().find('> span').get(0)
+          .innerHTML = ''+ grapher.formatDate(new Date(grapher.flotr.axes.x.datamin), '%d/%m/%y %H:%M:%S')
+            +'&nbsp;&nbsp;-&nbsp;&nbsp;'+ grapher.formatDate(new Date(grapher.flotr.axes.x.datamax), '%d/%m/%y %H:%M:%S')
+    });
+  });
 
   $('.scales input[type=button]').click(function (e) {
     var fromDate = new Date();

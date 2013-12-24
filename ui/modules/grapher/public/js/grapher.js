@@ -324,6 +324,10 @@
 
             this.draw();
 
+            Flotr.bean.fire(
+                this.$element.get(0), 'grapher:zoomed', [ tsfrom, tsto ]
+            );
+
             return true;
         },
 
@@ -378,6 +382,14 @@
             if ($hidden.length) this._activateSerie($hidden);
 
             this.refresh();
+        },
+
+        observe: function (e, c) {
+            return Flotr.EventAdapter.observe( this.$element.get(0), e, c );
+        },
+
+        formatDate: function (d, f) {
+            return Flotr.Date.format(d, f);
         }
     };
 
@@ -416,7 +428,6 @@
                     ]);
 
                     grapher.zoom(Math.round(sel.x1), Math.round(sel.x2));
-
                 });
 
                 Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:click', function () {
