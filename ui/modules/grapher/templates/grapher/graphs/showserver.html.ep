@@ -87,6 +87,10 @@
             'class' => "btn btn-mini",
             'title' => l('Edit')
           ), begin %><i class="icon-wrench"></i><% end %>
+          <%= link_to graphs_clone => { id => $graph->{id} } => (
+            'class' => "btn btn-mini btn_clone_graph",
+            'title' => l('Clone')
+          ), begin %><i class="icon-asterisk"></i><% end %>
       </div>
       % }
     </div>
