@@ -68,16 +68,35 @@
   <div class="row-fluid" style="margin-bottom: 5px">
     <div class="pull-right">
       <div class="btn-group">
-        <a href="#" offon-series="<%= $graph->{id} %>" class="btn btn-mini"><%=l 'Show/Hide series' %></a>
-        <a href="#" invert-series="<%= $graph->{id} %>" class="btn btn-mini"><%=l 'Invert Sel.' %></a>
-        <%= link_to graphs_show => { id => $graph->{id} }, (class => "btn btn-mini") => begin %><%=l 'Link' %><% end %>
-        <a href="#" export-graph="<%= $graph->{id} %>" class="btn btn-mini save"><%=l 'Export' %></a>
+        <a href="#" offon-series="<%= $graph->{id} %>"
+          class="btn btn-mini"
+          title="<%= l 'Show/Hide series' %>"
+          ><i class="icon-eye-open"></i></a>
+        <a href="#" invert-series="<%= $graph->{id} %>"
+          class="btn btn-mini"
+          title="<%= l 'Invert Sel.' %>"
+          ><i class="icon-eye-close"></i></a>
+        <%= link_to graphs_show => { id => $graph->{id} }, (
+            'class' => "btn btn-mini",
+            'title' => l('Link')
+          ), begin %><i class="icon-globe"></i><% end %>
+        <a href="#" export-graph="<%= $graph->{id} %>"
+          class="btn btn-mini save"
+          title="<%= l 'Save' %>"
+          ><i class="icon-download-alt"></i></a>
       </div>
 
       <% if (stash 'is_admin') { %>
       <div class="btn-group">
-        <%= link_to graphs_edit => { id => $graph->{id} } => (class => "btn btn-mini") => begin %><%=l 'Edit' %><% end %>
-        <%= link_to graphs_clone => { id => $graph->{id} } => (class => "btn btn-mini btn_clone_graph") => begin %><%=l 'Clone' %><% end %>
+        <%= link_to graphs_edit => { id => $graph->{id} } => (
+            'class' => "btn btn-mini",
+            'title' => l('Edit')
+          ), begin %><i class="icon-wrench"></i><% end %>
+        <%= link_to graphs_clone => { id => $graph->{id} } => (
+            'class' => "btn btn-mini btn_clone_graph",
+            'title' => l('Clone')
+          ), begin %><i class="icon-asterisk"></i>
+        <% end %>
       </div>
       <% } %>
     </div>

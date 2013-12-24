@@ -96,6 +96,9 @@ $(document).ready(function () {
   /* by default, show the week graph by triggering the week button */
   $('#sel_week').click();
 
+  /* show tooltips */
+  $('a[title]').tooltip();
+
   /* confirm on clone */
   $('.btn_clone_graph').click(function () {
       return confirm('Do you really want to clone this graph ?');
