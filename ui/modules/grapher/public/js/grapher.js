@@ -39,7 +39,7 @@
             },
             lines: {
               filled: true,
-              lineWidth: 0.5,
+              lineWidth: 2,
               stacked: false
             },
             mouse: {
