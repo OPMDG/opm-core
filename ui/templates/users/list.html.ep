@@ -15,7 +15,7 @@
           <% foreach my $r (@roles) { %>
             <%   my %line = %{$r}; %>
             <li>
-            <% if ($line{rolname} ne (session 'user_username')) {
+            <% if ($line{rolname} ne (session 'user_username')) { %>
               <%= link_to users_delete => {rolname => $line{rolname}} => ( onclick => "return confirmDel('user','$line{rolname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
             <% } %>
               <%= link_to users_edit => { rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
@@ -48,7 +48,7 @@
         <div class="control-group">
           <label class="control-label" for="password"><%=l 'Password' %>:</label>
           <div class="controls">
-            <%= text_field 'password', type => 'text', class => 'span3', id => 'password' %>
+            <%= password_field 'password', class => 'span3', id => 'password' %>
           </div>
         </div>
         <div class="btn-group pull-left">
