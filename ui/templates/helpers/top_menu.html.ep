@@ -22,7 +22,7 @@
       <li class="divider"></li>
       <% foreach my $a ( @servers ) { %>
       <li class="dropdown-submenu">
-        <a href="#"><%= $a->{'rolname'} %></a>
+        <a href="<%= url_for 'server_list'%>#account_<%= $a->{'rolname'} %>"><%=l $a->{'rolname'} %></a>
         <ul class="dropdown-menu">
           <% foreach my $s ( @{ $a->{'servers'} } ) { %>
           <li>

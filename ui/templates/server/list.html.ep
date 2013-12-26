@@ -26,15 +26,11 @@
 
       <div class="accordion" id="accordion2">
       <% foreach my $s ( @servers ) { %>
-        <div class="accordion-group">
+        <div id="account_<%= $s->{'rolname'} %>" class="accordion-group">
           <div class="accordion-heading">
             <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $s->{'servers'}[0]{'id'} %>">
             <i class="icon-plus"></i>
-            <% if ($s->{'rolname'} eq '') { %>
-              <%=l 'Unassigned' %>
-            <% } else { %>
-              <%= $s->{'rolname'} %>
-            <% } %>
+              <%=l $s->{'rolname'} %>
             </a>
           </div>
           <div id="account_<%= $s->{'servers'}[0]{'id'} %>" class="accordion-body collapse">
