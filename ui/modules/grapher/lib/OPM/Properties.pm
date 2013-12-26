@@ -30,45 +30,42 @@ sub validate {
     my ( $self, $input ) = @_;
     my $json = Mojo::JSON->new;
 
-    my %d = %$input;
+    my %d;
 
     # Remove empty values to use library/grapher defaults
-    foreach my $k (
-        qw/xaxis_timeFormat points_lineWidth bars_lineWidth pie_lineWidth
-        lines_lineWidth xaxis_titleAngle xaxis_labelsAngle/ )
-    {
-        delete $d{$k} if $d{$k} =~ m/^\s*$/;
+    foreach my $k ( qw{
+        xaxis_timeFormat xaxis_title yaxis_title xaxis_mode
+        type
+    }) {
+        next unless $input->{$k} and $input->{$k} !~ m/^\s*$/;
+        $d{$k} = $input->{$k};
     }
 
     # Process checkboxes: unchecked ones are in the hashref,
     # checked values are 1 and we want true or false.
-    foreach my $c (
-        qw/bars_stacked bars_filled bars_grouped lines_stacked
-        lines_filled points_filled pie_filled show_legend/ )
-    {
-        $d{$c} = ( exists $d{$c} ) ? $json->true : $json->false;
-    }
-
-    # Process null fields
-    foreach my $k (qw/xaxis_title yaxis_title/) {
-        $d{$k} = undef if $d{$k} =~ m/^\s*$/;
+    foreach my $c ( qw{
+        bars_stacked bars_filled bars_grouped lines_stacked
+        lines_filled points_filled pie_filled show_legend
+    }) {
+        $d{$c} = ( exists $input->{$c} ) ? $json->true : $json->false;
     }
 
     # Process numbers
-    foreach my $k (
-        qw/points_lineWidth bars_lineWidth yaxis_labelsAngle points_radius
-        xaxis_titleAngle xaxis_labelsAngle bars_barWidth pie_lineWidth
-        lines_lineWidth yaxis_titleAngle/ )
-    {
-        if ( ( exists $d{$k} ) && ( $d{$k} =~ m!^[\d\.]+$! ) ) {
-            $d{$k} = $d{$k} + 0;
-        }
+    foreach my $k ( qw{
+        bars_lineWidth bars_barWidth lines_lineWidth pie_lineWidth
+        points_lineWidth points_radius xaxis_labelsAngle
+        xaxis_titleAngle yaxis_labelsAngle yaxis_titleAngle
+    }) {
+        next unless exists $input->{$k}
+            and $input->{$k} =~ m/^[\d\.]+$/;
+
+        $d{$k} = $input->{$k} + 0;
     }
 
     # Process lists
-    if ( defined $d{colors} ) {
-        my @l = split /[\s\,\;]+/, $d{colors};
-        $d{colors} = \@l;
+    if ( defined $input->{'colors'} ) {
+        my @l = split /[\s\,\;]+/, $input->{'colors'};
+        $d{'colors'} = \@l;
     }
 
     return \%d;
