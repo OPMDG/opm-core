@@ -71,7 +71,7 @@
         </div>
 
         <p>Powered by <a href="http://www.mojolicious.org" title="mojolicious web framework">Mojolicious</a></p>
-        <p>Design based on <a href="http://twitter.github.com/bootstrap/" title="bootstrap">Bootstrap</a></p>
+        <p>Design based on <a href="http://getbootstrap.com/2.3.2/" title="bootstrap">Bootstrap 2.3.2</a></p>
 
       </div>
     </div>

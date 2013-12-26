@@ -7,8 +7,11 @@
 % content_for header => begin
   <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/graph.css' %>" />
   <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-datetimepicker.min.css' %>" />
-  <script type="text/javascript" src="<%= url_for '/js/bootstrap-datetimepicker.min.js' %>"></script>
-  <script type="text/javascript" src="<%= url_for '/js/show.js' %>"></script>
+  %= javascript '/js/bootstrap-datetimepicker.min.js'
+  %= javascript '/js/show.js'
+  %= javascript begin
+    var graphDataUrl = '<%= url_for 'graphs_data' %>';
+  % end
 % end
 % my @graphs = @{stash 'graphs'};
 % my @servers = @{ stash 'servers' };
@@ -48,7 +51,9 @@
           </a>
           <ul class="dropdown-menu">
             <% foreach my $s ( @servers ) { %>
-            <li><a href="/grapher/graphs/showserver/<%= $s->{'id'} %>"><%= $s->{'hostname'} %></a></li>
+            <li>
+              <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'} } => begin %><%= $s->{'hostname'} %><% end %>
+            </li>
             <% } %>
           </ul>
         </div>

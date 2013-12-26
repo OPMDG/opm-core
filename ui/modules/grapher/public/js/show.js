@@ -14,7 +14,7 @@ $(document).ready(function () {
 
   $('[id-graph]').each(function (i, elt) {
     $(this).grapher({
-      url: "/grapher/graphs/data",
+      url: graphDataUrl,
       legend_box: $('#legend-' + $(this).attr('id-graph'))
     });
 
