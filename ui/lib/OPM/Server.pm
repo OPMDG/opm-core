@@ -22,7 +22,7 @@ sub list {
     $sql = $dbh->prepare(
         "SELECT id, hostname, COALESCE(rolname,'') AS rolname
         FROM public.list_servers()
-        ORDER BY rolname;");
+        ORDER BY rolname, hostname;");
     $sql->execute();
 
     while ( my $row = $sql->fetchrow_hashref() ) {
