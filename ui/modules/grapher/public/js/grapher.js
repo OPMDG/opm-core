@@ -147,7 +147,7 @@
                                 if (t < second)
                                     return t+'ms';
                                 else
-                                    return Math.floor(t/second)+'s '+(t%second)+'ms';
+                                    return Math.floor(t/second)+'s '+(t%second? t%second+'ms':'');
                             }
                             return formatyear(val);
                         break;
