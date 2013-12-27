@@ -72,35 +72,81 @@ $(document).ready(function () {
     });
   });
 
-    $('[export-graph]').click(function (e) {
-        e.preventDefault();
-        var id = $(this).attr('export-graph'),
-            grapher = $('[id-graph='+id+']').grapher();
+  $('.go-forward').click(function (e) {
+    var frompick = $('#fromdatepick').data('datetimepicker');
+    var topick   = $('#todatepick').data('datetimepicker');
+    var fromDate = frompick.getLocalDate().getTime();
+    var toDate   = topick.getLocalDate().getTime();
+    var delta    = toDate - fromDate;
 
-        grapher.export();
+    e.preventDefault();
+
+    fromDate += delta;
+    toDate   += delta;
+
+    frompick.setLocalDate(new Date(fromDate));
+    topick.setLocalDate(new Date(toDate));
+
+    $('[id-graph]').each(function (i, e) {
+        $(e).grapher().zoom(
+            frompick.getLocalDate().getTime(),
+            topick.getLocalDate().getTime()
+        );
     });
+  });
 
-    $('[invert-series]').click(function (e) {
-        e.preventDefault();
-        var id = $(this).attr('invert-series'),
-            grapher = $('[id-graph='+id+']').grapher();
+  $('.go-backward').click(function (e) {
+    var frompick = $('#fromdatepick').data('datetimepicker');
+    var topick   = $('#todatepick').data('datetimepicker');
+    var fromDate = frompick.getLocalDate().getTime();
+    var toDate   = topick.getLocalDate().getTime();
+    var delta    = toDate - fromDate;
 
-        grapher.invertActivatedSeries();
+    e.preventDefault();
+
+    fromDate -= delta;
+    toDate   -= delta;
+
+    frompick.setLocalDate(new Date(fromDate));
+    topick.setLocalDate(new Date(toDate));
+
+    $('[id-graph]').each(function (i, e) {
+        $(e).grapher().zoom(
+            frompick.getLocalDate().getTime(),
+            topick.getLocalDate().getTime()
+        );
     });
+  });
 
-    $('[offon-series]').data('is_on', true).click(function (e) {
-        e.preventDefault();
-        var id = $(this).attr('offon-series'),
-            grapher = $('[id-graph='+id+']').grapher(),
-            is_on = ! $(this).data('is_on');
+  $('[export-graph]').click(function (e) {
+      e.preventDefault();
+      var id = $(this).attr('export-graph'),
+          grapher = $('[id-graph='+id+']').grapher();
 
-        if (is_on)
-            grapher.activateSeries();
-        else
-            grapher.deactivateSeries();
+      grapher.export();
+  });
 
-        $(this).data('is_on', is_on);
-    });
+  $('[invert-series]').click(function (e) {
+      e.preventDefault();
+      var id = $(this).attr('invert-series'),
+          grapher = $('[id-graph='+id+']').grapher();
+
+      grapher.invertActivatedSeries();
+  });
+
+  $('[offon-series]').data('is_on', true).click(function (e) {
+      e.preventDefault();
+      var id = $(this).attr('offon-series'),
+          grapher = $('[id-graph='+id+']').grapher(),
+          is_on = ! $(this).data('is_on');
+
+      if (is_on)
+          grapher.activateSeries();
+      else
+          grapher.deactivateSeries();
+
+      $(this).data('is_on', is_on);
+  });
 
   /* by default, show the week graph by triggering the week button */
   $('#sel_week').click();

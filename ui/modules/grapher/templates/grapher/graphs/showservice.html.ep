@@ -29,6 +29,9 @@
       <input id="sel_week" class="btn" type="button" value="<%=l 'Week' %>" />
       <input id="sel_day" class="btn" type="button" value="<%=l 'Day' %>" />
       &nbsp;&nbsp;&nbsp;
+      <button class="btn go-backward"><i class="icon-fast-backward"></i></button>
+      <button class="btn go-forward"><i class="icon-fast-forward"></i></button>
+      &nbsp;&nbsp;&nbsp;
       <div class="input-prepend date datepick" id="fromdatepick">
         <span class="add-on">
           <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
