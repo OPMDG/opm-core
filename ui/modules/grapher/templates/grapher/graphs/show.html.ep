@@ -24,13 +24,16 @@
 <div class="navbar">
   <div class="navbar-inner">
     <form class="navbar-form form-inline scales">
-      <input id="sel_year" class="btn" type="button" value="<%=l 'Year' %>" />
-      <input id="sel_month" class="btn" type="button" value="<%=l 'Month' %>" />
-      <input id="sel_week" class="btn" type="button" value="<%=l 'Week' %>" />
-      <input id="sel_day" class="btn" type="button" value="<%=l 'Day' %>" />
-      &nbsp;&nbsp;&nbsp;
-      <button class="btn go-backward"><i class="icon-fast-backward"></i></button>
-      <button class="btn go-forward"><i class="icon-fast-forward"></i></button>
+      <div class="btn-group">
+        <input id="sel_year" class="btn" type="button" value="<%=l 'Year' %>" />
+        <input id="sel_month" class="btn" type="button" value="<%=l 'Month' %>" />
+        <input id="sel_week" class="btn" type="button" value="<%=l 'Week' %>" />
+        <input id="sel_day" class="btn" type="button" value="<%=l 'Day' %>" />
+      </div>
+      <div class="btn-group">
+        <button class="btn go-backward"><i class="icon-fast-backward"></i></button>
+        <button class="btn go-forward"><i class="icon-fast-forward"></i></button>
+      </div>
       &nbsp;&nbsp;&nbsp;
       <div class="input-prepend date datepick" id="fromdatepick">
         <span class="add-on">
