@@ -80,6 +80,10 @@
           class="btn btn-mini"
           title="<%= l 'Invert Sel.' %>"
           ><i class="icon-eye-close"></i></a>
+        <%= link_to graphs_show => { id => $id }, (
+            'class' => "btn btn-mini",
+            'title' => l('Link')
+          ), begin %><i class="icon-globe"></i><% end %>
         <a href="#" export-graph="<%= $id %>"
           class="btn btn-mini save"
           title="<%= l 'Save' %>"
