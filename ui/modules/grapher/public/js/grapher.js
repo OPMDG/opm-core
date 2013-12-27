@@ -86,6 +86,7 @@
                     if (unit == null) unit = '';
                     switch ( unit ) {
                         case 'B':
+                        case 'Bps':
                             if (val > (1024*1024*1024*1024*1024))
                                 return (val / (1024*1024*1024*1024*1024)).toFixed(2) + " Pi" + unit;
                             if (val > (1024*1024*1024*1024))
@@ -95,8 +96,20 @@
                             if (val > (1024*1024))
                                 return (val / (1024*1024)).toFixed(2) + " Mi" + unit;
                             if (val > 1024)
-                                return (val / 1024).toFixed(2) + " ki" + unit;
+                                return (val / 1024).toFixed(2) + " Ki" + unit;
                             return val + " " + unit;
+                        break;
+
+                        case 'KB':
+                            if (val > (1024*1024*1024*1024))
+                                return (val / (1024*1024*1024*1024)).toFixed(2) + " PiB";
+                            if (val > (1024*1024*1024))
+                                return (val / (1024*1024*1024)).toFixed(2) + " TiB";
+                            if (val > (1024*1024))
+                                return (val / (1024*1024)).toFixed(2) + " GiB";
+                            if (val > 1024)
+                                return (val / 1024).toFixed(2) + " MiB";
+                            return val + " KiB";
                         break;
 
                         case 's':
@@ -127,6 +140,45 @@
                                     return t+'s';
                                 else
                                     return Math.floor(t/minute)+'m '+(t%minute)+'s';
+                            }
+                            return formatyear(val);
+                        break;
+
+                        case 'ms':
+                            var second = 1000;
+                            var minute = 60 * second;
+                            var hour = 60 * minute;
+                            var day = 24 * hour;
+                            var year = 365 * day;
+                            function formatyear(t){
+                                if (t < year)
+                                    return formatday(t);
+                                else
+                                    return Math.floor(t/year)+'y '+formatday(t%year);
+                            }
+                            function formatday(t){
+                                if (t < day)
+                                    return formathour(t);
+                                else
+                                    return Math.floor(t/day)+'d '+formathour(t%day);
+                            }
+                            function formathour(t){
+                                if (t < hour)
+                                    return formatminute(t);
+                                else
+                                    return Math.floor(t/hour)+'h '+formatminute(t%hour);
+                            }
+                            function formatminute(t){
+                                if (t < minute)
+                                    return formatsecond(t);
+                                else
+                                    return Math.floor(t/minute)+'m '+formatsecond(t%minute);
+                            }
+                            function formatsecond(t){
+                                if (t < second)
+                                    return t+'ms';
+                                else
+                                    return Math.floor(t/second)+'s '+(t%second)+'ms';
                             }
                             return formatyear(val);
                         break;
