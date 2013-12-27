@@ -24,9 +24,7 @@ sub register {
     $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )
         ->name('graphs_edit')
         ->to('grapher-graphs#edit');
-    $r_adm->route( ':id_server/graphs/:id/remove',
-            id => qr/\d+/,
-            id_server => qr/\d+/ )
+    $r_adm->route( '/graphs/:id/remove', id => qr/\d+/ )
         ->name('graphs_remove')
         ->to('grapher-graphs#remove');
     $r_adm->route( '/graphs/:id/clone', id => qr/\d+/ )

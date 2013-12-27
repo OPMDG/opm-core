@@ -200,6 +200,8 @@ sub edit {
 
     my $id_server = $graph->{id_server};
 
+    $self->flash('id_server', $id_server);
+
     # Save the form
     my $method = $self->req->method;
     if ( $method =~ m/^POST$/i ) {
@@ -215,9 +217,9 @@ sub edit {
 
         if ( exists $form->{drop} ) {
             $dbh->disconnect;
+
             return $self->redirect_to('graphs_remove',
-                id => $id,
-                id_server => $id_server,
+                id => $id
             );
         }
 
@@ -394,11 +396,34 @@ sub edit {
 sub remove {
     my $self      = shift;
     my $id        = $self->param('id');
-    my $id_server = $self->param('id_server');
     my $dbh       = $self->database;
+    my $id_server = $self->flash('id_server');
+    my $sth;
+
+    unless ($id_server) {
+
+        # Get the graph, and the service if a service is associated
+        $sth = $dbh->prepare(qq{
+            SELECT id_server
+            FROM pr_grapher.list_wh_nagios_graphs()
+            WHERE id = ?
+        });
+
+        unless ( defined $sth->execute($id) ) {
+            $self->render_exception( $dbh->errstr );
+            $sth->finish;
+            $dbh->rollback;
+            $dbh->disconnect;
+            return;
+        }
+
+        $id_server = $sth->fetchrow();
+
+        $sth->finish;
+    }
 
     # Get the graph, and the service if a service is associated
-    my $sth = $dbh->prepare(qq{
+    $sth = $dbh->prepare(qq{
         DELETE FROM pr_grapher.graphs
         WHERE id = ?
     });
@@ -412,6 +437,8 @@ sub remove {
     }
     $sth->finish;
     $dbh->disconnect;
+
+    $self->msg->info("Graph deleted.");
 
     if ( (defined $self->flash('saved_route')) && (defined $self->flash('stack')) ) {
         return $self->redirect_to($self->flash('saved_route'), $self->flash('stack'));
