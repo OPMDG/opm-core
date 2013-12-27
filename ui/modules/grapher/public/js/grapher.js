@@ -112,40 +112,9 @@
                             return val + " KiB";
                         break;
 
-                        case 's':
-                            var minute = 60;
-                            var hour = 60 * minute;
-                            var day = 24 * hour;
-                            var year = 365 * day;
-                            function formatyear(t){
-                                if (t < year)
-                                    return formatday(t);
-                                else
-                                    return Math.floor(t/year)+'y '+formatday(t%year);
-                            }
-                            function formatday(t){
-                                if (t < day)
-                                    return formathour(t);
-                                else
-                                    return Math.floor(t/day)+'d '+formathour(t%day);
-                            }
-                            function formathour(t){
-                                if (t < hour)
-                                    return formatminute(t);
-                                else
-                                    return Math.floor(t/hour)+'h '+formatminute(t%hour);
-                            }
-                            function formatminute(t){
-                                if (t < minute)
-                                    return t+'s';
-                                else
-                                    return Math.floor(t/minute)+'m '+(t%minute)+'s';
-                            }
-                            return formatyear(val);
-                        break;
-
                         case 'ms':
-                            var second = 1000;
+                        case 's':
+                            var second = (unit == 'ms') ? 1000:1;
                             var minute = 60 * second;
                             var hour = 60 * minute;
                             var day = 24 * hour;
