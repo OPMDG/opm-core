@@ -7,8 +7,7 @@
  * Copyright (C) 2012-2013: Open PostgreSQL Monitoring Development Group
 **/
 function displayResult(item, val, text) {
-      console.log(item);
-          window.location = '/server/' + val;
+    window.location = '/server/' + val;
 }
 
 function confirmDel(kind, name){
@@ -18,7 +17,7 @@ function confirmDel(kind, name){
 
 $(document).ready(function (){
     $('#search').typeahead({
-      ajax: { url: '/search/server', triggerLength: 1},
+      ajax: { url: document.URL.replace(/\/$/, "") + '/search/server', triggerLength: 1},
       itemSelected: displayResult
     });
 });
