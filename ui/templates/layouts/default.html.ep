@@ -32,6 +32,9 @@
     <script type="text/javascript" src="<%= url_for '/js/bootstrap-typeahead.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/flotr2.min.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/grapher.js' %>"></script>
+    %= javascript begin
+        var searchUrl = '<%= url_for 'search_server' %>';
+    % end
     <script type="text/javascript" src="<%= url_for '/js/opm.js' %>"></script>
 
     <%= content_for 'header' %>

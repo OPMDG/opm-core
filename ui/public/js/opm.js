@@ -17,7 +17,7 @@ function confirmDel(kind, name){
 
 $(document).ready(function (){
     $('#search').typeahead({
-      ajax: { url: document.URL.replace(/\/$/, "") + '/search/server', triggerLength: 1},
+      ajax: { url: searchUrl, triggerLength: 1},
       itemSelected: displayResult
     });
 });
