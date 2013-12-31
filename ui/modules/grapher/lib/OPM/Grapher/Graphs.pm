@@ -83,6 +83,7 @@ sub showservice {
         FROM pr_grapher.list_wh_nagios_graphs() g
         LEFT JOIN public.list_servers() s ON g.id_server = s.id
         WHERE g.id_service = ?
+        ORDER BY  g.graph
     });
 
     $sth->execute($id_service);
@@ -137,7 +138,7 @@ sub showserver {
         FROM pr_grapher.list_wh_nagios_graphs() g
         JOIN public.list_servers() s ON g.id_server = s.id
         WHERE g.id_server = ?
-        ORDER BY id_service, graph
+        ORDER BY  g.graph
     });
     $sth->execute($idserver);
     my $graphs = [];
