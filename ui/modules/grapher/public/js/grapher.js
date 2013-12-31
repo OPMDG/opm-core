@@ -152,6 +152,20 @@
                             return formatyear(val);
                         break;
 
+                        case '':
+                            if (val > (1000*1000*1000*1000*1000))
+                                return (val / (1000*1000*1000*1000*1000)).toFixed(2) + " P";
+                            if (val > (1000*1000*1000*1000))
+                                return (val / (1000*1000*1000*1000)).toFixed(2) + " T";
+                            if (val > (1000*1000*1000))
+                                return (val / (1000*1000*1000)).toFixed(2) + " G";
+                            if (val > (1000*1000))
+                                return (val / (1000*1000)).toFixed(2) + " M";
+                            if (val > 1000)
+                                return (val / 1000).toFixed(2) + " K";
+                            return val;
+                        break;
+
                         default:
                             return val + " " + unit;
                         break;
