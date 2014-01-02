@@ -75,6 +75,28 @@ sub service {
     $self->render();
 }
 
+sub host_by_name {
+    my $self        = shift;
+    my $dbh         = $self->database();
+    my $server_name = $self->param('server');
+    my $id_server;
+
+    my $sth = $dbh->prepare(q{
+        SELECT id
+        FROM public.list_servers()
+        WHERE hostname = ?
+    });
+    $sth->execute($server_name);
+    $id_server = $sth->fetchrow();
+
+    $sth->finish;
+    $dbh->disconnect;
+
+    return $self->redirect_to('server_host',
+        id => $id_server
+    );
+}
+
 sub host {
     my $self = shift;
     my $dbh  = $self->database();

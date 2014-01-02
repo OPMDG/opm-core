@@ -98,7 +98,10 @@ sub startup {
 
     # Server management
     $r_auth->route('/server')->to('server#list')->name('server_list');
-    $r_auth->route('/server/:id')->to('server#host')->name('server_host');
+    $r_auth->route('/server/:id', id => qr/\d+/ )
+        ->to('server#host')->name('server_host');
+    $r_auth->route('/server/:server', id => qr/[-a-zA-Z0-9_.@]/ )
+        ->to('server#host_by_name')->name('server_host_by_name');
 
     # Search bar
     $r_auth->route('/search/server')->to('search#server')->name('search_server');

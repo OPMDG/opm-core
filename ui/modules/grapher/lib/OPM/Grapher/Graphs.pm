@@ -83,6 +83,9 @@ sub showservice_by_name {
 
     $id_service = $sth->fetchrow();
 
+    $sth->finish;
+    $dbh->disconnect;
+
     return $self->redirect_to('graphs_showservice',
         id => $id_service
     );
