@@ -64,6 +64,29 @@ sub show {
 
 }
 
+sub showservice_by_name {
+    my $self         = shift;
+    my $server_name  = $self->param('server');
+    my $service_name = $self->param('service');
+    my $dbh          = $self->database;
+    my $id_service;
+
+    my $sth = $dbh->prepare(q{
+        SELECT s.id AS id_service
+        FROM list_services() AS s
+        JOIN list_servers() AS h ON h.id = s.id_server
+        WHERE h.hostname = ?
+            AND s.service = ?;
+    });
+
+    $sth->execute($server_name, $service_name);
+
+    $id_service = $sth->fetchrow();
+
+    return $self->redirect_to('graphs_showservice',
+        id => $id_service
+    );
+}
 
 sub showservice {
     my $self       = shift;
