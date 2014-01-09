@@ -25,6 +25,15 @@ sub update_info {
     my $self = shift;
     my $data = ref $_[0] ? $_[0] : {@_};
 
+    # Does the cookie expires ?
+    if ( defined $data->{'stay_connected'} ){
+        $self->target->session(expiration => 0);
+    } else {
+        # Default expiration : 1 hour
+        $self->target->session(expiration => 3600);
+    }
+
+    # save every needed information transmitted
     foreach my $info (qw/username password admin/) {
         if ( exists $data->{$info} ) {
             $self->target->session( 'user_' . $info => $data->{$info} );

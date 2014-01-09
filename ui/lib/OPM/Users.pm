@@ -227,7 +227,13 @@ sub login {
             my $admin = $sql->fetchrow();
             $sql->finish();
             $dbh->disconnect();
+
+            # Store information in the session.
+            # As the session is only updated at login, if a user is granted
+            # admin, he won't have access to specific pages before logging
+            # off and on again.
             $self->perm->update_info(
+                stay_connected => $form_data->{stay_connected},
                 username => $form_data->{username},
                 password => $form_data->{password},
                 admin    => $admin );

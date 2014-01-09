@@ -15,6 +15,7 @@ our %Lexicon = (
     "Admin"                       => "Admin",
     "Account name"                => "Groupe",
     "Password"                    => "Mot de passe",
+    "Stay connected ?"            => "Rester connecté ?",
     "Register"                    => "S'enregistrer",
     "Empty username."             => "Nom d'utilisateur vide.",
     "Empty password."             => "Mot de passe vide.",
