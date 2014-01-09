@@ -253,7 +253,7 @@ sub login {
     $self->flash('stack'=> $self->flash('stack'));
     $self->respond_to(
         json => { json => { error => 'Session expired.', refresh => 1 } },
-        html => $self->render()
+        html => sub { $self->render() }
     );
 }
 
