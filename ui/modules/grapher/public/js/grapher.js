@@ -213,12 +213,27 @@
                 dataType: 'json',
                 data: post_data,
                 success: function (r) {
-                    grapher.fetched = r;
-                    if (! r.error)
-                        grapher.fetched.properties = $.extend(true,
-                            grapher.default_props,
-                            grapher.fetched.properties || {}
-                        );
+                    if ( typeof r.error != 'undefined' ) {
+                        if ( r.refresh == 1 ){
+                            $.ajax({
+                                url: "",
+                                context: document.body,
+                                success: function(s,x){
+                                    $(this).html(s);
+                                    displayError( r.error );
+                                }
+                            });
+                        } else{
+                            displayError( r.error );
+                        }
+                    } else {
+                        grapher.fetched = r;
+                        if (! r.error)
+                            grapher.fetched.properties = $.extend(true,
+                                grapher.default_props,
+                                grapher.fetched.properties || {}
+                            );
+                    }
                 }
             });
         },

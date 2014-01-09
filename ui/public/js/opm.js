@@ -15,6 +15,15 @@ function confirmDel(kind, name){
   return ret;
 }
 
+function displayError(text) {
+    var tmp = '<div class="alert fade in alert-error">'
+      + '<button type="button" class="close" data-dismiss="alert">&times;</button>'
+      + '<ul class="unstyled">'
+      + '<li>' + text + '</li>'
+      + '</ul></div>';
+    $('#main').prepend(tmp);
+}
+
 $(document).ready(function (){
     $('#search').typeahead({
       ajax: { url: searchUrl, triggerLength: 1},

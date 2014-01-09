@@ -251,7 +251,10 @@ sub login {
     }
     $self->flash('saved_route'=> $self->flash('saved_route'));
     $self->flash('stack'=> $self->flash('stack'));
-    $self->render();
+    $self->respond_to(
+        json => { json => { error => 'Session expired.', refresh => 1 } },
+        html => $self->render()
+    );
 }
 
 sub profile {
