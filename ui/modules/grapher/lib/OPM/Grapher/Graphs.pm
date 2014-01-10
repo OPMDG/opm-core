@@ -524,6 +524,7 @@ sub data {
     my $config;
     my $isservice = 0;
     my $data      = [];
+    my $json      = Mojo::JSON->new;
 
     # Double check the input
     if ( !defined $y1_query && !defined $y2_query && !defined $id ) {
@@ -667,8 +668,11 @@ sub data {
             push @{$data}, { data => $series->{$label}, label => $label };
 
             # Buggy with multiple units!
-            $config->{'yaxis_unit'} = $unit
+            $config->{'yaxis_unit'} = $unit;
         }
+        $config->{'yaxis_autoscale'} = $json->true;
+        $config->{'yaxis_autoscaleMargin'} = 0.2;
+
         $sth->finish;
 
         $dbh->disconnect;
