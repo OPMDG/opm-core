@@ -251,10 +251,8 @@ sub login {
     }
     $self->flash('saved_route'=> $self->flash('saved_route'));
     $self->flash('stack'=> $self->flash('stack'));
-    $self->respond_to(
-        json => { json => { error => 'Session expired.', refresh => 1 } },
-        html => sub { $self->render() }
-    );
+
+    $self->render();
 }
 
 sub profile {
@@ -338,8 +336,21 @@ sub check_auth {
     if ( $self->perm->is_authd ) {
         return 1;
     }
+
     $self->flash('saved_route' => $self->current_route);
     $self->flash('stack' => $self->match->stack->[1]);
+
+    if ( $self->req->headers->accept =~ m@application/json@ ) {
+        $self->msg->error('Session expired.');
+        $self->respond_to( json => {
+                json => {
+                    'error' => 'Session expired.',
+                    'redirect' => 1
+                }
+        });
+        return 0
+    }
+
     $self->redirect_to('users_login');
     return 0;
 }
