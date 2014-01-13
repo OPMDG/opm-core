@@ -47,7 +47,7 @@
                  sensibility: 5,
                  trackFormatter: function (o) {
                      d = new Date(new Number(o.x));
-                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ o.series.data[o.index][1];
+                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ $().formatUnit(o.series.data[o.index][1], o.series.yaxis.options.unit);
                  }
             },
             pie: {
@@ -80,97 +80,7 @@
                 labelsAngle: 0,
                 showLabels: true,
                 titleAngle: 90,
-                tickFormatter: function (val, axis) {
-                    var unit = this.unit;
-
-                    if (unit == null) unit = '';
-                    switch ( unit ) {
-                        case 'B':
-                        case 'Bps':
-                            if (val > (1024*1024*1024*1024*1024))
-                                return (val / (1024*1024*1024*1024*1024)).toFixed(2) + " Pi" + unit;
-                            if (val > (1024*1024*1024*1024))
-                                return (val / (1024*1024*1024*1024)).toFixed(2) + " Ti" + unit;
-                            if (val > (1024*1024*1024))
-                                return (val / (1024*1024*1024)).toFixed(2) + " Gi" + unit;
-                            if (val > (1024*1024))
-                                return (val / (1024*1024)).toFixed(2) + " Mi" + unit;
-                            if (val > 1024)
-                                return (val / 1024).toFixed(2) + " Ki" + unit;
-                            return val + " " + unit;
-                        break;
-
-                        case 'KB':
-                            if (val > (1024*1024*1024*1024))
-                                return (val / (1024*1024*1024*1024)).toFixed(2) + " PiB";
-                            if (val > (1024*1024*1024))
-                                return (val / (1024*1024*1024)).toFixed(2) + " TiB";
-                            if (val > (1024*1024))
-                                return (val / (1024*1024)).toFixed(2) + " GiB";
-                            if (val > 1024)
-                                return (val / 1024).toFixed(2) + " MiB";
-                            return val + " KiB";
-                        break;
-
-                        case 'ms':
-                        case 's':
-                            var second = (unit == 'ms') ? 1000:1;
-                            var minute = 60 * second;
-                            var hour = 60 * minute;
-                            var day = 24 * hour;
-                            var year = 365 * day;
-                            function formatyear(t){
-                                if (t < year)
-                                    return formatday(t);
-                                else
-                                    return Math.floor(t/year)+'y '+formatday(t%year);
-                            }
-                            function formatday(t){
-                                if (t < day)
-                                    return formathour(t);
-                                else
-                                    return Math.floor(t/day)+'d '+formathour(t%day);
-                            }
-                            function formathour(t){
-                                if (t < hour)
-                                    return formatminute(t);
-                                else
-                                    return Math.floor(t/hour)+'h '+formatminute(t%hour);
-                            }
-                            function formatminute(t){
-                                if (t < minute)
-                                    return formatsecond(t);
-                                else
-                                    return Math.floor(t/minute)+'m '+formatsecond(t%minute);
-                            }
-                            function formatsecond(t){
-                                if (t < second)
-                                    return t+'ms';
-                                else
-                                    return Math.floor(t/second)+'s '+(t%second? t%second+'ms':'');
-                            }
-                            return formatyear(val);
-                        break;
-
-                        case '':
-                            if (val > (1000*1000*1000*1000*1000))
-                                return (val / (1000*1000*1000*1000*1000)).toFixed(2) + " P";
-                            if (val > (1000*1000*1000*1000))
-                                return (val / (1000*1000*1000*1000)).toFixed(2) + " T";
-                            if (val > (1000*1000*1000))
-                                return (val / (1000*1000*1000)).toFixed(2) + " G";
-                            if (val > (1000*1000))
-                                return (val / (1000*1000)).toFixed(2) + " M";
-                            if (val > 1000)
-                                return (val / 1000).toFixed(2) + " K";
-                            return val;
-                        break;
-
-                        default:
-                            return val + " " + unit;
-                        break;
-                    }
-                }
+                tickFormatter: function (val, axis) { return $().formatUnit (val, this.unit); }
             }
         };
     }
@@ -490,6 +400,95 @@
         else if (! param ) {
             return $(this).data('grapher');
         }
-    }
+    };
+
+    $.fn.formatUnit = function (val, unit) {
+        switch ( unit ) {
+            case 'b':
+            case 'bps':
+                if (val > (1024*1024*1024*1024*1024))
+                    return (val / (1024*1024*1024*1024*1024)).toFixed(2) + " Pi" + unit;
+                if (val > (1024*1024*1024*1024))
+                    return (val / (1024*1024*1024*1024)).toFixed(2) + " Ti" + unit;
+                if (val > (1024*1024*1024))
+                    return (val / (1024*1024*1024)).toFixed(2) + " Gi" + unit;
+                if (val > (1024*1024))
+                    return (val / (1024*1024)).toFixed(2) + " Mi" + unit;
+                if (val > 1024)
+                    return (val / 1024).toFixed(2) + " Ki" + unit;
+                return val + " " + unit;
+            break;
+
+            case 'kb':
+                if (val > (1024*1024*1024*1024))
+                    return (val / (1024*1024*1024*1024)).toFixed(2) + " PiB";
+                if (val > (1024*1024*1024))
+                    return (val / (1024*1024*1024)).toFixed(2) + " TiB";
+                if (val > (1024*1024))
+                    return (val / (1024*1024)).toFixed(2) + " GiB";
+                if (val > 1024)
+                    return (val / 1024).toFixed(2) + " MiB";
+                return val + " KiB";
+            break;
+
+            case 'ms':
+            case 's':
+                var second = (unit == 'ms') ? 1000:1;
+                var minute = 60 * second;
+                var hour = 60 * minute;
+                var day = 24 * hour;
+                var year = 365 * day;
+                function formatyear(t){
+                    if (t < year)
+                        return formatday(t);
+                    else
+                        return Math.floor(t/year)+'y '+formatday(t%year);
+                }
+                function formatday(t){
+                    if (t < day)
+                        return formathour(t);
+                    else
+                        return Math.floor(t/day)+'d '+formathour(t%day);
+                }
+                function formathour(t){
+                    if (t < hour)
+                        return formatminute(t);
+                    else
+                        return Math.floor(t/hour)+'h '+formatminute(t%hour);
+                }
+                function formatminute(t){
+                    if (t < minute)
+                        return formatsecond(t);
+                    else
+                        return Math.floor(t/minute)+'m '+formatsecond(t%minute);
+                }
+                function formatsecond(t){
+                    if (t < second)
+                        return t+'ms';
+                    else
+                        return Math.floor(t/second)+'s '+(t%second? t%second+'ms':'');
+                }
+                return formatyear(val);
+            break;
+
+            case '':
+                if (val > (1000*1000*1000*1000*1000))
+                    return (val / (1000*1000*1000*1000*1000)).toFixed(2) + " P";
+                if (val > (1000*1000*1000*1000))
+                    return (val / (1000*1000*1000*1000)).toFixed(2) + " T";
+                if (val > (1000*1000*1000))
+                    return (val / (1000*1000*1000)).toFixed(2) + " G";
+                if (val > (1000*1000))
+                    return (val / (1000*1000)).toFixed(2) + " M";
+                if (val > 1000)
+                    return (val / 1000).toFixed(2) + " K";
+                return val;
+            break;
+
+            default:
+                return val + " " + unit;
+            break;
+        }
+    };
 
 })(jQuery);
