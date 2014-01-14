@@ -47,7 +47,7 @@
                  sensibility: 5,
                  trackFormatter: function (o) {
                      d = new Date(new Number(o.x));
-                     return d.toUTCString() +"<br />"+ o.series.label +' = '+ $().formatUnit(o.series.data[o.index][1], o.series.yaxis.options.unit);
+                     return d.toString() +"<br />"+ o.series.label +' = '+ $().formatUnit(o.series.data[o.index][1], o.series.yaxis.options.unit);
                  }
             },
             pie: {
@@ -72,6 +72,7 @@
                 mode: 'time',
                 showLabels: true,
                 timeFormat: '%d/%m/%y %H:%M:%S',
+                timeMode: 'local',
                 titleAngle: 0
             },
             yaxis: {
@@ -339,8 +340,17 @@
             return Flotr.EventAdapter.observe( this.$element.get(0), e, c );
         },
 
-        formatDate: function (d, f) {
-            return Flotr.Date.format(d, f);
+        formatDate: function (d, f, m) {
+            tz = '';
+            if ( m == 'local' ) {
+                offset = d.getTimezoneOffset();
+                tz += ( offset > 0 ? '-' : '+' );
+                offset = Math.abs(offset);
+                tz += ('0' + Math.floor(offset/60)).slice(-2) + ('0' + (offset%60)).slice(-2);
+            } else {
+              tz = ' UTC';
+            }
+            return Flotr.Date.format(d, f, m) + tz;
         }
     };
 

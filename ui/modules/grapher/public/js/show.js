@@ -24,8 +24,8 @@ $(document).ready(function () {
 
         // FIXME: do not use flotr props to get min/max date
         $(this).parent().siblings().find('> span').get(0)
-          .innerHTML = ''+ grapher.formatDate(new Date(grapher.flotr.axes.x.datamin), '%d/%m/%y %H:%M:%S')
-            +'&nbsp;&nbsp;-&nbsp;&nbsp;'+ grapher.formatDate(new Date(grapher.flotr.axes.x.datamax), '%d/%m/%y %H:%M:%S')
+          .innerHTML = ''+ grapher.formatDate(new Date(grapher.flotr.axes.x.datamin), grapher.fetched.properties.xaxis.timeFormat, grapher.fetched.properties.xaxis.timeMode)
+            +'&nbsp;&nbsp;-&nbsp;&nbsp;'+ grapher.formatDate(new Date(grapher.flotr.axes.x.datamax),  grapher.fetched.properties.xaxis.timeFormat, grapher.fetched.properties.xaxis.timeMode);
     });
   });
 
