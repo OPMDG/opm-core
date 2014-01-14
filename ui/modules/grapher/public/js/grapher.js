@@ -124,7 +124,7 @@
                 data: post_data,
                 success: function (r) {
                     grapher.fetched = r;
-                    if ( r.error != null ) {
+                    if ( r.error != 'undefined' ) {
                         grapher.fetched.properties = $.extend(true,
                             grapher.default_props,
                             grapher.fetched.properties || {}
