@@ -395,8 +395,8 @@
 
     $.fn.formatUnit = function (val, unit) {
         switch ( unit ) {
-            case 'b':
-            case 'bps':
+            case 'B':
+            case 'Bps':
                 if (val > (1024*1024*1024*1024*1024))
                     return (val / (1024*1024*1024*1024*1024)).toFixed(2) + " Pi" + unit;
                 if (val > (1024*1024*1024*1024))
@@ -410,7 +410,7 @@
                 return val + " " + unit;
             break;
 
-            case 'kb':
+            case 'KB':
                 if (val > (1024*1024*1024*1024))
                     return (val / (1024*1024*1024*1024)).toFixed(2) + " PiB";
                 if (val > (1024*1024*1024))
