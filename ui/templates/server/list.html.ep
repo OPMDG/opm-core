@@ -13,7 +13,7 @@
 % my $first = 1;
 
 <div class="box" id="server_list">
-  <h1 class="page-header"><%=l 'List of servers per accounts' %></u></h1>
+  <h1 class="page-header"><%=l 'List of servers per accounts' %></h1>
   <% if ( scalar @servers ) { %>
 
     <div class="container span6">
