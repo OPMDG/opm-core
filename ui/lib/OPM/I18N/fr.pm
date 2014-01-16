@@ -27,7 +27,11 @@ our %Lexicon = (
     "Password must be longer than 5 characters" =>
         "Le mot de passe doit faire plus de 5 caractères",
     "Profile"                     => "Profil",
-    "Help"                        => "Aide",
+    "About"                       => "À propos",
+    "Visit official website for more information" =>
+        "Visitez la page officielle pour plus d'information",
+    "Extension"                   => "Extension",
+    "version"                     => "version",
     "Sign Out"                    => "Déconnexion",
     "Profile of"                  => "Profil de",
     "You have logged out."        => "Vous vous êtes déconnecté.",

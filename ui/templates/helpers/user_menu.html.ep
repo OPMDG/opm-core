@@ -10,7 +10,7 @@
   </a>
   <ul class="dropdown-menu">
     <li><%= link_to users_profile => begin %><%=l 'Profile' %><% end %></li>
-    <li><%= link_to site_help => begin %><%=l 'Help' %><% end %></li>
+    <li><%= link_to site_about => begin %><%=l 'About' %><% end %></li>
     <li class="divider"></li>
     <li><%= link_to users_logout => begin %><%=l 'Sign Out' %><% end %></li>
   </ul>

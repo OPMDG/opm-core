@@ -1,0 +1,27 @@
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+
+% layout config 'layout';
+% my @exn = @{stash 'exn'};
+
+<div class="box" id="labels_list">
+  <h1 class="page-header"><%=l 'About' %></h1>
+    <div class="container span8">
+      <h3>Open PostgreSQL Monitoring version <%= $OPM::VERSION %></h3>
+      <% if ( scalar @exn ) { %>
+         <div class="container span4 well">
+               <ul  class="nav nav-list">
+                 <% foreach my $e (@exn) { %>
+                     <li>
+                       Extension <b><%= $e->{name} %></b> version <u><%= $e->{version} %></u>
+                     </li>
+                 <% } %>
+               </ul>
+         </div>
+       <% } %>
+    </div>
+  <div class="clearfix"></div>
+      <a href="https://github.com/dalibo/OPM/wiki"><%=l 'Visit official website for more information' %></a>.
+</div>

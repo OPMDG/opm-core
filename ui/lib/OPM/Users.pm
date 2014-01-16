@@ -369,4 +369,33 @@ sub check_admin {
     return 0;
 }
 
+sub about {
+    my $self = shift;
+    my $dbh  = $self->database();
+    my $sql;
+
+    $sql = $dbh->prepare(
+        "SELECT name, version
+          FROM pg_available_extension_versions
+          WHERE installed
+          AND ('opm_core' = ANY(requires)
+          OR name = 'opm_core' )
+          ORDER BY name;"
+    );
+    $sql->execute();
+
+    my $exn = [];
+
+    while ( my ($name, $version) = $sql->fetchrow() ) {
+        push @{$exn}, { name => $name, version => $version };
+    }
+
+    $sql->finish();
+
+    $self->stash( exn => $exn );
+
+    $dbh->disconnect();
+    $self->render();
+}
+
 1;

@@ -6,6 +6,9 @@ use Mojo::Base 'Mojolicious';
 #
 # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
+use vars qw($VERSION);
+$VERSION = '2.0-dev';
+
 # This method will run once at server start
 sub startup {
     my $self = shift;
@@ -61,7 +64,7 @@ sub startup {
 
     # Home page
     $r_auth->route('/')->to('server#list')->name('site_home');
-    $r_auth->route('/help')->to('site#help')->name('site_help');
+    $r_auth->route('/about')->to('users#about')->name('site_about');
 
     # Lang
     $r->route('/lang/:code')->to('lang#set')->name('lang_set');
