@@ -6,6 +6,7 @@
 % my $msg = stash 'message';
 % $msg ||= 'Page not found';
 % my $detail = stash 'detail';
+% $detail ||= '';
 
 % layout config 'layout';
 
