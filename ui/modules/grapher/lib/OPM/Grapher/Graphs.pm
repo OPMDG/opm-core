@@ -82,6 +82,11 @@ sub showservice_by_name {
     $sth->execute($server_name, $service_name);
 
     $id_service = $sth->fetchrow();
+    if ( !defined($id_service) ) {
+        $self->stash(
+            message => 'Service not found');
+        return $self->render_not_found;
+    }
 
     $sth->finish;
     $dbh->disconnect;

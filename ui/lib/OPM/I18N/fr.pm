@@ -145,7 +145,8 @@ our %Lexicon = (
     "User not found"            => "Utilisateur non trouvé",
     "This user does not exists" => "Cet utilisateur n'existe pas",
     "Server not found"          => "Serveur non trouvé",
-    "This server does not exists" => "Ce serveur n'existe pas"
+    "This server does not exists" => "Ce serveur n'existe pas",
+    "Service not found"         => "Service introuvable"
     );
 
 1;
