@@ -109,7 +109,7 @@ sub services {
         # Generate needed class for template, service retention state
         my $need_purge = 'info';
         if ( defined $row->{'servalid'} ) {
-            $need_purge = ( $row->{'need_purge'} ? 'warning' : 'success' ),
+            $need_purge = ( $row->{'need_purge'} ? 'warning' : 'success' );
         }
 
         push @{ $curr_host->{'services'} }, {
@@ -198,7 +198,7 @@ sub service {
     # Generate needed class for template, service retention state
     my $purge_class = 'info';
     if ( defined $servicerow->{'servalid'} ) {
-        $purge_class = ( $servicerow->{'need_purge'} ? 'warning' : 'success' ),
+        $purge_class = ( $servicerow->{'need_purge'} ? 'warning' : 'success' );
     }
     $servicerow->{purge_class} = $purge_class;
 
@@ -226,7 +226,7 @@ sub service {
         # Generate needed class for template, label retention state
         my $label_purge_class = 'info';
         if ( defined $servicerow->{'servalid'} ) {
-            $label_purge_class = ( $range->{'need_purge'} ? 'warning' : 'success' ),
+            $label_purge_class = ( $range->{'need_purge'} ? 'warning' : 'success' );
         }
 
         # Merge hashes
