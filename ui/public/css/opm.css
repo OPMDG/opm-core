@@ -133,3 +133,23 @@ a.warning {
 a.critical{
   color: darkred;
 }
+
+td.clickable a {
+  display: block;
+}
+
+.floatright {
+  float: right;
+}
+
+.floatleft {
+  float: left;
+}
+
+.va_top {
+    verticcal-align: top;
+}
+
+.ta_center {
+  text-align: center;
+}

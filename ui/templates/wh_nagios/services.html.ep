@@ -1,0 +1,108 @@
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+
+% layout config 'layout';
+% content_for header => begin
+  <script type="text/javascript" src="<%= url_for '/js/wh_nagios.js' %>"></script>
+%end
+% my @services = @{stash 'services'};
+
+<div class="box" id="services_list">
+  <h1 class="page-header"><%=l 'List of services per servers' %> :</h1>
+  <% if ( scalar @services ) { %>
+
+    <div class="accordion" id="accordion_hosts">
+    % my $i = 0;
+    <% foreach my $s ( @services ) { %>
+      % $i++;
+      <div id="server_<%= $s->{'hostname'} %>" class="accordion-group">
+        <div class="accordion-heading">
+          <a class="accordion-toggle" data-toggle="collapse" href="#service_<%= $s->{'services'}[0]{'id'} %>">
+            <%=l $s->{'hostname'} %>
+          </a>
+        </div>
+        <div id="service_<%= $s->{'services'}[0]{'id'} %>" class="accordion-body collapse<%= ($i == 1 ? '  in' : '' ) %>">
+          <div class="accordion-inner">
+            <%= form_for wh_nagios_services => (method => 'POST') => begin %>
+              <table class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th><%=l 'Action' %></th>
+                    <th><%=l 'State' %></th>
+                    <th><%=l 'Name' %></th>
+                    <th><%=l 'Last cleanup' %></th>
+                    <th><%=l 'Data retention' %></th>
+                    <th><%=l 'Stored interval' %></th>
+                    <th><%=l 'Delete' %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% foreach my $ser (@{ $s->{'services'} }) { %>
+                    <tr>
+                      <td><%= check_box chk => $ser->{id} %></td>
+                      <td><span class="label label-<%= $ser->{class} %>"><%= $ser->{state} %></span></td>
+                      <td class="clickable">
+                        <%= link_to wh_nagios_service => { id => $ser->{id} } => begin %>
+                          <%= $ser->{service} %>
+                        <% end %>
+                      </td>
+                      <td><%= $ser->{last_cleanup} %>
+                        <%= link_to wh_nagios_cleanup => { id => $ser->{id} } => begin %>
+                        <label class="btn btn-inverse floatright" title="<%=l 'Cleanup now' %>"><span><i class="icon-tasks icon-white"></i></span></label>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= text_field 'servalid_val_' . $ser->{id}, type => 'text', class => 'span2 va_top',value => $ser->{servalid} %>
+                      </td>
+                      <td class="label-<%= $ser->{need_purge} %>">
+                        <%= $ser->{stored_interval} %>
+                        <% if ( $ser->{need_purge} ne 'info' ) { %>
+                          <%= link_to wh_nagios_purge => { id => $ser->{id} } => begin %>
+                            <label class="btn btn-inverse floatright" title="<%=l 'Purge now' %>"><span><i class="icon-trash icon-white"></i></span></label>
+                          <% end %>
+                        <% } %>
+                      </td>
+                      <td class="ta_center">
+                        <%= link_to wh_nagios_delete_service => { id => $ser->{id} } => ( onclick => "return confirmDelService('$s->{hostname}', '$ser->{service}');" ) => begin %>
+                          <label class="btn btn-danger" title="<%=l 'Delete service' %>"><span><i class="icon-remove icon-white"></i></span></label>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% } %>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="4">
+                      <a href="#" class="checkall"><%=l 'All' %></a>
+                      <a href="#" class="uncheckall"><%=l 'None' %></a>
+                      <a href="#" class="invertcheck"><%=l 'Invert Sel.' %></a>
+                      <label class="btn btn-inverse" for="cleanup_<%= $s->{'server_id'} %>"><span><i class="icon-tasks icon-white"></i></span> <%=l 'Cleanup' %></label>
+                      <%= submit_button l('Cleanup'), id => 'cleanup_' . $s->{'server_id'}, name => 'cleanup', class => 'hidden btn btn-inverse' %>&nbsp;
+                      <label class="btn btn-inverse" for="purge_<%= $s->{'server_id'} %>"><span><i class="icon-trash icon-white"></i></span> <%=l 'Purge' %></label>
+                      <%= submit_button l('Purge'), id => 'purge_' . $s->{'server_id'}, name => 'purge', class => 'hidden btn btn-inverse' %>&nbsp;
+                      <label class="btn btn-danger" for="delete_<%= $s->{'server_id'} %>"><span><i class="icon-remove icon-white"></i></span> <%=l 'Delete' %></label>
+                      <%= submit_button l('Delete'), id => 'delete_' . $s->{'server_id'}, name => 'delete', class => 'hidden btn btn-inverse', onclick => "return confirmDelService('$s->{hostname}', '');" %>&nbsp;
+                    </td>
+                    <td>
+                        <%= text_field 'validity', type => 'text', for => 'lbl_servalid_' . $s->{'server_id'}, class => 'span2', id => 'validity_' . $s->{'server_id'}, placeholder => l('Overall interval') %>
+                    </td>
+                    <td colspan=2">
+                      <label class="btn btn-info" for="servalid_<%= $s->{'server_id'} %>" id="lbl_servalid_<%= $s->{'server_id'} %>"><span><i class="icon-edit icon-white"></i></span> <%=l 'Update retention' %></label>
+                      <%= submit_button l('Update retention'), id => 'servalid_' . $s->{'server_id'}, name => 'servalid', class => 'hidden btn btn-info' %>&nbsp;
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+    </div>
+  <% } else { %>
+    <p><%=l 'No service found' %>.</p>
+  <% } %>
+</div>
+<div class="clearfix"></div>

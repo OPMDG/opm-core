@@ -106,6 +106,25 @@ sub startup {
     $r_auth->route('/server/:server', id => qr/[-a-zA-Z0-9_.@]/ )
         ->to('server#host_by_name')->name('server_host_by_name');
 
+    ## Wh_nagios management
+    #
+    # show all services
+    $r_adm->get('/wh_nagios')->to('wh_nagios#services')->name('wh_nagios_services');
+    # action (cleanup, purge), update retention or delete for multiple services
+    $r_adm->post('/wh_nagios')->to('wh_nagios#services_post')->name('wh_nagios_services_post');
+    # show a single service
+    $r_adm->route('/wh_nagios/:id', id => qr/\d+/ )->via('GET')->to('wh_nagios#service')->name('wh_nagios_service');
+    # update a single service retention or delete multiple labels
+    $r_adm->route('/wh_nagios/:id', id => qr/\d+/ )->via('POST')->to('wh_nagios#service_post')->name('wh_nagios_service_post');
+    # cleanup a single service
+    $r_adm->route('/wh_nagios/:id/cleanup', id => qr/\d+/ )->to('wh_nagios#cleanup')->name('wh_nagios_cleanup');
+    # purge a single service
+    $r_adm->route('/wh_nagios/:id/purge', id => qr/\d+/ )->to('wh_nagios#purge')->name('wh_nagios_purge');
+    # delete a single service
+    $r_adm->route('/wh_nagios/:id/delete', id => qr/\d+/ )->to('wh_nagios#delete_service')->name('wh_nagios_delete_service');
+    # delete a single label
+    $r_adm->route('/wh_nagios/:id_s/delete/:id_l', id_s => qr/\d+/, id_l => qr/\d+/ )->to('wh_nagios#delete_label')->name('wh_nagios_delete_label');
+
     # Search bar
     $r_auth->route('/search/server')->to('search#server')->name('search_server');
 }
