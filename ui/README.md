@@ -12,7 +12,7 @@ The versions showed have been tested, it may work with older versions
 
 * Perl 5.10
 * Mojolicious 2.98
-* Mojolicious::Plugin::I18N 
+* Mojolicious::Plugin::I18N
 * PostgreSQL 9.2
 * A CGI/Perl webserver
 
@@ -44,13 +44,13 @@ To run the UI with Apache, here is an example using CGI:
 		ServerAdmin webmaster@example.com
 		ServerName opm.example.com
 		DocumentRoot /var/www/opm/public/
-	
+
 		<Directory /var/www/opm/public/>
 			AllowOverride None
 			Order allow,deny
 			allow from all
 			IndexIgnore *
-	
+
 			RewriteEngine On
 			RewriteBase /
 			RewriteRule ^$ opm.cgi [L]
@@ -58,7 +58,7 @@ To run the UI with Apache, here is an example using CGI:
 			RewriteCond %{REQUEST_FILENAME} !-d
 			RewriteRule ^(.*)$ opm.cgi/$1 [L]
 		</Directory>
-	
+
 		ScriptAlias /opm.cgi /var/www/opm/script/opm
 		<Directory /var/www/opm/script/>
 			AddHandler cgi-script .cgi
@@ -69,12 +69,12 @@ To run the UI with Apache, here is an example using CGI:
 			SetEnv MOJO_MODE production
 			SetEnv MOJO_MAX_MESSAGE_SIZE 4294967296
 		</Directory>
-	
+
 		ErrorLog ${APACHE_LOG_DIR}/opm.log
 		# Possible values include: debug, info, notice, warn, error, crit,
 		# alert, emerg.
 		LogLevel warn
-	
+
 		CustomLog ${APACHE_LOG_DIR}/opm.log combined
 	</VirtualHost>
 

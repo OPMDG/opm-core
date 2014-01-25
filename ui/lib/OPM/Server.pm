@@ -132,7 +132,7 @@ sub host {
 
     # Fetch all services for the given server
     $sql = $dbh->prepare(q{
-        SELECT s.id AS id_service, s.service, lower(s.state) as state 
+        SELECT s.id AS id_service, s.service, lower(s.state) as state
         FROM wh_nagios.list_services() s
         WHERE s.id_server = ?
         ORDER BY s.service, s.id
