@@ -105,7 +105,7 @@ sub services {
         my $class = 'inverse';
         $class = 'success' if ( lc($row->{'state'}) eq 'ok' );
         $class = 'warning' if ( lc($row->{'state'}) eq 'warning' );
-        $class = 'important' if ( lc($row->{'state'}) eq 'error' );
+        $class = 'important' if ( lc($row->{'state'}) eq 'critical' );
         # Generate needed class for template, service retention state
         my $need_purge = 'info';
         if ( defined $row->{'servalid'} ) {
