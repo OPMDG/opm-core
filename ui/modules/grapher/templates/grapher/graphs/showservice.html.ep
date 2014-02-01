@@ -61,7 +61,7 @@
           <ul class="dropdown-menu">
             <% foreach my $s ( @services ) { %>
             <li>
-              <%= link_to 'graphs_showservice' => { 'id' => $s->{'id'} } => begin %><%= $s->{'service'} %><% end %>
+              <%= link_to 'graphs_showservice' => { server => stash('hostname'), service => $s->{'service'} } => begin %><%= $s->{'service'} %><% end %>
             </li>
             <% } %>
           </ul>

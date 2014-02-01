@@ -64,63 +64,34 @@ sub show {
 
 }
 
-sub showservice_by_name {
+sub showservice {
     my $self         = shift;
     my $server_name  = $self->param('server');
     my $service_name = $self->param('service');
     my $dbh          = $self->database;
-    my $id_service;
-
-    my $sth = $dbh->prepare(q{
-        SELECT s.id AS id_service
-        FROM list_services() AS s
-        JOIN list_servers() AS h ON h.id = s.id_server
-        WHERE h.hostname = ?
-            AND s.service = ?;
-    });
-
-    $sth->execute($server_name, $service_name);
-
-    $id_service = $sth->fetchrow();
-    if ( !defined($id_service) ) {
-        $self->stash(
-            message => 'Service not found');
-        return $self->render_not_found;
-    }
-
-    $sth->finish;
-    $dbh->disconnect;
-
-    return $self->redirect_to('graphs_showservice',
-        id => $id_service
-    );
-}
-
-sub showservice {
-    my $self       = shift;
-    my $id_service = $self->param('id');
-    my $dbh        = $self->database;
     my @services;
     my @graphs;
     my $hostname;
 
-    # Get the graphs associated with the given service
-    my $sth = $dbh->prepare(qq{
+    # Get the graphs associated with the given hostname and servicename
+    my $sth = $dbh->prepare(q{
         SELECT g.id, CASE
-            WHEN s.hostname IS NOT NULL THEN s.hostname || '::'
+            WHEN s2.hostname IS NOT NULL THEN s2.hostname || '::'
             ELSE ''
         END || graph AS graph,
-            description, s.id AS id_server, s.hostname
-        FROM pr_grapher.list_wh_nagios_graphs() g
-        LEFT JOIN public.list_servers() s ON g.id_server = s.id
-        WHERE g.id_service = ?
-        ORDER BY  g.graph
+        g.description, s2.id AS id_server, s2.hostname
+        FROM  public.list_services() AS s1
+        JOIN public.list_servers() AS s2 ON s2.id = s1.id_server
+        JOIN pr_grapher.list_wh_nagios_graphs() g ON g.id_server = s2.id
+            AND g.id_service = s1.id
+        WHERE s2.hostname = ? AND s1.service = ?
+        ORDER BY g.graph;
     });
 
-    $sth->execute($id_service);
+    $sth->execute($server_name, $service_name);
     push @graphs => $_ while $_ = $sth->fetchrow_hashref();
 
-    # Check if it exists (this can be reach by url)
+    # Check if it exists
     if ( @graphs < 1 ) {
         $dbh->disconnect;
         return $self->render_not_found;
@@ -133,13 +104,13 @@ sub showservice {
     if ( $graphs[0]{'id_server'} ) {
         # Get other available services from the same server
         my $sth = $dbh->prepare(qq{
-            SELECT id, service
+            SELECT service
             FROM wh_nagios.list_services()
-            WHERE id_server = ? AND id <> ?
+            WHERE id_server = ? AND service <> ?
             ORDER BY service
         });
 
-        $sth->execute($graphs[0]{'id_server'}, $id_service);
+        $sth->execute($graphs[0]{'id_server'}, $service_name);
         push @services => $_ while $_ = $sth->fetchrow_hashref();
         $sth->finish;
     }
@@ -153,7 +124,7 @@ sub showservice {
         is_admin => $self->session('user_admin')
     );
 
-    $self->render;
+    return $self->render;
 }
 
 sub showserver {

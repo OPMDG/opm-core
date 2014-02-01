@@ -42,15 +42,10 @@ sub register {
     $r_auth->post('/graphs/data')->name('graphs_data')
         ->to('grapher-graphs#data');
 
-    # show service
-    $r_auth->route( '/graphs/showservice/:id', id => qr/\d+/ )
+    # show service (using name)
+    $r_auth->route( '/graphs/showservice/:server/:service' )
         ->name('graphs_showservice')
         ->to('grapher-graphs#showservice');
-
-    # show service using names
-    $r_auth->route( '/graphs/showservice/:server/:service' )
-        ->name('graphs_showservice_by_name')
-        ->to('grapher-graphs#showservice_by_name');
 
     # show server
     $r_auth->route( '/graphs/showserver/:idserver',

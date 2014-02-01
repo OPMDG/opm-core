@@ -24,7 +24,7 @@
           <li class="divider"></li>
         <% foreach my $s ( @services ) { %>
           <li>
-            <%= link_to graphs_showservice => { id => $s->{'id_service'} } => ( class => $s->{'state'} ) => begin %><%= $s->{'service'} %><% end %>
+            <%= link_to graphs_showservice => { server => stash('hostname'), service => $s->{'service'} } => ( class => $s->{'state'} ) => begin %><%= $s->{'service'} %><% end %>
           </li>
         <% } %>
         </ul>
