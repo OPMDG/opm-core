@@ -29,6 +29,11 @@ sub register {
     # Save connection parameters
     $self->conninfo($dsn);
 
+    # Force AutoCommit to be able to handle transactions if needed.
+    # and avoid unnecessary commit/rollback.
+    $config->{options}->{AutoCommit} = 1;
+
+
     # Register a helper that give the database handle
     $app->helper(
         database => sub {
@@ -37,10 +42,6 @@ sub register {
                 $username = $ctrl->session('user_username');
                 $password = $ctrl->session('user_password');
             }
-
-            # Force AutoCommit to be able to handle transactions if needed.
-            # and avoid unnecessary commit/rollback.
-            $config->{options}->{AutoCommit} = 1;
             # Return a new database connection handle
             my $dbh =
                 DBI->connect( $self->conninfo, $username, $password,
