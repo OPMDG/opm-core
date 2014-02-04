@@ -29,8 +29,11 @@ sub startup {
     my $config_file = $self->home . '/opm.conf';
     my $config = $self->plugin( 'JSONConfig' => { file => $config_file } );
 
-    # setup secret passphrase XXX
-    $self->secret('Xwyfe-_d:y~Dr+p][Vs9KY+e3gmP=c_|s7hQExF#b|4r4^gO|');
+    # setup secret passphrase
+    if($config->{secrets})
+    {
+      $self->secrets($config->{secrets});
+    }
 
     # startup database connection
     $self->plugin( 'database', $config->{database} || {} );
