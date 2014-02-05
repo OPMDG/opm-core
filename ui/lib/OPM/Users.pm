@@ -165,7 +165,7 @@ sub delete {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('users_list');
+    $self->redirect_post('users_list');
 }
 
 sub delacc {
@@ -189,7 +189,7 @@ sub delacc {
     }
     $sql->finish();
     $dbh->disconnect();
-    $self->redirect_to('users_edit');
+    $self->redirect_post('users_edit');
 }
 
 sub login {
@@ -197,7 +197,7 @@ sub login {
 
     # Do not go through the login process if the user is already in
     if ( $self->perm->is_authd ) {
-        return $self->redirect_to('site_home');
+        return $self->redirect_post('site_home');
     }
 
     my $method = $self->req->method;
@@ -239,9 +239,9 @@ sub login {
                 admin    => $admin );
 
             if ( (defined $self->flash('saved_route')) && (defined $self->flash('stack')) ){
-                return $self->redirect_to($self->flash('saved_route'), $self->flash('stack'));
+                return $self->redirect_post($self->flash('saved_route'), $self->flash('stack'));
             } else {
-                return $self->redirect_to('site_home');
+                return $self->redirect_post('site_home');
             }
         }
         else {
@@ -326,7 +326,7 @@ sub logout {
         $self->msg->info("You have logged out.");
     }
     $self->perm->remove_info;
-    $self->redirect_to('site_home');
+    $self->redirect_post('site_home');
 }
 
 sub check_auth {
@@ -351,7 +351,7 @@ sub check_auth {
         return 0
     }
 
-    $self->redirect_to('users_login');
+    $self->redirect_post('users_login');
     return 0;
 }
 
