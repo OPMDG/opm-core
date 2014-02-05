@@ -1,6 +1,6 @@
 # OPM core extension
 comment = 'OPM core'
-default_version = '1.0'
+default_version = '1.1'
 module_pathname = '$libdir/opm-core'
 superuser = false
 relocatable = false
