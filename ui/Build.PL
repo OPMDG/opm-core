@@ -16,7 +16,7 @@ my $builder = Module::Build->new(
         'Test::More' => 0,
     },
     requires => {
-        'Mojo' => 0,
+        'Mojolicious' => 0,
         'Mojolicious::Plugin::I18N' => 0,
         'DBD::Pg' => 0
     },
