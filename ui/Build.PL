@@ -18,7 +18,8 @@ my $builder = Module::Build->new(
     requires => {
         'Mojolicious' => 0,
         'Mojolicious::Plugin::I18N' => 0,
-        'DBD::Pg' => 0
+        'DBD::Pg' => 0,
+        'TAP::Harness::Archive' => 0
     },
     add_to_cleanup     => [ 'OPM-*' ],
     create_makefile_pl => 'traditional',
