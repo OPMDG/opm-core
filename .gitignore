@@ -9,6 +9,10 @@ Makefile*
 MANIFEST*
 !MANIFEST.SKIP
 pm_to_blib
-*.conf
+*.confa
+!opm.conf.test
 log/*
 work
+_build
+Build
+*.json
