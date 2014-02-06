@@ -24,7 +24,7 @@ has_error $t, "Wrong password supplied", "Invalid password is rejected";
 
 $t->post_ok('/profile/' => form => {
     change_password => 'true',
-    current_password => 'test',
+    current_password => 'password',
     new_password => 'tias',
     repeat_password => 'tias' });
 
@@ -32,10 +32,19 @@ has_error $t, "Password must be longer than 5 characters", "Invalid password is 
 
 $t->post_ok('/profile/' => form => {
     change_password => 'true',
-    current_password => 'test',
+    current_password => 'password',
     new_password => 'testtesttest',
     repeat_password => 'testtesttest' });
 
 has_success $t, "Password changed", "Password has been changed correctly";
+
+$t = client('test', 'testtesttest');
+$t->get_ok('/profile');
+
+$t->post_ok('/profile/' => form => {
+    change_password => 'true',
+    current_password => 'testtesttest',
+    new_password => 'password',
+    repeat_password => 'password' });
 
 done_testing();
