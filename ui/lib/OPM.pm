@@ -35,9 +35,6 @@ sub startup {
       $self->secrets($config->{secrets});
     }
 
-
-    push @{$self->commands->namespaces}, 'OPM::Command';
-
     # startup database connection
     $self->plugin( 'database', $config->{database} || {} );
 
