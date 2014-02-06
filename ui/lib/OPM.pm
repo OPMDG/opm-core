@@ -7,7 +7,7 @@ use Mojo::Base 'Mojolicious';
 # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 use vars qw($VERSION);
-$VERSION = '2.0-dev';
+$VERSION = '2.0.0_1';
 
 # This method will run once at server start
 sub startup {
