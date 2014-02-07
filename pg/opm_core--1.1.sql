@@ -1098,8 +1098,8 @@ DECLARE
     v_hint       text ;
     v_context    text ;
 BEGIN
-    SELECT count(*) = 1 INTO v_exists FROM public.list_users()
-    WHERE rolname = p_rolname ;
+    SELECT true INTO v_exists FROM public.list_users()
+    WHERE rolname = p_rolname LIMIT 1;
     IF NOT v_exists THEN
         RETURN false ;
     END IF ;
