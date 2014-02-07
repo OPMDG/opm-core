@@ -13,3 +13,4 @@ SET check_function_bodies = false;
 
 DROP FUNCTION public.update_user(IN p_account name, IN p_password text);
 
+DROP FUNCTION public.update_current_user(text);

@@ -71,3 +71,22 @@ GRANT ALL ON FUNCTION public.update_user(IN name, IN text)
 COMMENT ON FUNCTION public.update_user (IN name, IN text) IS
 'Change the password of an opm user.' ;
 
+CREATE OR REPLACE FUNCTION
+  public.update_current_user(text)
+  RETURNS boolean
+AS $$
+    SELECT public.update_user(current_user, $1);
+$$
+LANGUAGE sql
+VOLATILE
+LEAKPROOF;
+
+ALTER FUNCTION public.update_current_user(text)
+    OWNER TO opm ;
+REVOKE ALL ON FUNCTION public.update_current_user(text)
+    FROM public ;
+GRANT ALL ON FUNCTION public.update_current_user(text)
+    TO opm_roles;
+
+COMMENT ON FUNCTION public.update_current_user(text) IS
+'Change the password of the current opm user.' ;
