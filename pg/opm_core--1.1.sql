@@ -402,7 +402,7 @@ BEGIN
         );
     END IF;
 
-    IF NOT is_admin(session_user) THEN
+    IF NOT public.is_admin(session_user) THEN
         query := query || $q$ AND pg_has_role(session_user, a.accname, 'MEMBER')$q$;
     END IF;
 
@@ -437,7 +437,7 @@ DECLARE
         WHERE NOT r.rolcanlogin
     $q$;
 BEGIN
-    IF NOT is_admin(session_user) THEN
+    IF NOT public.is_admin(session_user) THEN
         query := query || $q$ AND pg_has_role(session_user, r.rolname, 'MEMBER')$q$;
     END IF;
 
@@ -885,7 +885,7 @@ CREATE OR REPLACE FUNCTION public.list_servers()
   RETURNS TABLE (id bigint, hostname name, rolname name)
 AS $$
 BEGIN
-    IF is_admin(session_user) THEN
+    IF public.is_admin(session_user) THEN
         RETURN QUERY SELECT s.id, s.hostname, r.rolname
             FROM public.servers s
             LEFT JOIN public.roles r ON s.id_role = r.id;
@@ -955,7 +955,7 @@ BEGIN
     END;
 
     v_grantoption = '';
-    IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
+    IF ( (public.is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
         IF (p_accountname = 'opm_admins') THEN
             -- Allow members of opm_admins to add new admins
             v_grantoption = ' WITH ADMIN OPTION';
@@ -994,7 +994,7 @@ AS $$
 DECLARE
     v_ok boolean;
 BEGIN
-    IF ( (NOT is_user(p_rolname)) OR (NOT is_account(p_accountname)) ) THEN
+    IF ( (NOT public.is_user(p_rolname)) OR (NOT is_account(p_accountname)) ) THEN
         RETURN NULL;
     END IF;
     IF (NOT pg_has_role(p_rolname, p_accountname, 'MEMBER')) THEN
@@ -1007,7 +1007,7 @@ BEGIN
         RETURN false;
     END IF;
 
-    IF ( (is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
+    IF ( (public.is_admin(session_user)) OR (pg_has_role(session_user, p_accountname, 'MEMBER')) )THEN
         EXECUTE format('REVOKE %I FROM %I', p_accountname, p_rolname);
         RETURN true;
     ELSE
