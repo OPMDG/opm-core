@@ -427,8 +427,7 @@ sub remove {
 
     # Get the graph, and the service if a service is associated
     $sth = $dbh->prepare(qq{
-        DELETE FROM pr_grapher.graphs
-        WHERE id = ?
+        SELECT * FROM pr_grapher.delete_graph(?)
     });
 
     unless ( defined $sth->execute($id) ) {
@@ -438,10 +437,15 @@ sub remove {
         $dbh->disconnect;
         return;
     }
+    my $rc = $sth->fetchrow();
     $sth->finish;
     $dbh->disconnect;
 
-    $self->msg->info("Graph deleted.");
+    if ( $rc ) {
+        $self->msg->info("Graph deleted.");
+    } else {
+        $self->msg->error("Graph could not be deleted.");
+    }
 
     if ( (defined $self->flash('saved_route')) && (defined $self->flash('stack')) ) {
         return $self->redirect_to($self->flash('saved_route'), $self->flash('stack'));
