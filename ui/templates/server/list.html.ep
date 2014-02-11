@@ -8,13 +8,14 @@
   <link   type="text/css" href="<%= url_for '/css/servers.css' %>" media="all" rel="stylesheet" />
   <script type="text/javascript" src="<%= url_for '/js/servers.js' %>"></script>
 % end
-% my @servers = @{stash 'servers'};
+% my $servers_by_role = stash 'servers_by_role';
 % my $previous;
 % my $first = 1;
+% my $Dumper = stash 'Dumper';
 
 <div class="box" id="server_list">
   <h1 class="page-header"><%=l 'List of servers per accounts' %></h1>
-  <% if ( scalar @servers ) { %>
+  <% if ( scalar %{$servers_by_role} ) { %>
 
     <div class="container span6">
       <div class="btn-toolbar">
@@ -25,20 +26,22 @@
       </div>
 
       <div class="accordion" id="accordion2">
-      <% foreach my $s ( @servers ) { %>
-        <div id="account_<%= $s->{'rolname'} %>" class="accordion-group">
+        <% while ( (my $accname, my $servers ) = each %{$servers_by_role}) { %>
+        <div id="account_header_<%= $accname %>" class="accordion-group">
           <div class="accordion-heading">
-            <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $s->{'servers'}[0]{'id'} %>">
+            <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $accname %>">
             <i class="icon-plus"></i>
-              <%=l $s->{'rolname'} %>
+              <%= $accname %>
             </a>
           </div>
-          <div id="account_<%= $s->{'servers'}[0]{'id'} %>" class="accordion-body collapse">
+          <div id="account_<%= $accname %>"  class="accordion-body collapse">
             <div class="accordion-inner">
               <ul>
-              <% foreach my $ser (@{ $s->{'servers'} }) { %>
+                <% foreach my $ser (@{$servers}) { %>
                 <li>
-                <%= link_to server_host => { id => $ser->{'id'} } => begin %><%= $ser->{'hostname'} %><% end %>
+                <%= link_to server_host => { id => $ser->{id} } => begin %>
+                <%= $ser->{hostname} %>
+                <% end %>
                 </li>
               <% } %>
               </ul>

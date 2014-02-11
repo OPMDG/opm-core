@@ -7,116 +7,73 @@ package OPM::Server;
 
 use Mojo::Base 'Mojolicious::Controller';
 
-use Data::Dumper;
 use Digest::SHA qw(sha256_hex);
+use Helpers::Database::Utils;
 
 sub list {
     my $self = shift;
-    my $dbh  = $self->database();
-    my $sql;
-    my @servers;
-    my $curr_role = {
-        'servers' => []
-    };
-
-    $sql = $dbh->prepare(
-        "SELECT id, hostname, COALESCE(rolname,'') AS rolname
+    my $servers;
+    my $sql = $self->prepare(q{
+        SELECT id, hostname, COALESCE(rolname,'Unassigned') AS rolname
         FROM public.list_servers()
-        ORDER BY rolname, hostname;");
+        ORDER BY rolname, hostname
+    });
     $sql->execute();
 
-    while ( my $row = $sql->fetchrow_hashref() ) {
+    $servers = Helpers::Database::Utils->groupby($sql->fetchall_arrayref({}), sub { $_->{rolname} });
+    $self->stash( servers_by_role => $servers );
 
-        $row->{'rolname'} = 'Unassigned' unless $row->{'rolname'};
-
-        if ( not exists $curr_role->{'rolname'}
-            or $curr_role->{'rolname'} ne $row->{'rolname'}
-        ) {
-            push @servers, \%{ $curr_role } if exists $curr_role->{'rolname'};
-
-            $curr_role = {
-                'rolname'  => $row->{'rolname'},
-                'servers'  => []
-            };
-        }
-
-        push @{ $curr_role->{'servers'} }, {
-            'id'       => $row->{'id'},
-            'hostname' => $row->{'hostname'}
-        };
-    }
-    push @servers, \%{ $curr_role } if exists $curr_role->{'rolname'};
-    $sql->finish();
-
-    $self->stash( servers => \@servers );
-
-    $dbh->disconnect();
-    $self->render();
+    return $self->render();
 }
 
 sub service {
     my $self = shift;
-    my $dbh  = $self->database();
-    my $sql;
+    my $sql = $self->database->prepare('SELECT s2.hostname
+        FROM public.list_services() s1
+        JOIN public.list_servers s2 ON s2.id = s1.id_server
+        ORDER BY s1.id
+    ');
 
-    $sql = $dbh->prepare(
-        "SELECT s1.id, s2.hostname FROM public.list_services() s1 JOIN public.list_servers s2 ON s2.id = s1.id_server ORDER BY 1;"
-    );
     $sql->execute();
-    my $servers = [];
-    while ( my $v = $sql->fetchrow() ) {
-        push @{$servers}, { hostname => $v };
-    }
-    $sql->finish();
+    $self->stash( servers => $sql->fetchall_arrayref({}) );
 
-    $self->stash( servers => $servers );
-
-    $dbh->disconnect();
-    $self->render();
+    return $self->render();
 }
 
 sub host_by_name {
     my $self        = shift;
-    my $dbh         = $self->database();
     my $server_name = $self->param('server');
-    my $id_server;
-
-    my $sth = $dbh->prepare(q{
+    my $sql         = $self->database->prepare(q{
         SELECT id
         FROM public.list_servers()
         WHERE hostname = ?
+        LIMIT 1;
     });
-    $sth->execute($server_name);
-    $id_server = $sth->fetchrow();
+    my $id_server;
 
-    $sth->finish;
-    $dbh->disconnect;
+    $sql->execute($server_name);
 
     return $self->redirect_to('server_host',
-        id => $id_server
+        id => @{$sql->fetchall_arrayref()}[0]
     );
 }
 
 sub host {
     my $self = shift;
-    my $dbh  = $self->database();
     my $id   = $self->param('id');
     my $sql;
-    my $row;
     my $hostname;
-    my @services;
 
-    $sql = $dbh->prepare(q{
+    $sql = $self->prepare(q{
         SELECT hostname
         FROM public.list_servers()
         WHERE id = ?
+        LIMIT 1;
     });
     $sql->execute($id);
     $hostname = $sql->fetchrow();
-    $sql->finish();
 
-    if ( not $hostname ){
-        $dbh->disconnect();
+    if ( not $hostname ) {
         $self->stash(
             message => 'Server not found',
             detail => 'This server does not exists'
@@ -125,32 +82,24 @@ sub host {
     }
 
     # create missing graphs for given server
-    # FIXME: handle error
-    $sql = $dbh->prepare("SELECT pr_grapher.create_graph_for_wh_nagios(?)");
-    $sql->execute($id);
-    $sql->finish();
+    $self->dbsubs(schema => 'pr_grapher')
+        ->create_graph_for_wh_nagios($id);
 
     # Fetch all services for the given server
-    $sql = $dbh->prepare(q{
+    $sql = $self->prepare(q{
         SELECT s.id AS id_service, s.service, lower(s.state) as state
         FROM wh_nagios.list_services() s
         WHERE s.id_server = ?
         ORDER BY s.service, s.id
     });
-    # FIXME: handle error
     $sql->execute($id);
 
-    push @services, $row while $row = $sql->fetchrow_hashref();
-    $sql->finish();
-
     $self->stash(
-        services => \@services,
+        services => $sql->fetchall_arrayref({}),
         hostname => $hostname,
         id => $id
     );
-
-    $dbh->disconnect();
-    $self->render();
+    return $self->render();
 }
 
 1;
