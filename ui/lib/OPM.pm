@@ -32,7 +32,7 @@ sub startup {
     # setup secret passphrase
     if($config->{secrets})
     {
-      $self->secrets($config->{secrets});
+        $self->secrets($config->{secrets});
     }
 
     # startup database connection
