@@ -9,6 +9,8 @@ use Mojo::Base 'Mojolicious::Plugin';
 
 use Carp;
 use DBI;
+use Helpers::Database::Utils;
+
 
 has conninfo => sub { [] };
 
@@ -42,14 +44,92 @@ sub register {
                 $username = $ctrl->session('user_username');
                 $password = $ctrl->session('user_password');
             }
+            if(!defined($username))
+            {
+              return;
+            }
+            my $dbh = $ctrl->stash->{'dbh'}->{$username};
+            if(defined($dbh))
+            {
+              return $dbh;
+            }
             # Return a new database connection handle
-            my $dbh =
+            $dbh =
                 DBI->connect( $self->conninfo, $username, $password,
                 $config->{options} || {} );
-            return $dbh;
+            if($dbh && $self->db_sub_one($dbh, 'is_user', $username))
+            {
+              $ctrl->stash('dbh')->{$username} = $dbh;
+              return $dbh;
+            }
+            # If the user is the current logged in user and is not valid,
+            # disconnect
+            if($username eq $ctrl->session('user_username'))
+            {
+              $ctrl->perm->remove_info;
+              $ctrl->redirect_post('site_home');
+            }
+            return;
         } );
 
+    $app->helper(
+        prepare => sub {
+          my ( $ctrl, $stmt ) = @_;
+          return $ctrl->database->prepare($stmt);
+        } );
+
+    $app->helper(
+        dbsubs => sub {
+            my $ctrl = shift;
+            my %args = (
+              schema => 'public',
+              @_
+            );
+            return Helpers::Database::Utils->new(
+                db => $self,
+                connection => $ctrl->database(),
+                schema => $args{schema});
+        });
+
+    # Register a hook that will trash the connection if needed.
+    $app->hook(
+        after_dispatch => sub {
+            my $self = shift;
+            my $dbh = $self->stash->{'dbh'};
+            while( (my $key, my $value) = each %{$dbh} ){
+              $value->disconnect() if $dbh;
+              delete $dbh->{$key};
+            }
+        } );
+
+    # Register a helper that executes a database functions, and returns a single
+    # result.
+    $app->helper(db_sub_one => \&db_sub_one);
     return;
+}
+
+sub db_sub_one {
+    my ($self, $dbh) = (shift, shift);
+    my $stmt = _db_sub($dbh, @_);
+    my $result = $stmt->fetchrow();
+    $stmt->finish();
+    return $result;
+};
+
+
+sub _function_call {
+  my $fnname = shift;
+  my $fn_args = join(",", map { "?" } @_);
+  return "$fnname($fn_args)";
+}
+
+
+sub _db_sub {
+    my ($dbh, $fnname) = (shift, shift);
+    my $fncall = _function_call($fnname, @_);
+    my $stmt = $dbh->prepare("SELECT $fncall;");
+    $stmt->execute(@_);
+    return $stmt;
 }
 
 1;
