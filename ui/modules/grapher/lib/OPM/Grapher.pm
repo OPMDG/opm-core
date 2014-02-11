@@ -11,7 +11,7 @@ sub register {
     my ( $self, $app, $config ) = @_;
 
     # Load properties helper
-    $app->plugin( 'properties' );
+    $app->plugin('properties');
 
     # Routes
     my $r      = $app->routes->route('/grapher');
@@ -24,18 +24,15 @@ sub register {
         ->to('grapher-graphs#show');
 
     # edit
-    $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )
-        ->name('graphs_edit')
+    $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )->name('graphs_edit')
         ->to('grapher-graphs#edit');
 
     # remove
     $r_adm->route( '/graphs/:id/remove', id => qr/\d+/ )
-        ->name('graphs_remove')
-        ->to('grapher-graphs#remove');
+        ->name('graphs_remove')->to('grapher-graphs#remove');
 
     # clone
-    $r_adm->route( '/graphs/:id/clone', id => qr/\d+/ )
-        ->name('graphs_clone')
+    $r_adm->route( '/graphs/:id/clone', id => qr/\d+/ )->name('graphs_clone')
         ->to('grapher-graphs#clone');
 
     # data
@@ -43,15 +40,12 @@ sub register {
         ->to('grapher-graphs#data');
 
     # show service (using name)
-    $r_auth->route( '/graphs/showservice/:server/:service' )
-        ->name('graphs_showservice')
-        ->to('grapher-graphs#showservice');
+    $r_auth->route('/graphs/showservice/:server/:service')
+        ->name('graphs_showservice')->to('grapher-graphs#showservice');
 
     # show server
-    $r_auth->route( '/graphs/showserver/:idserver',
-            idserver => qr/\d+/ )
-        ->name('graphs_showserver')
-        ->to('grapher-graphs#showserver');
+    $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )
+        ->name('graphs_showserver')->to('grapher-graphs#showserver');
 
 }
 

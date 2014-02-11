@@ -21,7 +21,7 @@ sub show {
         qq{SELECT CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description, s.id AS id_server, s.hostname
         FROM pr_grapher.list_wh_nagios_graphs() g
         LEFT JOIN public.list_servers() s ON g.id_server = s.id
-        WHERE g.id = ?});
+        WHERE g.id = ?} );
 
     $sth->execute($id);
     my $graph = $sth->fetchrow_hashref;
@@ -36,7 +36,7 @@ sub show {
     my $hostname = $graph->{'hostname'};
 
     my $graph_list = [];
-    if (scalar $hostname){
+    if ( scalar $hostname ) {
         $sth = $dbh->prepare(
             qq{SELECT g.id,g.graph
             FROM public.list_servers() s
@@ -44,8 +44,8 @@ sub show {
             WHERE s.hostname = ? AND g.id <> ?
             ORDER BY 2}
         );
-        $sth->execute($hostname, $id);
-        while(my ($k,$v) = $sth->fetchrow){
+        $sth->execute( $hostname, $id );
+        while ( my ( $k, $v ) = $sth->fetchrow ) {
             push @{$graph_list}, { id => $k, graphname => $v };
         }
         $sth->finish;
@@ -54,11 +54,10 @@ sub show {
     $dbh->disconnect;
 
     $self->stash(
-        graph       => $graph,
-        hostname    => $hostname,
-        graph_list  => $graph_list,
-        is_admin    => $self->session('user_admin')
-    );
+        graph      => $graph,
+        hostname   => $hostname,
+        graph_list => $graph_list,
+        is_admin   => $self->session('user_admin') );
 
     $self->render;
 
@@ -74,7 +73,8 @@ sub showservice {
     my $hostname;
 
     # Get the graphs associated with the given hostname and servicename
-    my $sth = $dbh->prepare(q{
+    my $sth = $dbh->prepare(
+        q{
         SELECT g.id, CASE
             WHEN s2.hostname IS NOT NULL THEN s2.hostname || '::'
             ELSE ''
@@ -86,9 +86,9 @@ sub showservice {
             AND g.id_service = s1.id
         WHERE s2.hostname = ? AND s1.service = ?
         ORDER BY g.graph;
-    });
+    } );
 
-    $sth->execute($server_name, $service_name);
+    $sth->execute( $server_name, $service_name );
     push @graphs => $_ while $_ = $sth->fetchrow_hashref();
 
     # Check if it exists
@@ -102,15 +102,17 @@ sub showservice {
     $hostname = $graphs[0]{'hostname'};
 
     if ( $graphs[0]{'id_server'} ) {
+
         # Get other available services from the same server
-        my $sth = $dbh->prepare(qq{
+        my $sth = $dbh->prepare(
+            qq{
             SELECT service
             FROM wh_nagios.list_services()
             WHERE id_server = ? AND service <> ?
             ORDER BY service
-        });
+        } );
 
-        $sth->execute($graphs[0]{'id_server'}, $service_name);
+        $sth->execute( $graphs[0]{'id_server'}, $service_name );
         push @services => $_ while $_ = $sth->fetchrow_hashref();
         $sth->finish;
     }
@@ -121,8 +123,7 @@ sub showservice {
         graphs   => \@graphs,
         hostname => $hostname,
         services => \@services,
-        is_admin => $self->session('user_admin')
-    );
+        is_admin => $self->session('user_admin') );
 
     return $self->render;
 }
@@ -135,29 +136,31 @@ sub showserver {
     my @servers;
 
     # Get the graphs
-    my $sth = $dbh->prepare(qq{
+    my $sth = $dbh->prepare(
+        qq{
         SELECT g.id, CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description,s.hostname
         FROM pr_grapher.list_wh_nagios_graphs() g
         JOIN public.list_servers() s ON g.id_server = s.id
         WHERE g.id_server = ?
         ORDER BY  g.graph
-    });
+    } );
     $sth->execute($idserver);
     my $graphs = [];
     my $hostname;
-    while ( my $graph = $sth->fetchrow_hashref() ){
-        $hostname = $graph->{'hostname'} if (! defined $hostname);
+    while ( my $graph = $sth->fetchrow_hashref() ) {
+        $hostname = $graph->{'hostname'} if ( !defined $hostname );
         push @{$graphs}, $graph;
     }
     $sth->finish;
 
     # Get other available servers
-    $sth = $dbh->prepare(qq{
+    $sth = $dbh->prepare(
+        qq{
         SELECT id, hostname
         FROM public.list_servers()
         WHERE id <> ?
         ORDER BY hostname
-    });
+    } );
 
     $sth->execute($idserver);
     push @servers => $_ while $_ = $sth->fetchrow_hashref();
@@ -169,8 +172,7 @@ sub showserver {
         graphs   => $graphs,
         hostname => $hostname,
         servers  => \@servers,
-        is_admin => $self->session('user_admin')
-    );
+        is_admin => $self->session('user_admin') );
 
     $self->render;
 
@@ -179,8 +181,8 @@ sub showserver {
 sub edit {
     my $self = shift;
 
-    my $id         = $self->param('id');
-    my $e          = 0;
+    my $id = $self->param('id');
+    my $e  = 0;
 
     my $dbh = $self->database;
 
@@ -203,7 +205,7 @@ sub edit {
 
     my $id_server = $graph->{id_server};
 
-    $self->flash('id_server', $id_server);
+    $self->flash( 'id_server', $id_server );
 
     # Save the form
     my $method = $self->req->method;
@@ -215,22 +217,18 @@ sub edit {
         # Action depends on the name of the button pressed
         if ( exists $form->{cancel} ) {
             $dbh->disconnect;
-            return $self->redirect_to('graphs_show', id => $id);
+            return $self->redirect_to( 'graphs_show', id => $id );
         }
 
         if ( exists $form->{drop} ) {
             $dbh->disconnect;
 
-            return $self->redirect_to('graphs_remove',
-                id => $id
-            );
+            return $self->redirect_to( 'graphs_remove', id => $id );
         }
 
         if ( exists $form->{clone} ) {
             $dbh->disconnect;
-            return $self->redirect_to('graphs_clone',
-                id => $id
-            );
+            return $self->redirect_to( 'graphs_clone', id => $id );
         }
 
         if ( exists $form->{save} ) {
@@ -242,10 +240,10 @@ sub edit {
                 $e = 1;
             }
 
-            if (   ( !scalar $id_server )
+            if (    ( !scalar $id_server )
                 and $form->{y1_query} =~ m!^\s*$!
-                and $form->{y2_query} =~ m!^\s*$!
-            ) {
+                and $form->{y2_query} =~ m!^\s*$! )
+            {
                 $self->msg->error("Missing query");
                 $e = 1;
             }
@@ -283,8 +281,8 @@ sub edit {
 
                 # Save the properties actually sent
                 # If a property is missing, library/grapher default value will be used
-                my $json = Mojo::JSON->new;
-                my $config = $json->encode( $props );
+                my $json   = Mojo::JSON->new;
+                my $config = $json->encode($props);
 
                 $sth = $dbh->prepare(
                     qq{UPDATE pr_grapher.graphs
@@ -304,19 +302,20 @@ sub edit {
                 $sth->finish;
 
                 ## Set labels for this graph
-                my @labels = ( );
-                if (ref $form->{'labels'} eq 'ARRAY') {
+                my @labels = ();
+                if ( ref $form->{'labels'} eq 'ARRAY' ) {
                     @labels = @{ $form->{'labels'} };
                 }
                 else {
                     push @labels => $form->{'labels'};
                 }
 
-                $sth = $dbh->prepare(qq{
+                $sth = $dbh->prepare(
+                    qq{
                     SELECT pr_grapher.update_graph_labels(?, ?)
-                });
+                } );
 
-                if ( !defined $sth->execute( $id, \@labels) ) {
+                if ( !defined $sth->execute( $id, \@labels ) ) {
                     $self->render_exception( $dbh->errstr );
                     $sth->finish;
                     $dbh->rollback;
@@ -327,7 +326,7 @@ sub edit {
 
                 $self->msg->info("Graph saved");
                 $dbh->disconnect;
-                return $self->redirect_to('graphs_show', id => $id);
+                return $self->redirect_to( 'graphs_show', id => $id );
             }
         }
 
@@ -343,11 +342,9 @@ sub edit {
                 FROM pr_grapher.list_wh_nagios_labels(?) AS l
                 JOIN wh_nagios.list_services() AS s
                     ON l.id_service = s.id
-            });
+            } );
 
-        if (
-            !defined $sth->execute($id) )
-        {
+        if ( !defined $sth->execute($id) ) {
             $self->render_exception( $dbh->errstr );
             $sth->finish;
             $dbh->rollback;
@@ -359,16 +356,17 @@ sub edit {
 
         my $row;
 
-        while ( defined($row = $sth->fetchrow_hashref) ) {
+        while ( defined( $row = $sth->fetchrow_hashref ) ) {
             $row->{'unit'} = 'no unit' if $row->{'unit'} eq '';
-            push @labels, { %{ $row } };
-            $self->req->params->append( "labels", $row->{'id_label'}) if $row->{'checked'};
+            push @labels, { %{$row} };
+            $self->req->params->append( "labels", $row->{'id_label'} )
+                if $row->{'checked'};
         }
 
         $sth->finish;
 
         # Prepare properties
-        my $json = Mojo::JSON->new;
+        my $json   = Mojo::JSON->new;
         my $config = $json->decode( $graph->{config} );
         delete $graph->{config};
 
@@ -376,7 +374,6 @@ sub edit {
         foreach my $p ( keys %$config ) {
             $self->param( $p, $config->{$p} );
         }
-
 
         # Prefill the rest
         foreach my $p ( keys %$graph ) {
@@ -387,8 +384,7 @@ sub edit {
         $self->stash(
             'id_server' => $id_server,
             'labels'    => \@labels,
-            'graph'     => $graph->{'graph'}
-        );
+            'graph'     => $graph->{'graph'} );
     }
 
     $dbh->disconnect;
@@ -406,11 +402,12 @@ sub remove {
     unless ($id_server) {
 
         # Get the graph, and the service if a service is associated
-        $sth = $dbh->prepare(qq{
+        $sth = $dbh->prepare(
+            qq{
             SELECT id_server
             FROM pr_grapher.list_wh_nagios_graphs()
             WHERE id = ?
-        });
+        } );
 
         unless ( defined $sth->execute($id) ) {
             $self->render_exception( $dbh->errstr );
@@ -426,9 +423,10 @@ sub remove {
     }
 
     # Get the graph, and the service if a service is associated
-    $sth = $dbh->prepare(qq{
+    $sth = $dbh->prepare(
+        qq{
         SELECT * FROM pr_grapher.delete_graph(?)
-    });
+    } );
 
     unless ( defined $sth->execute($id) ) {
         $self->render_exception( $dbh->errstr );
@@ -441,27 +439,32 @@ sub remove {
     $sth->finish;
     $dbh->disconnect;
 
-    if ( $rc ) {
+    if ($rc) {
         $self->msg->info("Graph deleted.");
-    } else {
+    }
+    else {
         $self->msg->error("Graph could not be deleted.");
     }
 
-    if ( (defined $self->flash('saved_route')) && (defined $self->flash('stack')) ) {
-        return $self->redirect_to($self->flash('saved_route'), $self->flash('stack'));
+    if (   ( defined $self->flash('saved_route') )
+        && ( defined $self->flash('stack') ) )
+    {
+        return $self->redirect_to( $self->flash('saved_route'),
+            $self->flash('stack') );
     }
 
     return $self->redirect_to( 'server_host', id => $id_server );
 }
 
 sub clone {
-    my $self      = shift;
-    my $id        = $self->param('id');
-    my $dbh       = $self->database;
+    my $self = shift;
+    my $id   = $self->param('id');
+    my $dbh  = $self->database;
     my $new_id;
 
     # Clone the graph and its associated labels
-    my $sth = $dbh->prepare(qq{WITH graph AS (
+    my $sth = $dbh->prepare(
+        qq{WITH graph AS (
             INSERT INTO pr_grapher.graphs
                 (graph, description, y1_query, y2_query, config)
             SELECT 'Clone - ' || graph, description, y1_query,
@@ -474,7 +477,7 @@ sub clone {
         FROM pr_grapher.graph_wh_nagios, graph
         WHERE id_graph=?
         RETURNING id_graph
-    });
+    } );
 
     unless ( defined $sth->execute( $id, $id ) ) {
         $self->render_exception( $dbh->errstr );
@@ -484,7 +487,7 @@ sub clone {
         return;
     }
 
-    ( $new_id ) = $sth->fetchrow;
+    ($new_id) = $sth->fetchrow;
     $sth->finish;
     $dbh->disconnect;
 
@@ -496,11 +499,11 @@ sub clone {
 sub data {
     my $self = shift;
 
-    my $y1_query   = $self->param('y1_query');
-    my $y2_query   = $self->param('y2_query');
-    my $id         = $self->param('id');
-    my $from       = $self->param("from");
-    my $to         = $self->param("to");
+    my $y1_query = $self->param('y1_query');
+    my $y2_query = $self->param('y2_query');
+    my $id       = $self->param('id');
+    my $from     = $self->param("from");
+    my $to       = $self->param("to");
     my $config;
     my $isservice = 0;
     my $data      = [];
@@ -538,7 +541,7 @@ sub data {
         $sth->finish;
     }
 
-    if ( not $isservice ) { # Regular graph
+    if ( not $isservice ) {    # Regular graph
         if ( defined $y1_query and $y1_query !~ m!^\s*$! ) {
             my $series = {};
 
@@ -608,29 +611,30 @@ sub data {
             }
         }
     }
-    else {# Graph is linked to a service
+    else {    # Graph is linked to a service
         $sth = $dbh->prepare(
             qq{SELECT s.hostname || '::' || graph AS graph,description
             FROM pr_grapher.list_wh_nagios_graphs() g
             JOIN public.list_servers() s ON s.id = g.id_server
-            WHERE g.id = ?});
+            WHERE g.id = ?} );
         $sth->execute($id);
-        my ($graphtitle,$graphsubtitle) = $sth->fetchrow();
+        my ( $graphtitle, $graphsubtitle ) = $sth->fetchrow();
         $sth->finish();
-        $config->{'title'} = $graphtitle;
+        $config->{'title'}    = $graphtitle;
         $config->{'subtitle'} = $graphsubtitle;
 
-        $sth = $dbh->prepare(qq{
+        $sth = $dbh->prepare(
+            qq{
             SELECT id_label, label, unit
             FROM pr_grapher.list_wh_nagios_labels(?)
             WHERE available;
-        });
+        } );
         $sth->execute($id);
 
         my $series = {};
         my $sql;
         $from = substr $from, 0, -3;
-        $to = substr $to, 0, -3;
+        $to   = substr $to,   0, -3;
 
         #FIXME: handle wh_nagios as a module
         $sql = $dbh->prepare(
@@ -642,7 +646,8 @@ sub data {
                 sprintf( "%.0f", ( $to - $from ) / 700 ) );
             $series->{$label} = [];
             while ( my ( $x, $y ) = $sql->fetchrow() ) {
-                push @{ $series->{$label} }, [ 0 + $x, ($y eq "NaN" ? undef : 0.0 + $y ) ];
+                push @{ $series->{$label} },
+                    [ 0 + $x, ( $y eq "NaN" ? undef : 0.0 + $y ) ];
             }
             $sql->finish;
             push @{$data}, { data => $series->{$label}, label => $label };
@@ -650,7 +655,7 @@ sub data {
             # Buggy with multiple units!
             $config->{'yaxis_unit'} = $unit;
         }
-        $config->{'yaxis_autoscale'} = $json->true;
+        $config->{'yaxis_autoscale'}       = $json->true;
         $config->{'yaxis_autoscaleMargin'} = 0.2;
 
         $sth->finish;
