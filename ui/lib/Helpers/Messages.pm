@@ -11,6 +11,14 @@ use Mojo::ByteStream 'b';
 has msg_lists =>
     sub { { debug => [], info => [], error => [], warning => [] } };
 
+
+our %Error_class = (
+  "debug" => "alert-info",
+  "error" => "alert-error",
+  "info" => "alert-success"
+);
+
+
 sub register {
     my ( $self, $app ) = @_;
 
@@ -20,51 +28,20 @@ sub register {
         display_messages => sub {
             my ($ctrl) = @_;
             my $html;
-
-            if ( @{ $self->msg_lists->{debug} } ) {
-                $html .= qq{<div class="alert fade in  alert-info">\n};
+            foreach my $error_type ('debug', 'error', 'warning', 'info') {
+              my $values = $self->msg_lists->{$error_type};
+              if(scalar(@$values))
+              {
+                my $class = $Error_class{$error_type} || '';
+                $html .= qq{<div class="alert fade in $class">\n};
                 $html .=
                     qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
                 $html .= qq{<ul class="unstyled">\n};
                 $html .= join( "\n",
-                    map { "<li>" . $ctrl->l($_) . "</li>" }
-                        @{ $self->msg_lists->{debug} } );
+                    map { "<li>" . $ctrl->l($_) . "</li>" } @{$values} );
                 $html .= qq{</ul></div>};
+              }
             }
-
-            if ( @{ $self->msg_lists->{error} } ) {
-                $html .= qq{<div class="alert fade in  alert-error">};
-                $html .=
-                    qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
-                $html .= qq{<ul class="unstyled">\n};
-                $html .= join( "\n",
-                    map { "<li>" . $ctrl->l($_) . "</li>" }
-                        @{ $self->msg_lists->{error} } );
-                $html .= qq{</ul></div>};
-            }
-
-            if ( @{ $self->msg_lists->{warning} } ) {
-                $html .= qq{<div class="alert fade in">};
-                $html .=
-                    qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
-                $html .= qq{<ul class="unstyled">\n};
-                $html .= join( "\n",
-                    map { "<li>" . $ctrl->l($_) . "</li>" }
-                        @{ $self->msg_lists->{warning} } );
-                $html .= qq{</ul></div>};
-            }
-
-            if ( @{ $self->msg_lists->{info} } ) {
-                $html .= qq{<div class="alert fade in alert-success">};
-                $html .=
-                    qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
-                $html .= qq{<ul class="unstyled">\n};
-                $html .= join( "\n",
-                    map { "<li>" . $ctrl->l($_) . "</li>" }
-                        @{ $self->msg_lists->{info} } );
-                $html .= qq{</ul></div>};
-            }
-
             # Empty the message list so that it is displayed only once
             $self->msg_lists(
                 { debug => [], info => [], error => [], warning => [] } );
