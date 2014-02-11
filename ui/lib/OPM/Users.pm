@@ -58,7 +58,7 @@ sub create {
 
     return $self->list if $validation->has_error;
 
-    $created = $self->dbsubs->create_user(
+    $created = $self->proc_wrapper->create_user(
         $form_data->{username},
         $form_data->{password},
         [ $form_data->{accname} ]
@@ -106,7 +106,7 @@ sub edit {
         $self->validation_error($validation);
 
         if( $validation->is_valid ) {
-            my $granted = $self->dbsubs->grant_account(
+            my $granted = $self->proc_wrapper->grant_account(
                 $rolname, $validation->output->{accname}
             );
             
@@ -150,7 +150,7 @@ sub delete {
     my $self    = shift;
     my $rolname = $self->param('rolname');
 
-    if ( $self->dbsubs->drop_user( $rolname ) ) {
+    if ( $self->proc_wrapper->drop_user( $rolname ) ) {
         $self->msg->info("User deleted");
     }
     else {
@@ -165,7 +165,7 @@ sub delacc {
     my $rolname = $self->param('rolname');
     my $accname = $self->param('accname');
 
-    if ( $self->dbsubs->revoke_account($rolname, $accname) ) {
+    if ( $self->proc_wrapper->revoke_account($rolname, $accname) ) {
         $self->msg->info("Account removed from user");
     }
     else {
@@ -212,7 +212,7 @@ sub login {
             password       => $form_data->{password}
         );
 
-        $admin = $self->dbsubs->is_admin( $form_data->{username} );
+        $admin = $self->proc_wrapper->is_admin( $form_data->{username} );
 
         # Store information in the session.
         # As the session is only updated at login, if a user is granted
@@ -253,7 +253,7 @@ sub change_password {
     return $self->profile if $validation->has_error;
 
     $new_password = $validation->output->{new_password};
-    if( $self->dbsubs->update_current_user($new_password) ) {
+    if( $self->proc_wrapper->update_current_user($new_password) ) {
         $self->msg->info("Password changed");
         $self->session->{user_password} = $validation->output->{new_password};
         return $self->redirect_post('users_profile');

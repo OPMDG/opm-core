@@ -8,7 +8,6 @@ package OPM::Server;
 use Mojo::Base 'Mojolicious::Controller';
 
 use Digest::SHA qw(sha256_hex);
-use Helpers::Database::Utils;
 
 sub list {
     my $self = shift;
@@ -82,7 +81,7 @@ sub host {
     }
 
     # create missing graphs for given server
-    $self->dbsubs(schema => 'pr_grapher')
+    $self->proc_wrapper(schema => 'pr_grapher')
         ->create_graph_for_wh_nagios($id);
 
     # Fetch all services for the given server

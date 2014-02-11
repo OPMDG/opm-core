@@ -25,7 +25,7 @@ sub list {
 
         $form_data = $validation->output;
 
-        if ( $self->dbsubs->create_account( $form_data->{accname} ) ) {
+        if ( $self->proc_wrapper->create_account( $form_data->{accname} ) ) {
             $self->msg->info("Account created");
             return $self->redirect_post('accounts_list');
         }
@@ -49,7 +49,7 @@ sub delete {
     # TODO: ensure that this is only accessible via get (see issue #59)
     my $accname = $self->param('accname');
 
-    if ( $self->dbsubs->drop_account($accname) ) {
+    if ( $self->proc_wrapper->drop_account($accname) ) {
         $self->msg->info("Account deleted");
     }
     else {
@@ -65,7 +65,7 @@ sub delrol {
     my $rolname = $self->param('rolname');
     my $accname = $self->param('accname');
 
-    if ( $self->dbsubs->revoke_account( $rolname, $accname ) ) {
+    if ( $self->proc_wrapper->revoke_account( $rolname, $accname ) ) {
         $self->msg->info("Account removed from user");
     }
     else {
@@ -81,7 +81,7 @@ sub revokeserver {
     my $idserver = $self->param('idserver');
     my $accname  = $self->param('accname');
 
-    if ( $self->dbsubs->revoke_server( $idserver, $accname ) ) {
+    if ( $self->proc_wrapper->revoke_server( $idserver, $accname ) ) {
         $self->msg->info("Server revoked");
     }
     else {
@@ -174,7 +174,7 @@ sub add_user {
         $self->validation_error($validation);
         last if $validation->has_error;
 
-        if ($self->dbsubs->grant_account(
+        if ($self->proc_wrapper->grant_account(
             $validation->output->{existing_username}, $accname
         )) {
             $self->msg->info("User added");
@@ -201,7 +201,7 @@ sub new_user {
         $self->validation_error($validation);
         last if $validation->has_error;
 
-        if ($self->dbsubs->create_user(
+        if ($self->proc_wrapper->create_user(
             $validation->output->{new_username},
             $validation->output->{password},
             [ $accname ]
@@ -229,7 +229,7 @@ sub add_server {
         $self->validation_error($validation);
         last if $validation->has_error;
 
-        if ($self->dbsubs->grant_server(
+        if ($self->proc_wrapper->grant_server(
             $validation->output->{existing_hostname},
             $accname
         )) {

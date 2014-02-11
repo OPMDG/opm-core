@@ -1,4 +1,4 @@
-package Helpers::Database::Utils;
+package Helpers::Database::ProcWrapper;
 
 # This program is open source, licensed under the PostgreSQL License.
 # For license terms, see the LICENSE file.
