@@ -45,14 +45,27 @@ sub register {
             # Empty the message list so that it is displayed only once
             $self->msg_lists(
                 { debug => [], info => [], error => [], warning => [] } );
-
             $html = ($html) ? qq{<div id="messages">$html</div>\n} : '';
 
             return b($html);
             }
-
     );
 
+    $app->helper(
+        validation_error => sub {
+          (my $ctrl, my $validation) = (shift, shift);
+          if($validation->has_error)
+          {
+              while( (my $key, my $values) = each %{$validation->{error}} ){
+                  (my $check_name, my $result) = shift @$values, shift @$values;
+                  my $formatter = $ctrl->l("validation_$check_name");
+                  my $fieldname = $ctrl->l($key);
+                  my @values = map { $ctrl->l($_) } @$values;
+                  my $formatted = sprintf($formatter, $fieldname, @values);
+                  $self->error($formatted);
+              }
+          }
+        });
     return;
 }
 
@@ -80,7 +93,6 @@ sub info {
 
 sub error {
     my $self = shift;
-
     my $messages = $self->msg_lists;
     my @error    = @{ $messages->{error} };
     push @error, @_;
@@ -91,7 +103,6 @@ sub error {
 
 sub warning {
     my $self = shift;
-
     my $messages = $self->msg_lists;
     my @warning  = @{ $messages->{warning} };
     push @warning, @_;
