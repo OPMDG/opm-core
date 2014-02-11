@@ -10,6 +10,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Carp;
 use DBI;
 use Helpers::Database::Utils;
+use Helpers::Database::Sth;
 
 
 has conninfo => sub { [] };
@@ -74,9 +75,11 @@ sub register {
 
     $app->helper(
         prepare => sub {
-          my ( $ctrl, $stmt ) = @_;
-          return $ctrl->database->prepare($stmt);
-        } );
+            my ( $ctrl, $stmt ) = @_;
+            return Helpers::Database::Sth->new(
+                sth => $ctrl->database->prepare($stmt)
+            );
+    });
 
     $app->helper(
         dbsubs => sub {

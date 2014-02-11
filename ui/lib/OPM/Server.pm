@@ -20,7 +20,7 @@ sub list {
     });
     $sql->execute();
 
-    $servers = Helpers::Database::Utils->groupby($sql->fetchall_arrayref({}), sub { $_->{rolname} });
+    $servers = $sql->fetchall_groupby('rolname');
     $self->stash( servers_by_role => $servers );
 
     return $self->render();

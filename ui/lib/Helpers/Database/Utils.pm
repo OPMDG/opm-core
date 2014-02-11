@@ -23,22 +23,4 @@ sub AUTOLOAD {
 sub DESTROY {
 }
 
-sub groupby {
-    my ( $mod, $values, $sub ) = @_;
-    my $results  = {};
-    my $last_key = "";
-    my $current_values;
-    foreach my $value ( @{$values} ) {
-        $_ = $value;
-        my $key = &$sub( %{$value} );
-        if ( $key ne $last_key ) {
-            $last_key        = $key;
-            $current_values  = [];
-            $results->{$key} = $current_values;
-        }
-        push @$current_values, $value;
-    }
-    return $results;
-}
-
 return 1;
