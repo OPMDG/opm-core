@@ -98,6 +98,13 @@ sub startup {
         ->name('accounts_create');
     $r_adm->route('/accounts/:accname')->to('accounts#edit')
         ->name('accounts_edit');
+    $r_adm->route('/accounts/:accname/add_user')->to('accounts#add_user')
+        ->name('accounts_add_user');
+    $r_adm->route('/accounts/:accname/add_server')->to('accounts#add_server')
+        ->name('accounts_add_server');
+    $r_adm->route('/accounts/:accname/new_user')->to('accounts#new_user')
+        ->name('accounts_new_user');
+
     $r_adm->route('/accounts/delete/:accname')->to('accounts#delete')
         ->name('accounts_delete');
     $r_adm->route('/accounts/delrol/:accname/:rolname')->to('accounts#delrol')

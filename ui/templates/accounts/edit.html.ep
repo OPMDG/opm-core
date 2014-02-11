@@ -42,7 +42,7 @@
   </div>
   <div class="span4 box" id="acc_edit">
     <b><%=l 'Add a user to account' %> <%= param 'accname' %></b><br /><br />
-    <%= form_for accounts_edit => (method => 'POST') => begin %>
+    <%= form_for accounts_new_user => (method => 'POST') => begin %>
       <fieldset>
         <div class="control-group">
           <label class="control-label" for="username"><%=l 'Username' %>:</label>
@@ -63,7 +63,7 @@
       </fieldset>
     <% end %>
 
-    <%= form_for accounts_edit => (method => 'POST') => begin %>
+    <%= form_for accounts_add_user => (method => 'POST') => begin %>
       <fieldset>
         <div class="control-group">
           <label class="control-label" for="existing_user"><%=l 'Existing user' %> :</label>
@@ -80,7 +80,7 @@
       </fieldset>
     <% end %>
 
-    <%= form_for accounts_edit => (method => 'POST') => begin %>
+    <%= form_for accounts_add_server => (method => 'POST') => begin %>
       <fieldset>
         <div class="control-group">
           <label class="control-label" for="hostname"><%=l 'Unassigned servers' %> :</label>

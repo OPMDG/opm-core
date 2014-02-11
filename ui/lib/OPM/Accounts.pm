@@ -11,232 +11,236 @@ use Data::Dumper;
 use Digest::SHA qw(sha256_hex);
 
 sub list {
-    my $self = shift;
-    my $dbh  = $self->database();
+    my $self       = shift;
+    my $method     = $self->req->method;
+    my $validation = $self->validation;
     my $sql;
 
-    my $method = $self->req->method;
-    if ( $method =~ m/^POST$/i ) {    # Create a new account
-                                      # process the input data
-        my $form_data = $self->req->params->to_hash;
+    if ( $method eq 'POST' && $validation->has_data ) {{
+        my $form_data;
 
-        # Check input values
-        my $e = 0;
-        if ( $form_data->{accname} =~ m/^\s*$/ ) {
-            $self->msg->error("Empty account name.");
-            $e = 1;
-        }
-        if ( !$e ) {
-            $sql =
-                $dbh->prepare( "SELECT public.create_account(?);" );
-            if ( $sql->execute( $form_data->{accname} ) ) {
-                $self->msg->info("Account created");
-            }
-            else {
-                $self->msg->error("Could not create account");
-            }
-            $sql->finish();
-        }
-    }
+        $validation->required('accname');
+        $self->validation_error($validation);
+        last if $validation->has_error;
 
-    $sql = $dbh->prepare(
-        'SELECT accname FROM public.list_accounts() ORDER BY 1;');
+        $form_data = $validation->output;
+
+        if ( $self->dbsubs->create_account( $form_data->{accname} ) ) {
+            $self->msg->info("Account created");
+            return $self->redirect_post('accounts_list');
+        }
+
+        $self->msg->error("Could not create account");
+    }}
+
+    $sql = $self->prepare('SELECT accname
+        FROM public.list_accounts()
+        ORDER BY 1
+    ');
     $sql->execute();
-    my $acc = [];
-    while ( my $v = $sql->fetchrow() ) {
-        push @{$acc}, { accname => $v };
-    }
-    $sql->finish();
 
-    $self->stash( acc => $acc );
+    $self->stash( acc => $sql->fetchall_arrayref( {} ) );
 
-    $dbh->disconnect();
-    $self->render();
+    return $self->render('accounts/list');
 }
 
 sub delete {
     my $self    = shift;
-    my $dbh     = $self->database();
+    # TODO: ensure that this is only accessible via get (see issue #59)
     my $accname = $self->param('accname');
-    my $sql     = $dbh->prepare("SELECT public.drop_account(?);");
-    if ( $sql->execute($accname) ) {
+
+    if ( $self->dbsubs->drop_account($accname) ) {
         $self->msg->info("Account deleted");
     }
     else {
         $self->msg->error("Could not delete account");
     }
-    $sql->finish();
-    $dbh->disconnect();
-    $self->redirect_to('accounts_list');
+
+    return $self->redirect_post('accounts_list');
 }
 
 sub delrol {
     my $self    = shift;
-    my $dbh     = $self->database();
+    # TODO: ensure that this is only accessible via get (see issue #59)
     my $rolname = $self->param('rolname');
     my $accname = $self->param('accname');
-    my $rc;
-    my $sql =
-        $dbh->prepare( 'SELECT public.revoke_account(?,?);' );
-    if ( $sql->execute($rolname, $accname) ) {
-        my $rc = $sql->fetchrow();
-        if ( $rc ){
-            $self->msg->info("Account removed from user");
-        } else{
-            $self->msg->error("Could not remove account from user");
-        }
+
+    if ( $self->dbsubs->revoke_account( $rolname, $accname ) ) {
+        $self->msg->info("Account removed from user");
     }
     else {
         $self->msg->error("Could not remove account from user");
     }
-    $sql->finish();
-    $dbh->disconnect();
-    $self->redirect_to('accounts_edit');
+
+    return $self->redirect_post('accounts_edit');
 }
 
 sub revokeserver {
-    my $self    = shift;
-    my $dbh     = $self->database();
+    my $self     = shift;
+    # TODO: ensure that this is only accessible via get (see issue #59)
     my $idserver = $self->param('idserver');
-    my $accname = $self->param('accname');
-    my $sql =
-        $dbh->prepare( "SELECT rc FROM public.revoke_server(?, ?);");
-    if ( $sql->execute($idserver, $accname) ) {
-        my $rc = $sql->fetchrow();
-        if ( $rc ){
-            $self->msg->info("Server revoked");
-        } else {
-            $self->msg->info("Could not revoke server");
-        }
+    my $accname  = $self->param('accname');
+
+    if ( $self->dbsubs->revoke_server( $idserver, $accname ) ) {
+        $self->msg->info("Server revoked");
     }
     else {
-        $self->msg->error("Unknown error");
+        $self->msg->info("Could not revoke server");
     }
-    $sql->finish();
-    $dbh->disconnect();
-    $self->redirect_to('accounts_edit');
+
+    return $self->redirect_to('accounts_edit');
+}
+
+sub _is_account {
+    my ( $self, $accname ) = @_;
+    my $sql = $self->prepare('SELECT COUNT(*)
+        FROM public.list_accounts()
+        WHERE accname = ?
+    ');
+
+    $sql->execute($accname);
+
+    return $sql->fetchrow() == 1;
 }
 
 sub edit {
-    my $self    = shift;
-    my $dbh     = $self->database();
-    my $accname = $self->param('accname');
+    my $self        = shift;
+    my $accname     = $self->param('accname');
+    my $myservers   = [];
+    my $freeservers = [];
     my $rc;
     my $sql;
+    my $roles;
+    my $allroles;
 
-    $sql = $dbh->prepare(
-        "SELECT COUNT(*) FROM public.list_accounts() WHERE accname = ?");
+    # TODO: find a way to raise a NotFound exception
+    # from another subroutine.
+    return $self->render_not_found unless $self->_is_account($accname);
+
+    $sql = $self->prepare('SELECT useid, rolname
+        FROM list_users(?)
+        ORDER BY 2
+    ');
     $sql->execute($accname);
-    my $found = ( $sql->fetchrow() == 1);
-    $sql->finish();
-    if ( !$found ){
-        $dbh->disconnect();
-        return $self->render_not_found;
-    }
+    $roles = $sql->fetchall_arrayref( {} );
 
-    my $method = $self->req->method;
-    if ( $method =~ m/^POST$/i ) {
+    $sql = $self->prepare('SELECT DISTINCT rolname
+        FROM list_users()
+        EXCEPT SELECT rolname
+        FROM list_users(?)
+        ORDER BY 1
+    ');
+    $sql->execute($accname);
+    $allroles = $sql->fetchall_arrayref( {} );
 
-        # process the input data
-        my $form_data = $self->req->params->to_hash;
+    $sql = $self->prepare('SELECT id, hostname, rolname
+        FROM public.list_servers()
+        WHERE rolname = ?
+            OR rolname IS NULL
+        ORDER BY 2
+    ');
+    $sql->execute($accname);
 
-        # Check input values
-        my $e = 0;
-        if ( !$form_data->{existing_username} =~ m/^\s*$/ ) {
-
-            # Add existing user to account
-            $sql =
-                $dbh->prepare( 'SELECT public.grant_account(?,?);' );
-            if ( $sql->execute( $form_data->{existing_username}, $accname ) ) {
-                my $rc = $sql->fetchrow();
-                if ( $rc ){
-                    $self->msg->info("User added");
-                } else {
-                    $self->msg->error("Could not add user");
-                }
-            }
-            else {
-                $self->msg->error("Could not add user");
-            }
-            $sql->finish();
+    while ( my ( $id_server, $hostname, $rolname ) = $sql->fetchrow() ) {
+        if ( scalar $rolname ) {
+            push @{$myservers}, { $id_server => $hostname };
         }
-        elsif ( !$form_data->{new_username} =~ m/^\s*$/ ) {
-
-            # Create new user in this account
-
-            if ( $form_data->{password} =~ m/^\s*$/ ) {
-                $self->msg->error("Empty password.");
-                $e = 1;
-            }
-            if ( !$e ) {
-                $sql =
-                    $dbh->prepare( "SELECT public.create_user(?, ?,'{" . $accname . "}');" );
-                if ( $sql->execute($form_data->{new_username},$form_data->{password}) ) {
-                    $self->msg->info("User added");
-                }
-                else {
-                    $self->msg->error("Could not add user");
-                }
-                $sql->finish();
-            }
-        }
-        elsif ( !$form_data->{existing_hostname} =~ m/^\s*$/ ) {
-
-            # Grant the account to the chosen server
-            $sql = $dbh->prepare("SELECT rc FROM public.grant_server(?, ?);");
-            if ( $sql->execute($form_data->{existing_hostname},$accname) ){
-                my $rc = $sql->fetchrow();
-                if ( $rc ){
-                    $self->msg->info("Server granted");
-                } else {
-                    $self->msg->info("Could not grant server");
-                }
-            } else {
-                $self->msg->info("Unknown error");
-            }
-        }
-    }
-
-    $sql = $dbh->prepare(
-        "SELECT useid,rolname FROM list_users(?) ORDER BY 2;");
-    $sql->execute($accname);
-    my $roles = [];
-
-    while ( my ( $i, $n ) = $sql->fetchrow() ) {
-        push @{$roles}, { rolname => $n };
-    }
-    $sql->finish();
-
-    $sql = $dbh->prepare(
-        "SELECT DISTINCT rolname FROM list_users() EXCEPT SELECT rolname FROM list_users(?) ORDER BY 1;"
-    );
-    $sql->execute($accname);
-    my $allroles = [];
-
-    while ( my ($v) = $sql->fetchrow() ) {
-        push @{$allroles}, { rolname => $v };
-    }
-    $sql->finish();
-
-    my $myservers = [];
-    my $freeservers = [];
-    $sql = $dbh->prepare(
-        "SELECT id, hostname, rolname FROM public.list_servers() WHERE rolname = ? OR rolname IS NULL ORDER BY 2;"
-    );
-    $sql->execute($accname);
-    while ( my ($id_server, $hostname, $rolname) = $sql->fetchrow() ) {
-        if (scalar $rolname){
-            push @{$myservers}, { $id_server => $hostname }
-        } else{
+        else {
             push @{$freeservers}, { $id_server => $hostname };
         }
     }
-    $sql->finish();
 
-    $self->stash( roles => $roles, allroles => $allroles, myservers => $myservers, freeservers => $freeservers );
+    $self->stash(
+        roles       => $roles,
+        allroles    => $allroles,
+        myservers   => $myservers,
+        freeservers => $freeservers
+    );
 
-    $dbh->disconnect();
-    $self->render();
+    return $self->render('accounts/edit');
+}
+
+sub add_user {
+    my $self    = shift;
+    my $method  = $self->req->method;
+    my $accname = $self->param('accname');
+
+    return $self->render_not_found unless $self->_is_account($accname);
+
+    if ( $method eq 'POST' ) {{
+        my $validation = $self->validation;
+
+        $validation->required('existing_username');
+        $self->validation_error($validation);
+        last if $validation->has_error;
+
+        if ($self->dbsubs->grant_account(
+            $validation->output->{existing_username}, $accname
+        )) {
+            $self->msg->info("User added");
+            return $self->redirect_post('accounts_edit');
+        }
+
+        $self->msg->error("Could not add user");
+    }}
+    return $self->edit;
+}
+
+sub new_user {
+    my $self    = shift;
+    my $method  = $self->req->method;
+    my $accname = $self->param('accname');
+
+    return $self->render_not_found unless $self->_is_account($accname);
+
+    if ( $method eq 'POST' ) {{
+        my $validation = $self->validation;
+
+        $validation->required('new_username');
+        $validation->required('password')->size( 5, 64 );
+        $self->validation_error($validation);
+        last if $validation->has_error;
+
+        if ($self->dbsubs->create_user(
+            $validation->output->{new_username},
+            $validation->output->{password},
+            [ $accname ]
+        )) {
+            $self->msg->info("User added");
+            return $self->redirect_post('accounts_edit');
+        }
+
+        $self->msg->error("Could not add user");
+    }}
+    return $self->edit;
+}
+
+sub add_server {
+    my $self    = shift;
+    my $method  = $self->req->method;
+    my $accname = $self->param('accname');
+
+    return $self->render_not_found unless $self->_is_account($accname);
+
+    if ( $method eq 'POST' ) {{
+        my $validation = $self->validation;
+
+        $validation->required('existing_hostname');
+        $self->validation_error($validation);
+        last if $validation->has_error;
+
+        if ($self->dbsubs->grant_server(
+            $validation->output->{existing_hostname},
+            $accname
+        )) {
+            $self->msg->info("Server granted");
+            return $self->redirect_post('accounts_edit');
+        }
+
+        $self->msg->info("Could not grant server");
+    }}
+
+    return $self->edit;
 }
 
 1;
