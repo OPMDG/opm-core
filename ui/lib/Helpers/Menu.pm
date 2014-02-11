@@ -75,7 +75,6 @@ sub register {
                 push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
 
                 $sql->finish();
-                $dbh->disconnect();
             }
 
             $self->stash(
