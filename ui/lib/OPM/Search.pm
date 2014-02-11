@@ -10,19 +10,22 @@ use Mojo::Base 'Mojolicious::Controller';
 sub server {
     my $self = shift;
     my $query = $self->param('query');
-    my $dbh  = $self->database();
-    if (scalar $query){
-        $query = " WHERE hostname ilike '%$query%' ";
-    }
-    my $sql = $dbh->prepare("SELECT id,hostname FROM public.list_servers() $query ORDER BY 1;");
-    $sql->execute();
-    my $servers = [];
-    while ( my ($id, $hostname) = $sql->fetchrow() ) {
-        push @{$servers}, { id => $id, name => $hostname };
-    }
-    $sql->finish();
-    $dbh->disconnect();
-    $self->render( 'json' => $servers );
+    my $sql;
+    my $servers;
+    my $predicate;
+    
+    $predicate = scalar($query) ? " WHERE hostname ilike ? " : "";
+    $sql = $self->prepare(qq{SELECT id, hostname as name
+        FROM public.list_servers()
+        $predicate
+        ORDER BY 1
+    });
+
+    $sql->execute("%$query%");
+
+    $servers = $sql->fetchall_arrayref({});
+    
+    return $self->render( 'json' => $servers );
 }
 
 1;
