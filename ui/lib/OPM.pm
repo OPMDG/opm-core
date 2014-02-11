@@ -76,6 +76,8 @@ sub startup {
     # User stuff
     $r->route('/login')->to('users#login')->name('users_login');
     $r_auth->route('/profile')->to('users#profile')->name('users_profile');
+
+    $r_auth->route('/change_password')->to('users#change_password')->name('users_change_password');
     $r_auth->route('/logout')->to('users#logout')->name('users_logout');
     if ( $config->{allow_register} ) {
         $r->route('/register')->to('users#register')->name('users_register');

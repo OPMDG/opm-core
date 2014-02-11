@@ -25,7 +25,7 @@
     </div>
   </div>
   <div class="span4 box" id="user_create">
-    <%= form_for users_list => (method => 'POST') => begin %>
+    <%= form_for users_create => (method => 'POST') => begin %>
       <fieldset>
         <b><%=l 'Add a user' %></b><br /><br />
         <div class="control-group">
