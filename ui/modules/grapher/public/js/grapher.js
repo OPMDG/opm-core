@@ -20,8 +20,9 @@
         this.legend_box
             .data('id-graph', this.$element.attr('id-graph'));
 
-        if (! this.config.legend_box)
+        if (! this.config.legend_box) {
             this.$element.append(this.legend_box);
+        }
 
         this.default_props = {
             autoscale: true,
@@ -46,7 +47,7 @@
                  track: true,
                  sensibility: 5,
                  trackFormatter: function (o) {
-                     d = new Date(new Number(o.x));
+                     var d = new Date(new Number(o.x));
                      return d.toString() +"<br />"+ o.series.label +' = '+ $().formatUnit(o.series.data[o.index][1], o.series.yaxis.options.unit);
                  }
             },
@@ -84,14 +85,14 @@
                 tickFormatter: function (val, axis) { return $().formatUnit (val, this.unit); }
             }
         };
-    }
+    };
 
     Grapher.prototype = {
 
         constructor: Grapher,
 
         html_error: function (message) {
-            if (typeof message == 'undefined') message = '';
+            if (typeof message == 'undefined') { message = '' }
 
             return '<div class="alert alert-error">'+
                 '<button type="button" class="close" data-dismiss="alert">&times;</button>'+
@@ -104,11 +105,9 @@
             var grapher = this,
                 post_data;
 
-            if (fromDate == null)
-                fromDate = this.config.from;
+            if (fromDate == null) { fromDate = this.config.from }
 
-            if (toDate == null)
-                toDate = this.config.to;
+            if (toDate == null)   { toDate = this.config.to }
 
             post_data = {
                 id: this.config.id,
@@ -137,7 +136,7 @@
 
         draw: function () {
             var $plot   = this.$element.find('.plot'),
-                $legend = this.legend_box
+                $legend = this.legend_box,
                 inactiveSeries = null;
 
             // Empty the graph to draw it from scratch
@@ -147,7 +146,7 @@
             if (this.fetched && this.fetched.series.length) {
                 inactiveSeries = new Array();
                 $.map(this.fetched.series, function (s) {
-                    if (s.hide) inactiveSeries.push(s.label);
+                    if (s.hide) { inactiveSeries.push(s.label) }
                 });
             }
 
@@ -158,16 +157,18 @@
                 if (this.fetched.redirect == 1) {
                     document.location = document.location;
                 }
-                else
+                else {
                     $plot.parent().empty()
                         .append(this.html_error(this.fetched.error));
+                }
                 return;
             }
 
             if (inactiveSeries !== null) {
                 $.map(this.fetched.series, function (s) {
-                    if (inactiveSeries.indexOf(s.label) !== -1)
+                    if (inactiveSeries.indexOf(s.label) !== -1) {
                         s.hide = true;
+                    }
                 });
             }
 
