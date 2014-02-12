@@ -12,9 +12,8 @@
     var Grapher = function (element, options) {
         this.config = options;
         this.$element = $(element);
-        this.legend_box = this.config.legend_box ?
-            this.config.legend_box
-            : $('<div class="legend" />');
+        this.legend_box = this.config.legend_box ||
+            $('<div class="legend" />');
 
         this.$element.append('<div class="plot">');
         this.legend_box
@@ -47,7 +46,7 @@
                  track: true,
                  sensibility: 5,
                  trackFormatter: function (o) {
-                     var d = new Date(new Number(o.x));
+                     var d = new Date(parseInt(o.x));
                      return d.toString() +"<br />"+ o.series.label +' = '+ $().formatUnit(o.series.data[o.index][1], o.series.yaxis.options.unit);
                  }
             },
@@ -92,7 +91,7 @@
         constructor: Grapher,
 
         html_error: function (message) {
-            if (typeof message == 'undefined') { message = '' }
+            if (typeof message == 'undefined') { message = ''; }
 
             return '<div class="alert alert-error">'+
                 '<button type="button" class="close" data-dismiss="alert">&times;</button>'+
@@ -103,11 +102,11 @@
         fetch_data: function (url, fromDate, toDate) {
 
             var grapher = this,
-                post_data;
+                post_data, a;
 
-            if (fromDate == null) { fromDate = this.config.from }
+            if (fromDate === undefined) { fromDate = this.config.from; }
 
-            if (toDate == null)   { toDate = this.config.to }
+            if (toDate === undefined)   { toDate = this.config.to; }
 
             post_data = {
                 id: this.config.id,
@@ -115,7 +114,7 @@
                 to: toDate
             };
 
-            var a = $.ajax(url, {
+            a = $.ajax(url, {
                 async: false,
                 cache: false,
                 type: 'post',
@@ -124,7 +123,7 @@
                 data: post_data,
                 success: function (r) {
                     grapher.fetched = r;
-                    if ( r.error != 'undefined' ) {
+                    if ( r.error === undefined ) {
                         grapher.fetched.properties = $.extend(true,
                             grapher.default_props,
                             grapher.fetched.properties || {}
@@ -144,16 +143,16 @@
 
             // Remember active series if we already have some
             if (this.fetched && this.fetched.series.length) {
-                inactiveSeries = new Array();
+                inactiveSeries = [];
                 $.map(this.fetched.series, function (s) {
-                    if (s.hide) { inactiveSeries.push(s.label) }
+                    if (s.hide) { inactiveSeries.push(s.label); }
                 });
             }
 
             // Fetch to data to plot
-            this.fetch_data(this.config['url']);
+            this.fetch_data(this.config.url);
 
-            if (this.fetched.error != null) {
+            if (this.fetched.error !== undefined) {
                 if (this.fetched.redirect == 1) {
                     document.location = document.location;
                 }
@@ -161,7 +160,7 @@
                     $plot.parent().empty()
                         .append(this.html_error(this.fetched.error));
                 }
-                return;
+                return false;
             }
 
             if (inactiveSeries !== null) {
@@ -174,6 +173,8 @@
 
             this.refresh();
             this.drawLegend();
+
+            return true;
         },
 
         refresh: function () {
@@ -188,21 +189,17 @@
         },
 
         _activateSerie: function($e) {
-            with ($e) {
-                find('.flotr-legend-color-box')
-                    .css('opacity', 0.9);
-                find('label')
-                    .removeClass('deactivated');
-            }
+            $e.find('.flotr-legend-color-box')
+                .css('opacity', 0.9);
+            $e.find('label')
+                .removeClass('deactivated');
         },
 
         _deactivateSerie: function($e) {
-            with ($e) {
-                find('.flotr-legend-color-box')
-                    .css('opacity', 0.1);
-                find('label')
-                    .addClass('deactivated');
-            }
+            $e.find('.flotr-legend-color-box')
+                .css('opacity', 0.1);
+            $e.find('label')
+                .addClass('deactivated');
         },
 
         drawLegend: function() {
@@ -210,21 +207,36 @@
             var $legend    = this.legend_box,
                 legend_opt = this.flotr.legend.options,
                 series     = this.flotr.series,
-                i, label, color,
+                i, label, $label, color, s, $cell, toggleSerie,
                 itemCount  = $.grep(series, function (e) {
-                        return (e.label && !e.hide) }
-                    ).length;
+                        return (e.label && !e.hide);
+                    }).length;
 
             if (itemCount) {
-                for(i = 0; i < series.length; ++i) {
-                    if(!series[i].label) continue;
+                toggleSerie = function () {
+                    var $this   = $(this),
+                        grapher = $('[id-graph='+ $this.parent().data('id-graph') +']')
+                            .grapher(),
+                        serie   = grapher.fetched.series[$this.data('i')];
 
-                    var s = series[i];
+                    serie.hide = ! serie.hide;
+                    if ( serie.hide ) {
+                        grapher._deactivateSerie($this);
+                    }
+                    else { grapher._activateSerie($this); }
+
+                    grapher.refresh();
+                };
+                        
+                for(i = 0; i < series.length; ++i) {
+                    if(!series[i].label) { continue; }
+
+                    s = series[i];
 
                     label = legend_opt.labelFormatter(s.label);
                     color = ((s.bars && s.bars.show && s.bars.fillColor && s.bars.fill) ? s.bars.fillColor : s.color);
 
-                    var $cell = $(
+                    $cell = $(
                         '<div class="flotr-legend-color-box" />'
                     )
                         .css({
@@ -238,25 +250,12 @@
                         .attr('id', 'legendcolor'+i)
                         .add('<label>'+ label +'</label>');
 
-                    var $label = $('<div class="label-'+ i +'" />').prepend($cell)
+                    $label = $('<div class="label-'+ i +'" />').prepend($cell)
                         .data('i', i)
-                        .click(function () {
-                            var $this   = $(this),
-                                grapher = $('[id-graph='+ $this.parent().data('id-graph') +']')
-                                    .grapher(),
-                                s       = grapher.fetched.series[$this.data('i')];
-
-                            if ( (s.hide = ! s.hide) )
-                                grapher._deactivateSerie($this);
-                            else
-                                grapher._activateSerie($this);
-
-                            grapher.refresh();
-                        })
+                        .click(toggleSerie)
                         .appendTo($legend);
 
-                    if (s.hide)
-                        this._deactivateSerie( $label );
+                    if (s.hide) { this._deactivateSerie( $label ); }
                 }
 
                 $legend.css({
@@ -268,14 +267,14 @@
         zoom: function (tsfrom, tsto) {
             var i;
 
-            if (!tsfrom || !tsto) return false;
+            if (!tsfrom || !tsto) { return false; }
 
             $.extend(this.config, {
                 from: tsfrom,
                 to: tsto
             });
 
-            this.draw();
+            if (! this.draw() ) { return false; }
 
             Flotr.bean.fire(
                 this.$element.get(0), 'grapher:zoomed', [ tsfrom, tsto ]
@@ -301,8 +300,9 @@
             var series     = this.fetched.series,
                 i;
 
-            for(i = 0; i < series.length; ++i)
+            for(i = 0; i < series.length; ++i) {
                 series[i].hide = false;
+            }
 
             this._activateSerie( this.legend_box.find('> div') );
 
@@ -331,8 +331,8 @@
             for(i = 0; i < series.length; ++i)
                 series[i].hide = ! series[i].hide;
 
-            if ($showed.length) this._deactivateSerie($showed);
-            if ($hidden.length) this._activateSerie($hidden);
+            if ($showed.length) { this._deactivateSerie($showed); }
+            if ($hidden.length) { this._activateSerie($hidden);   }
 
             this.refresh();
         },
@@ -342,13 +342,14 @@
         },
 
         formatDate: function (d, f, m) {
-            tz = '';
+            var tz = '';
             if ( m == 'local' ) {
-                offset = d.getTimezoneOffset();
+                var offset = d.getTimezoneOffset();
                 tz += ( offset > 0 ? '-' : '+' );
                 offset = Math.abs(offset);
                 tz += ('0' + Math.floor(offset/60)).slice(-2) + ('0' + (offset%60)).slice(-2);
-            } else {
+            }
+            else {
               tz = ' UTC';
             }
             return Flotr.Date.format(d, f, m) + tz;
@@ -364,7 +365,7 @@
                     grapher = $this.data('grapher');
 
                 // if no grapher object is already registred on this tag, add it
-                if (grapher) return;
+                if (grapher) { return; }
 
                 var options = $.extend({}, {
                         properties: null,
@@ -378,10 +379,10 @@
 
                 options.id = $this.attr('id-graph');
 
-                if (options.id === undefined) return;
+                if (options.id === undefined) { return; }
 
                 $this.data('grapher', (grapher = new Grapher(this, options)));
-                $this.data('zooms', new Array());
+                $this.data('zooms', []);
 
                 Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:select', function (sel, g) {
                     $this.data('zooms').push([
@@ -399,9 +400,7 @@
                 });
             });
         }
-        else if (! param ) {
-            return $(this).data('grapher');
-        }
+        else if (! param ) { return $(this).data('grapher'); }
     };
 
     $.fn.formatUnit = function (val, unit) {
@@ -419,7 +418,6 @@
                 if (val > 1024)
                     return (val / 1024).toFixed(2) + " Ki" + unit;
                 return val + " " + unit;
-            break;
 
             case 'KB':
                 if (val > (1024*1024*1024*1024))
@@ -431,7 +429,6 @@
                 if (val > 1024)
                     return (val / 1024).toFixed(2) + " MiB";
                 return val + " KiB";
-            break;
 
             case 'ms':
             case 's':
@@ -440,56 +437,48 @@
                 var hour = 60 * minute;
                 var day = 24 * hour;
                 var year = 365 * day;
-                function formatyear(t){
-                    if (t < year)
-                        return formatday(t);
-                    else
-                        return Math.floor(t/year)+'y '+formatday(t%year);
+                function formatyear(t) {
+                    if (t < year) { return formatday(t); }
+                    return Math.floor(t/year)+'y '+formatday(t%year);
                 }
-                function formatday(t){
-                    if (t < day)
-                        return formathour(t);
-                    else
-                        return Math.floor(t/day)+'d '+formathour(t%day);
+                function formatday(t) {
+                    if (t < day) { return formathour(t); }
+                    return Math.floor(t/day)+'d '+formathour(t%day);
                 }
-                function formathour(t){
-                    if (t < hour)
-                        return formatminute(t);
-                    else
-                        return Math.floor(t/hour)+'h '+formatminute(t%hour);
+                function formathour(t) {
+                    if (t < hour) { return formatminute(t); }
+                    return Math.floor(t/hour)+'h '+formatminute(t%hour);
                 }
-                function formatminute(t){
-                    if (t < minute)
-                        return formatsecond(t);
-                    else
-                        return Math.floor(t/minute)+'m '+formatsecond(t%minute);
+                function formatminute(t) {
+                    if (t < minute) { return formatsecond(t); }
+                    return Math.floor(t/minute)+'m '+formatsecond(t%minute);
                 }
-                function formatsecond(t){
-                    if (t < second)
-                        return t+'ms';
-                    else
-                        return Math.floor(t/second)+'s '+(t%second? t%second+'ms':'');
+                function formatsecond(t) {
+                    if (t < second) { return t+'ms'; }
+                    return Math.floor(t/second)+'s '+(t%second? t%second+'ms':'');
                 }
                 return formatyear(val);
-            break;
 
             case '':
-                if (val > (1000*1000*1000*1000*1000))
+                if (val > (1000*1000*1000*1000*1000)) {
                     return (val / (1000*1000*1000*1000*1000)).toFixed(2) + " P";
-                if (val > (1000*1000*1000*1000))
+                }
+                if (val > (1000*1000*1000*1000)) {
                     return (val / (1000*1000*1000*1000)).toFixed(2) + " T";
-                if (val > (1000*1000*1000))
+                }
+                if (val > (1000*1000*1000)) {
                     return (val / (1000*1000*1000)).toFixed(2) + " G";
-                if (val > (1000*1000))
+                }
+                if (val > (1000*1000)) {
                     return (val / (1000*1000)).toFixed(2) + " M";
-                if (val > 1000)
+                }
+                if (val > 1000) {
                     return (val / 1000).toFixed(2) + " K";
+                }
                 return val;
-            break;
 
             default:
                 return val + " " + unit;
-            break;
         }
     };
 
