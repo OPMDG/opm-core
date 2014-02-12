@@ -18,7 +18,7 @@ sub show {
 
     # Get the graph
     my $sth = $dbh->prepare(
-        qq{SELECT CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description, s.id AS id_server, s.hostname
+        qq{SELECT CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description, s.id AS id_server, s.hostname, g.id
         FROM pr_grapher.list_wh_nagios_graphs() g
         LEFT JOIN public.list_servers() s ON g.id_server = s.id
         WHERE g.id = ?} );
