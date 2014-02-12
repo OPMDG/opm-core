@@ -25,8 +25,11 @@ function displayError(text) {
 }
 
 $(document).ready(function (){
-    $('#search').typeahead({
-      ajax: { url: searchUrl, triggerLength: 1},
-      itemSelected: displayResult
+    $('[data-searchurl]').each(function() {
+        var $this = $(this);
+        $this.typeahead({
+            ajax: { url: $this.attr('data-searchurl'), triggerLength: 1},
+            itemSelected: displayResult
+        });
     });
 });

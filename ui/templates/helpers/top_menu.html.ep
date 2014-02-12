@@ -55,6 +55,6 @@
 
 % if (($user_level eq "user" ) or ($user_level eq "admin")){
 <form class="navbar-search pull-right" style="margin-right: 20px" >
-  <input type="text" class="search-query" placeholder="<%=l 'Search amongs servers' %>" id="search" autocomplete="off">
+  <input type="text" class="search-query" data-searchurl="<%= url_for 'search_server'%>" placeholder="<%=l 'Search amongs servers' %>" autocomplete="off">
 </form>
 % }

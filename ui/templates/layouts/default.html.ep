@@ -26,10 +26,6 @@
     <!--[if lt IE 9]>
       <script src="<%= url_for '/' %>js/html5.js"></script>
     <![endif]-->
-    %= javascript begin
-        var searchUrl = '<%= url_for 'search_server' %>';
-    % end
-
     <%= content_for 'header' %>
 
   </head>
