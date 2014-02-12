@@ -1,13 +1,14 @@
-<div class="graph_container">
+<div class="graph_container" data-graphid="<%= $graph->{id} %>"
+  data-graphurl="<%= url_for('graphs_data') %>">
   <div class="grapher-header row-fluid" style="margin-bottom: 5px">
     <span></span>
     <div class="pull-right">
       <div class="btn-group">
-        <a href="#" offon-series="<%= $graph->{id} %>"
+        <a href="#" data-graphrole="offon-series"
           class="btn btn-mini"
           title="<%= l 'Show/Hide series' %>"
           ><i class="icon-eye-open"></i></a>
-        <a href="#" invert-series="<%= $graph->{id} %>"
+        <a href="#" data-graphrole="invert-series"
           class="btn btn-mini"
           title="<%= l 'Invert Sel.' %>"
           ><i class="icon-eye-close"></i></a>
@@ -15,7 +16,7 @@
             'class' => "btn btn-mini",
             'title' => l('Link')
           ), begin %><i class="icon-globe"></i><% end %>
-        <a href="#" export-graph="<%= $graph->{id} %>"
+        <a href="#" data-graphrole="export-graph"
           class="btn btn-mini save"
           title="<%= l 'Save' %>"
           ><i class="icon-download-alt"></i></a>
@@ -38,8 +39,8 @@
   </div>
 
   <div class="row-fluid">
-    <div class="span9" id-graph="<%= $graph->{id} %>"></div>
-    <div class="span3 graph-legend" id="legend-<%= $graph->{id} %>"></div>
+    <div class="span9" data-graphrole="plot"></div>
+    <div class="span3 graph-legend" data-graphrole="legend"></div>
   </div>
 </div>
 

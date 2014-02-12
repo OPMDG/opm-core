@@ -12,13 +12,42 @@ $(document).ready(function () {
     format: 'dd/MM/yyyy hh:mm:ss'
   });
 
-  $('[id-graph]').each(function () {
-    $(this).grapher({
-      url: graphDataUrl,
-      legend_box: $('#legend-' + $(this).attr('id-graph'))
+  $('[data-graphid]').each(function () {
+    var $this = $(this),
+        $plot_box = $this.find('[data-graphrole="plot"]'),
+        $legend_box = $this.find('[data-graphrole="legend"]'),
+        $grapher;
+    $plot_box.grapher({
+      url: $this.attr('data-graphurl'),
+      id: $this.attr('data-graphid'),
+      legend_box: $legend_box
+    });
+    $grapher = $plot_box.data('grapher');
+
+    // Setup actions on buttons toolbar
+    $this.find('[data-graphrole="offon-series"]').data('selectall', 'true').click(function (e) {
+      e.preventDefault();
+      var selectall = !$(this).data('selectall');
+      if (selectall)
+          $grapher.activateSeries();
+      else
+          $grapher.deactivateSeries();
+      $(this).data('selectall', selectall);
     });
 
-    $(this).grapher().observe('grapher:zoomed', function () {
+    $this.find('[data-graphrole="invert-series"]').click(function(e){
+      e.preventDefault();
+      $grapher.invertActivatedSeries();
+    });
+    // Export the graph
+    $this.find('[data-graphrole="export-graph"]').click(function(e){
+        e.preventDefault();
+        $grapher.export();
+    });
+
+
+
+    $grapher.observe('grapher:zoomed', function (from, to) {
         var $this = $(this),
           grapher  = $this.grapher();
 
@@ -64,8 +93,8 @@ $(document).ready(function () {
     }
     frompick.setLocalDate(fromDate);
     topick.setLocalDate(toDate);
-    $('[id-graph]').each(function (i, e) {
-        $(e).grapher().zoom(
+    $('[data-graphrole="plot"]').each(function (i, e) {
+        $(this).grapher().zoom(
             frompick.getLocalDate().getTime(),
             topick.getLocalDate().getTime()
         );
@@ -116,34 +145,6 @@ $(document).ready(function () {
             topick.getLocalDate().getTime()
         );
     });
-  });
-
-  $('[export-graph]').click(function (e) {
-      e.preventDefault();
-      var id = $(this).attr('export-graph'),
-          grapher = $('[id-graph='+id+']').grapher();
-
-      grapher.export();
-  });
-
-  $('[invert-series]').click(function (e) {
-      e.preventDefault();
-      var id = $(this).attr('invert-series'),
-          grapher = $('[id-graph='+id+']').grapher();
-
-      grapher.invertActivatedSeries();
-  });
-
-  $('[offon-series]').data('is_on', true).click(function (e) {
-      e.preventDefault();
-      var id = $(this).attr('offon-series'),
-          grapher = $('[id-graph='+id+']').grapher(),
-          is_on = ! $(this).data('is_on');
-
-      if (is_on) { grapher.activateSeries();   }
-      else       { grapher.deactivateSeries(); }
-
-      $(this).data('is_on', is_on);
   });
 
   /* by default, show the week graph by triggering the week button */

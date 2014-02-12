@@ -137,7 +137,6 @@
             var $plot   = this.$element.find('.plot'),
                 $legend = this.legend_box,
                 inactiveSeries = null;
-
             // Empty the graph to draw it from scratch
             $legend.empty();
 
@@ -366,7 +365,6 @@
                     grapher = $this.data('grapher'),
                     options;
 
-                // if no grapher object is already registred on this tag, add it
                 if (grapher) { return; }
 
                 options = $.extend({}, {
@@ -379,14 +377,10 @@
                     param
                 );
 
-                options.id = $this.attr('id-graph');
-
-                if (options.id === undefined) { return; }
-
                 grapher = new Grapher(this, options);
-
                 $this.data('grapher', grapher);
                 $this.data('zooms', []);
+                grapher.draw();
 
                 Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:select', function (sel) {
                     $this.data('zooms').push([
