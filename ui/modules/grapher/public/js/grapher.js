@@ -46,7 +46,7 @@
                  track: true,
                  sensibility: 5,
                  trackFormatter: function (o) {
-                     var d = new Date(parseInt(o.x));
+                     var d = new Date(parseInt(o.x, 10));
                      return d.toString() +"<br />"+ o.series.label +' = '+ $().formatUnit(o.series.data[o.index][1], o.series.yaxis.options.unit);
                  }
             },
@@ -81,7 +81,7 @@
                 labelsAngle: 0,
                 showLabels: true,
                 titleAngle: 90,
-                tickFormatter: function (val, axis) { return $().formatUnit (val, this.unit); }
+                tickFormatter: function (val) { return $().formatUnit (val, this.unit); }
             }
         };
     };
@@ -91,7 +91,7 @@
         constructor: Grapher,
 
         html_error: function (message) {
-            if (typeof message == 'undefined') { message = ''; }
+            if (message === undefined) { message = ''; }
 
             return '<div class="alert alert-error">'+
                 '<button type="button" class="close" data-dismiss="alert">&times;</button>'+
@@ -153,7 +153,7 @@
             this.fetch_data(this.config.url);
 
             if (this.fetched.error !== undefined) {
-                if (this.fetched.redirect == 1) {
+                if (this.fetched.redirect === 1) {
                     document.location = document.location;
                 }
                 else {
@@ -265,8 +265,6 @@
         },
 
         zoom: function (tsfrom, tsto) {
-            var i;
-
             if (!tsfrom || !tsto) { return false; }
 
             $.extend(this.config, {
@@ -313,8 +311,9 @@
             var series     = this.fetched.series,
                 i;
 
-            for(i = 0; i < series.length; ++i)
+            for(i = 0; i < series.length; ++i) {
                 series[i].hide = true;
+            }
 
             this._deactivateSerie( this.legend_box.find('> div') );
 
@@ -328,8 +327,9 @@
                 $showed = $legend.find('label:not(.deactivated)').parent(),
                 i;
 
-            for(i = 0; i < series.length; ++i)
+            for(i = 0; i < series.length; ++i) {
                 series[i].hide = ! series[i].hide;
+            }
 
             if ($showed.length) { this._deactivateSerie($showed); }
             if ($hidden.length) { this._activateSerie($hidden);   }
@@ -342,9 +342,10 @@
         },
 
         formatDate: function (d, f, m) {
-            var tz = '';
-            if ( m == 'local' ) {
-                var offset = d.getTimezoneOffset();
+            var tz = '',
+                offset;
+            if ( m === 'local' ) {
+                offset = d.getTimezoneOffset();
                 tz += ( offset > 0 ? '-' : '+' );
                 offset = Math.abs(offset);
                 tz += ('0' + Math.floor(offset/60)).slice(-2) + ('0' + (offset%60)).slice(-2);
@@ -358,16 +359,17 @@
 
     // Plugin definition
     $.fn.grapher = function (param) {
-        if (typeof param == 'object') {
+        if (typeof param === 'object') {
             return this.each(function () {
 
                 var $this = $(this),
-                    grapher = $this.data('grapher');
+                    grapher = $this.data('grapher'),
+                    options;
 
                 // if no grapher object is already registred on this tag, add it
                 if (grapher) { return; }
 
-                var options = $.extend({}, {
+                options = $.extend({}, {
                         properties: null,
                         id:         null,
                         to:         null,
@@ -381,10 +383,12 @@
 
                 if (options.id === undefined) { return; }
 
-                $this.data('grapher', (grapher = new Grapher(this, options)));
+                grapher = new Grapher(this, options);
+
+                $this.data('grapher', grapher);
                 $this.data('zooms', []);
 
-                Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:select', function (sel, g) {
+                Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:select', function (sel) {
                     $this.data('zooms').push([
                         grapher.config.from,
                         grapher.config.to
@@ -395,90 +399,66 @@
 
                 Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:click', function () {
                     var zo = $this.data('zooms').pop();
-                    if (zo)
-                        grapher.zoom(zo[0], zo[1]);
+                    if (zo) { grapher.zoom(zo[0], zo[1]); }
                 });
             });
         }
-        else if (! param ) { return $(this).data('grapher'); }
+        if (! param ) { return $(this).data('grapher'); }
     };
 
     $.fn.formatUnit = function (val, unit) {
+        var scale, i;
         switch ( unit ) {
             case 'B':
-            case 'Bps':
-                if (val > (1024*1024*1024*1024*1024))
-                    return (val / (1024*1024*1024*1024*1024)).toFixed(2) + " Pi" + unit;
-                if (val > (1024*1024*1024*1024))
-                    return (val / (1024*1024*1024*1024)).toFixed(2) + " Ti" + unit;
-                if (val > (1024*1024*1024))
-                    return (val / (1024*1024*1024)).toFixed(2) + " Gi" + unit;
-                if (val > (1024*1024))
-                    return (val / (1024*1024)).toFixed(2) + " Mi" + unit;
-                if (val > 1024)
-                    return (val / 1024).toFixed(2) + " Ki" + unit;
-                return val + " " + unit;
+            case 'Bps': {
+                if (val <= 1024) { return val + ' ' + unit; }
+                scale = [null, 'Ki', 'Mi', 'Gi', 'Ti', 'Pi'];
+                for (i=0; i<5 && val > 1024; i++) {
+                    val /= 1024;
+                }
+                return val.toFixed(2) + ' ' + scale[i] + unit;
+            }
 
-            case 'KB':
-                if (val > (1024*1024*1024*1024))
-                    return (val / (1024*1024*1024*1024)).toFixed(2) + " PiB";
-                if (val > (1024*1024*1024))
-                    return (val / (1024*1024*1024)).toFixed(2) + " TiB";
-                if (val > (1024*1024))
-                    return (val / (1024*1024)).toFixed(2) + " GiB";
-                if (val > 1024)
-                    return (val / 1024).toFixed(2) + " MiB";
-                return val + " KiB";
+            case 'KB': {
+                if (val <= 1024) { return val + ' KiB'; }
+                scale = [null, ' MiB', ' GiB', ' TiB', ' PiB'];
+                for (i=0; i<4 && val > 1024; i++) {
+                    val /= 1024;
+                }
+                return val.toFixed(2) + scale[i];
+            }
 
             case 'ms':
-            case 's':
-                var second = (unit == 'ms') ? 1000:1;
-                var minute = 60 * second;
-                var hour = 60 * minute;
-                var day = 24 * hour;
-                var year = 365 * day;
-                function formatyear(t) {
-                    if (t < year) { return formatday(t); }
-                    return Math.floor(t/year)+'y '+formatday(t%year);
+            case 's': {
+                var msecond = 1,
+                    second  = (unit === 's')? 1:1000,
+                    minute  = 60  * second,
+                    hour    = 60  * minute,
+                    day     = 24  * hour,
+                    year    = 365 * day,
+                    steps   = [ year, day, hour, minute, second, msecond ],
+                    res     = '';
+                scale   = [ 'y ', 'd ', 'h ', 'm ', 's ', 'ms' ];
+                for (i=0; i < scale.length; i++) {
+                    if (val < steps[i] || val === 0) { continue; }
+                    res += Math.floor(val/steps[i]) + scale[i];
+                    val = val%steps[i];
                 }
-                function formatday(t) {
-                    if (t < day) { return formathour(t); }
-                    return Math.floor(t/day)+'d '+formathour(t%day);
-                }
-                function formathour(t) {
-                    if (t < hour) { return formatminute(t); }
-                    return Math.floor(t/hour)+'h '+formatminute(t%hour);
-                }
-                function formatminute(t) {
-                    if (t < minute) { return formatsecond(t); }
-                    return Math.floor(t/minute)+'m '+formatsecond(t%minute);
-                }
-                function formatsecond(t) {
-                    if (t < second) { return t+'ms'; }
-                    return Math.floor(t/second)+'s '+(t%second? t%second+'ms':'');
-                }
-                return formatyear(val);
+                return res;
+            }
 
-            case '':
-                if (val > (1000*1000*1000*1000*1000)) {
-                    return (val / (1000*1000*1000*1000*1000)).toFixed(2) + " P";
+            case '': {
+                if (val <= 1000) { return val; }
+
+                scale = [null, 'K', 'M', 'G', 'T', 'P'];
+                for (i=0; i<5 && val > 1000; i++) {
+                    val /= 1000;
                 }
-                if (val > (1000*1000*1000*1000)) {
-                    return (val / (1000*1000*1000*1000)).toFixed(2) + " T";
-                }
-                if (val > (1000*1000*1000)) {
-                    return (val / (1000*1000*1000)).toFixed(2) + " G";
-                }
-                if (val > (1000*1000)) {
-                    return (val / (1000*1000)).toFixed(2) + " M";
-                }
-                if (val > 1000) {
-                    return (val / 1000).toFixed(2) + " K";
-                }
-                return val;
+                return val.toFixed(2) + scale[i];
+            }
 
             default:
-                return val + " " + unit;
+                return val + ' '  + unit;
         }
     };
 
