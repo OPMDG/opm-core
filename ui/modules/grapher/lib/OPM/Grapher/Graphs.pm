@@ -11,13 +11,10 @@ use Data::Dumper;
 
 sub show {
     my $self = shift;
-
-    my $id = $self->param('id');
-
-    my $dbh = $self->database;
+    my $id   = $self->param('id');
 
     # Get the graph
-    my $sth = $dbh->prepare(
+    my $sth = $self->prepare(
         qq{SELECT CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description, s.id AS id_server, s.hostname, g.id
         FROM pr_grapher.list_wh_nagios_graphs() g
         LEFT JOIN public.list_servers() s ON g.id_server = s.id
@@ -29,7 +26,6 @@ sub show {
 
     # Check if it exists (this can be reach by url)
     if ( !defined $graph ) {
-        $dbh->disconnect;
         return $self->render_not_found;
     }
 
@@ -37,40 +33,33 @@ sub show {
 
     my $graph_list = [];
     if ( scalar $hostname ) {
-        $sth = $dbh->prepare(
-            qq{SELECT g.id,g.graph
+        $sth = $self->prepare(
+            qq{SELECT g.id, g.graph as graphname
             FROM public.list_servers() s
             JOIN pr_grapher.list_wh_nagios_graphs() g ON s.id = g.id_server
             WHERE s.hostname = ? AND g.id <> ?
             ORDER BY 2}
         );
         $sth->execute( $hostname, $id );
-        while ( my ( $k, $v ) = $sth->fetchrow ) {
-            push @{$graph_list}, { id => $k, graphname => $v };
-        }
-        $sth->finish;
+        $graph_list = $sth->fetchall_arrayref( {} );
     }
-
-    $dbh->disconnect;
-
-    $self->stash(
-        graph      => $graph,
+    return $self->render(
+        'grapher/graphs/show',
+        server_id  => $graph->{id_server},
+        graphs     => [$graph],
         hostname   => $hostname,
         graph_list => $graph_list,
         is_admin   => $self->session('user_admin') );
-
-    $self->render;
-
 }
 
 sub showservice {
     my $self         = shift;
-    my $server_name  = $self->param('server');
+    my $hostname     = $self->param('server');
     my $service_name = $self->param('service');
     my $dbh          = $self->database;
-    my @services;
-    my @graphs;
-    my $hostname;
+    my $server_id;
+    my $services;
+    my $graphs;
 
     # Get the graphs associated with the given hostname and servicename
     my $sth = $dbh->prepare(
@@ -88,20 +77,19 @@ sub showservice {
         ORDER BY g.graph;
     } );
 
-    $sth->execute( $server_name, $service_name );
-    push @graphs => $_ while $_ = $sth->fetchrow_hashref();
+    $sth->execute( $hostname, $service_name );
+    $graphs = $sth->fetchall_arrayref( {} );
 
     # Check if it exists
-    if ( @graphs < 1 ) {
-        $dbh->disconnect;
+    if ( $graphs < 1 ) {
         return $self->render_not_found;
     }
 
     $sth->finish;
 
-    $hostname = $graphs[0]{'hostname'};
+    $server_id = $graphs->[0]{'id_server'};
 
-    if ( $graphs[0]{'id_server'} ) {
+    if ($server_id) {
 
         # Get other available services from the same server
         my $sth = $dbh->prepare(
@@ -112,28 +100,29 @@ sub showservice {
             ORDER BY service
         } );
 
-        $sth->execute( $graphs[0]{'id_server'}, $service_name );
-        push @services => $_ while $_ = $sth->fetchrow_hashref();
+        $sth->execute( $server_id, $service_name );
+        $services = $sth->fetchall_arrayref( {} );
         $sth->finish;
     }
 
     $dbh->disconnect;
 
-    $self->stash(
-        graphs   => \@graphs,
-        hostname => $hostname,
-        services => \@services,
-        is_admin => $self->session('user_admin') );
-
-    return $self->render;
+    return $self->render(
+        graphs    => $graphs,
+        server_id => $server_id,
+        hostname  => $hostname,
+        services  => $services,
+        is_admin  => $self->session('user_admin') );
 }
 
 sub showserver {
-    my $self     = shift;
-    my $idserver = $self->param('idserver');
-    my $period   = $self->param('period');
-    my $dbh      = $self->database;
-    my @servers;
+    my $self      = shift;
+    my $server_id = $self->param('idserver');
+    my $period    = $self->param('period');
+    my $dbh       = $self->database;
+    my $servers;
+    my $graphs;
+    my $hostname;
 
     # Get the graphs
     my $sth = $dbh->prepare(
@@ -144,14 +133,9 @@ sub showserver {
         WHERE g.id_server = ?
         ORDER BY  g.graph
     } );
-    $sth->execute($idserver);
-    my $graphs = [];
-    my $hostname;
-    while ( my $graph = $sth->fetchrow_hashref() ) {
-        $hostname = $graph->{'hostname'} if ( !defined $hostname );
-        push @{$graphs}, $graph;
-    }
-    $sth->finish;
+    $sth->execute($server_id);
+    $graphs = $sth->fetchall_arrayref( {} );
+    $hostname = $graphs->[0]{'hostname'};
 
     # Get other available servers
     $sth = $dbh->prepare(
@@ -161,21 +145,16 @@ sub showserver {
         WHERE id <> ?
         ORDER BY hostname
     } );
+    $sth->execute($server_id);
+    $servers = $sth->fetchall_arrayref( {} );
 
-    $sth->execute($idserver);
-    push @servers => $_ while $_ = $sth->fetchrow_hashref();
-    $sth->finish;
-
-    $dbh->disconnect;
-
-    $self->stash(
-        graphs   => $graphs,
-        hostname => $hostname,
-        servers  => \@servers,
-        is_admin => $self->session('user_admin') );
-
-    $self->render;
-
+    return $self->render(
+        'grapher/graphs/showserver',
+        graphs    => $graphs,
+        hostname  => $hostname,
+        server_id => $server_id,
+        servers   => $servers,
+        is_admin  => $self->session('user_admin') );
 }
 
 sub edit {

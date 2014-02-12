@@ -1,0 +1,52 @@
+% layout config 'layout';
+
+% content_for header => begin
+  <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/graph.css' %>" />
+  <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-datetimepicker.min.css' %>" />
+  %= javascript '/js/bootstrap-datetimepicker.min.js'
+  %= javascript '/js/show.js'
+  %= javascript begin
+    var graphDataUrl = '<%= url_for 'graphs_data' %>';
+  % end
+% end
+
+<%= link_to server_host => { id => $server_id } => begin %> « <%=l 'Back to server' %> <%= $hostname %><% end %>
+
+<div class="navbar">
+  <div class="navbar-inner">
+    <form class="navbar-form form-inline scales">
+      <div class="btn-group">
+        <input id="sel_year" class="btn" type="button" value="<%=l 'Year' %>" />
+        <input id="sel_month" class="btn" type="button" value="<%=l 'Month' %>" />
+        <input id="sel_week" class="btn" type="button" value="<%=l 'Week' %>" />
+        <input id="sel_day" class="btn" type="button" value="<%=l 'Day' %>" />
+      </div>
+      <div class="btn-group">
+        <button class="btn go-backward"><i class="icon-fast-backward"></i></button>
+        <button class="btn go-forward"><i class="icon-fast-forward"></i></button>
+      </div>
+      &nbsp;&nbsp;&nbsp;
+      <div class="input-prepend date datepick" id="fromdatepick">
+        <span class="add-on">
+          <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
+        </span>
+        <input id="fromdate" type="text" class="dateinput" />
+      </div>
+      <span class="add-on input-daterange-to">
+        <%=l 'to' %>
+      </span>
+      <div class="input-append date datepick" id="todatepick">
+        <input id="todate" type="text" class="dateinput" />
+        <span class="add-on">
+          <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
+        </span>
+      </div>
+      <input type="button" id="sel_custom" class="btn" style="" value="<%=l 'Custom' %>" />
+      <%= content_for 'graph_nav_right' %> 
+    </form>
+  </div>
+</div>
+
+<% foreach my $graph (@$graphs) { %>
+    %= include 'grapher/graphs/graph', graph => $graph
+<% } %>
