@@ -407,37 +407,35 @@
     };
 
     $.fn.formatUnit = function (val, unit) {
-        var scale, i;
+        var scale, steps, i, msecond, second, minute, hour, day, year, res;
         switch ( unit ) {
             case 'B':
-            case 'Bps': {
+            case 'Bps':
                 if (val <= 1024) { return val + ' ' + unit; }
                 scale = [null, 'Ki', 'Mi', 'Gi', 'Ti', 'Pi'];
                 for (i=0; i<5 && val > 1024; i++) {
                     val /= 1024;
                 }
                 return val.toFixed(2) + ' ' + scale[i] + unit;
-            }
 
-            case 'KB': {
+            case 'KB':
                 if (val <= 1024) { return val + ' KiB'; }
                 scale = [null, ' MiB', ' GiB', ' TiB', ' PiB'];
                 for (i=0; i<4 && val > 1024; i++) {
                     val /= 1024;
                 }
                 return val.toFixed(2) + scale[i];
-            }
 
             case 'ms':
-            case 's': {
-                var msecond = 1,
-                    second  = (unit === 's')? 1:1000,
-                    minute  = 60  * second,
-                    hour    = 60  * minute,
-                    day     = 24  * hour,
-                    year    = 365 * day,
-                    steps   = [ year, day, hour, minute, second, msecond ],
-                    res     = '';
+            case 's':
+                msecond = 1;
+                second  = (unit === 's')? 1:1000;
+                minute  = 60  * second;
+                hour    = 60  * minute;
+                day     = 24  * hour;
+                year    = 365 * day;
+                steps   = [ year, day, hour, minute, second, msecond ];
+                res     = '';
                 scale   = [ 'y ', 'd ', 'h ', 'm ', 's ', 'ms' ];
                 for (i=0; i < scale.length; i++) {
                     if (val < steps[i] || val === 0) { continue; }
@@ -445,9 +443,8 @@
                     val = val%steps[i];
                 }
                 return res;
-            }
 
-            case '': {
+            case '':
                 if (val <= 1000) { return val; }
 
                 scale = [null, 'K', 'M', 'G', 'T', 'P'];
@@ -455,7 +452,6 @@
                     val /= 1000;
                 }
                 return val.toFixed(2) + scale[i];
-            }
 
             default:
                 return val + ' '  + unit;
