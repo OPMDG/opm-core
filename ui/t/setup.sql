@@ -1,15 +1,15 @@
-DROP DATABASE opm;
-DROP ROLE opm;
-DROP ROLE opm_roles;
-DROP ROLE opm_admins;
-DROP ROLE dalibo;
-DROP ROLE test;
-DROP ROLE entreprise;
-DROP ROLE user1;
-DROP ROLE user2;
-DROP ROLE user3;
-DROP ROLE acc1;
-DROP ROLE acc2;
+DROP DATABASE IF EXISTS opm;
+DROP ROLE IF EXISTS opm;
+DROP ROLE IF EXISTS opm_roles;
+DROP ROLE IF EXISTS opm_admins;
+DROP ROLE IF EXISTS dba;
+DROP ROLE IF EXISTS test;
+DROP ROLE IF EXISTS entreprise;
+DROP ROLE IF EXISTS user1;
+DROP ROLE IF EXISTS user2;
+DROP ROLE IF EXISTS user3;
+DROP ROLE IF EXISTS acc1;
+DROP ROLE IF EXISTS acc2;
 
 CREATE DATABASE opm;
 \c opm
@@ -21,9 +21,9 @@ CREATE EXTENSION wh_nagios;
 CREATE EXTENSION pr_grapher;
 CREATE EXTENSION pr_grapher_wh_nagios;
 
-SELECT create_account('dalibo');
+SELECT create_account('dba');
 
-SELECT create_user('test','password','{dalibo}');
+SELECT create_user('test','password','{dba}');
 SELECT public.grant_account('test','opm_admins');
 
 SELECT create_account('entreprise');
