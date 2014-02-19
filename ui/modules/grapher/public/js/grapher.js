@@ -99,7 +99,7 @@
                 '</div>';
         },
 
-        fetch_data: function (url, fromDate, toDate) {
+        fetch_data: function (url, fromDate, toDate, callback) {
 
             var grapher = this,
                 post_data, a;
@@ -115,20 +115,20 @@
             };
 
             a = $.ajax(url, {
-                async: false,
-                cache: false,
                 type: 'post',
                 url: url,
                 dataType: 'json',
                 data: post_data,
-                success: function (r) {
-                    grapher.fetched = r;
-                    if ( r.error === undefined ) {
-                        grapher.fetched.properties = $.extend(true,
-                            grapher.default_props,
-                            grapher.fetched.properties || {}
+            }).done(function(r){
+                grapher.fetched = r;
+                if ( r.error === undefined ) {
+                    grapher.fetched.properties = $.extend(true,
+                        grapher.default_props,
+                        grapher.fetched.properties || {}
                         );
-                    }
+                }
+                if(callback){
+                    callback();
                 }
             });
         },
@@ -136,7 +136,8 @@
         draw: function () {
             var $plot   = this.$element.find('.plot'),
                 $legend = this.legend_box,
-                inactiveSeries = null;
+                inactiveSeries = null,
+                self = this;
             // Empty the graph to draw it from scratch
             $legend.empty();
 
@@ -149,31 +150,29 @@
             }
 
             // Fetch to data to plot
-            this.fetch_data(this.config.url);
-
-            if (this.fetched.error !== undefined) {
-                if (this.fetched.redirect === 1) {
-                    document.location = document.location;
-                }
-                else {
-                    $plot.parent().empty()
-                        .append(this.html_error(this.fetched.error));
-                }
-                return false;
-            }
-
-            if (inactiveSeries !== null) {
-                $.map(this.fetched.series, function (s) {
-                    if (inactiveSeries.indexOf(s.label) !== -1) {
-                        s.hide = true;
+            this.fetch_data(this.config.url, undefined, undefined, function(){
+                if (self.fetched.error !== undefined) {
+                    if (self.fetched.redirect === 1) {
+                        document.location = document.location;
                     }
-                });
-            }
+                    else {
+                        $plot.parent().empty()
+                            .append(self.html_error(self.fetched.error));
+                    }
+                    return false;
+                }
 
-            this.refresh();
-            this.drawLegend();
+                if (inactiveSeries !== null) {
+                    $.map(self.fetched.series, function (s) {
+                        if (inactiveSeries.indexOf(s.label) !== -1) {
+                            s.hide = true;
+                        }
+                    });
+                }
 
-            return true;
+                self.refresh();
+                self.drawLegend();
+            });
         },
 
         refresh: function () {
@@ -380,8 +379,7 @@
                 grapher = new Grapher(this, options);
                 $this.data('grapher', grapher);
                 $this.data('zooms', []);
-                grapher.draw();
-
+                
                 Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:select', function (sel) {
                     $this.data('zooms').push([
                         grapher.config.from,
