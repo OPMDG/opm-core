@@ -407,7 +407,7 @@
     };
 
     $.fn.formatUnit = function (val, unit) {
-        var scale, steps, i, msecond, second, minute, hour, day, year, res;
+        var scale, steps, i, msecond, second, minute, hour, day, year, res, version;
         switch ( unit ) {
             case 'B':
             case 'Bps':
@@ -443,6 +443,12 @@
                     val = val%steps[i];
                 }
                 return res;
+
+            case 'PGNUMVER':
+                version = parseInt(val / 10000);
+                version += '.' + parseInt((val / 100) % 100);
+                version += '.' + parseInt((val % 100));
+                return version;
 
             case '':
                 if (val <= 1000) { return val; }
