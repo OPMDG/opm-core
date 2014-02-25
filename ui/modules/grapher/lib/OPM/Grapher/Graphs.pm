@@ -105,8 +105,6 @@ sub showservice {
         $sth->finish;
     }
 
-    $dbh->disconnect;
-
     return $self->render(
         graphs    => $graphs,
         server_id => $server_id,
@@ -178,7 +176,6 @@ sub edit {
 
     # Check if it exists
     if ( !defined $graph ) {
-        $dbh->disconnect;
         return $self->render_not_found;
     }
 
@@ -195,18 +192,14 @@ sub edit {
 
         # Action depends on the name of the button pressed
         if ( exists $form->{cancel} ) {
-            $dbh->disconnect;
             return $self->redirect_to( 'graphs_show', id => $id );
         }
 
         if ( exists $form->{drop} ) {
-            $dbh->disconnect;
-
             return $self->redirect_to( 'graphs_remove', id => $id );
         }
 
         if ( exists $form->{clone} ) {
-            $dbh->disconnect;
             return $self->redirect_to( 'graphs_clone', id => $id );
         }
 
@@ -275,7 +268,6 @@ sub edit {
                     $self->render_exception( $dbh->errstr );
                     $sth->finish;
                     $dbh->rollback;
-                    $dbh->disconnect;
                     return;
                 }
                 $sth->finish;
@@ -298,13 +290,11 @@ sub edit {
                     $self->render_exception( $dbh->errstr );
                     $sth->finish;
                     $dbh->rollback;
-                    $dbh->disconnect;
                     return;
                 }
                 $sth->finish;
 
                 $self->msg->info("Graph saved");
-                $dbh->disconnect;
                 return $self->redirect_to( 'graphs_show', id => $id );
             }
         }
@@ -327,7 +317,6 @@ sub edit {
             $self->render_exception( $dbh->errstr );
             $sth->finish;
             $dbh->rollback;
-            $dbh->disconnect;
             return;
         }
 
@@ -365,9 +354,6 @@ sub edit {
             'labels'    => \@labels,
             'graph'     => $graph->{'graph'} );
     }
-
-    $dbh->disconnect;
-
     $self->render;
 }
 
@@ -392,7 +378,6 @@ sub remove {
             $self->render_exception( $dbh->errstr );
             $sth->finish;
             $dbh->rollback;
-            $dbh->disconnect;
             return;
         }
 
@@ -411,12 +396,10 @@ sub remove {
         $self->render_exception( $dbh->errstr );
         $sth->finish;
         $dbh->rollback;
-        $dbh->disconnect;
         return;
     }
     my $rc = $sth->fetchrow();
     $sth->finish;
-    $dbh->disconnect;
 
     if ($rc) {
         $self->msg->info("Graph deleted.");
@@ -462,13 +445,11 @@ sub clone {
         $self->render_exception( $dbh->errstr );
         $sth->finish;
         $dbh->rollback;
-        $dbh->disconnect;
         return;
     }
 
     ($new_id) = $sth->fetchrow;
     $sth->finish;
-    $dbh->disconnect;
 
     $self->msg->info("Graph cloned, please edit it.");
 
@@ -529,7 +510,6 @@ sub data {
                 my $error = { error => '<pre>' . $dbh->errstr . '</pre>' };
                 $sth->finish;
                 $dbh->rollback;
-                $dbh->disconnect;
                 return $self->render( 'json' => $error );
             }
 
@@ -569,7 +549,6 @@ sub data {
                 my $error = { error => '<pre>' . $dbh->errstr . '</pre>' };
                 $sth->finish;
                 $dbh->rollback;
-                $dbh->disconnect;
                 return $self->render( 'json' => $error );
             }
 
@@ -638,8 +617,6 @@ sub data {
         $config->{'yaxis_autoscaleMargin'} = 0.2;
 
         $sth->finish;
-
-        $dbh->disconnect;
 
         if ( !scalar(@$data) ) {
             return $self->render( 'json' => { error => "Empty output" } );
