@@ -58,6 +58,8 @@ $(document).ready(function () {
     });
   });
 
+
+  // FIXME: clean this for a proper event-based date selection 
   $('.scales input[type=button]').click(function () {
     var fromDate = new Date(),
       toDate = new Date(),
@@ -116,7 +118,7 @@ $(document).ready(function () {
     frompick.setLocalDate(new Date(fromDate));
     topick.setLocalDate(new Date(toDate));
 
-    $('[id-graph]').each(function (i, e) {
+    $('[data-graphrole="plot"]').each(function (i, e) {
         $(e).grapher().zoom(
             frompick.getLocalDate().getTime(),
             topick.getLocalDate().getTime()
@@ -138,9 +140,8 @@ $(document).ready(function () {
 
     frompick.setLocalDate(new Date(fromDate));
     topick.setLocalDate(new Date(toDate));
-
-    $('[id-graph]').each(function (i, e) {
-        $(e).grapher().zoom(
+    $('[data-graphrole="plot"]').each(function (i, e) {
+        $(this).grapher().zoom(
             frompick.getLocalDate().getTime(),
             topick.getLocalDate().getTime()
         );
