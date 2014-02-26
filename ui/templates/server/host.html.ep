@@ -6,6 +6,8 @@
 % layout config 'layout';
 % content_for header => begin
   <link   type="text/css" href="<%= url_for '/css/host.css' %>" media="all" rel="stylesheet" />
+% end
+% content_for body_scripts => begin
   <script type="text/javascript" src="<%= url_for '/js/host.js' %>"></script>
 % end
 % my @services = @{stash 'services'};
