@@ -4,7 +4,7 @@
 % # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 % layout config 'layout';
-% content_for header => begin
+% content_for body_scripts => begin
   <script type="text/javascript" src="<%= url_for '/js/edit.js' %>"></script>
 % end
 % my @labels       = @{ stash 'labels' };
