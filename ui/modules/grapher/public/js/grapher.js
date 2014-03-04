@@ -205,6 +205,7 @@
             var $legend    = this.legend_box,
                 legend_opt = this.flotr.legend.options,
                 series     = this.flotr.series,
+                self       = this,
                 i, label, $label, color, s, $cell, toggleSerie,
                 itemCount  = $.grep(series, function (e) {
                         return (e.label && !e.hide);
@@ -212,20 +213,15 @@
 
             if (itemCount) {
                 toggleSerie = function () {
-                    var $this   = $(this),
-                        grapher = $('[id-graph='+ $this.parent().data('id-graph') +']')
-                            .grapher(),
-                        serie   = grapher.fetched.series[$this.data('i')];
-
+                    var $this = $(this),
+                        serie = self.fetched.series[$this.data('i')];
                     serie.hide = ! serie.hide;
                     if ( serie.hide ) {
-                        grapher._deactivateSerie($this);
+                        self._deactivateSerie($this);
                     }
-                    else { grapher._activateSerie($this); }
-
-                    grapher.refresh();
+                    else { self._activateSerie($this); }
+                    self.refresh();
                 };
-                        
                 for(i = 0; i < series.length; ++i) {
                     if(!series[i].label) { continue; }
 
@@ -234,25 +230,21 @@
                     label = legend_opt.labelFormatter(s.label);
                     color = ((s.bars && s.bars.show && s.bars.fillColor && s.bars.fill) ? s.bars.fillColor : s.color);
 
-                    $cell = $(
-                        '<div class="flotr-legend-color-box" />'
-                    )
-                        .css({
-                            'margin' : '0 10px 0 0',
-                            'float'  : 'left',
-                            'border' : '1px solid '+ legend_opt.labelBoxBorderColor,
-                            'width'  : '1.4em',
-                            'height' : '1.2em',
-                            'background-color': color
-                        })
-                        .attr('id', 'legendcolor'+i)
-                        .add('<label>'+ label +'</label>');
+                    $cell = $('<div>').addClass('flotr-legend-color-box')
+                            .css({
+                                'margin' : '0 10px 0 0',
+                                'float'  : 'left',
+                                'border' : '1px solid '+ legend_opt.labelBoxBorderColor,
+                                'width'  : '1.4em',
+                                'height' : '1.2em',
+                                'background-color': color
+                            })
+                            .add($('<label>').html(label));
 
-                    $label = $('<div class="label-'+ i +'" />').prepend($cell)
-                        .data('i', i)
-                        .click(toggleSerie)
-                        .appendTo($legend);
-
+                    $label = $('<div>').addClass('label-' + i).prepend($cell)
+                            .data('i', i)
+                            .click(toggleSerie)
+                            .appendTo($legend);
                     if (s.hide) { this._deactivateSerie( $label ); }
                 }
 
