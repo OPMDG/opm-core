@@ -8,8 +8,6 @@ package OPM::Properties;
 use Mojo::Base 'Mojolicious::Plugin';
 use Carp;
 
-use Data::Dumper;
-
 has data => sub { { file => '' } };
 
 sub register {

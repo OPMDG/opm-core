@@ -7,7 +7,6 @@ package OPM::Users;
 
 use Mojo::Base 'Mojolicious::Controller';
 use Helpers::Database;
-use Data::Dumper;
 
 sub list {
     my $self = shift;

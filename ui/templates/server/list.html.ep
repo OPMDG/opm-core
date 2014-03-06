@@ -6,58 +6,47 @@
 % layout config 'layout';
 % my $previous;
 % my $first = 1;
-% my $Dumper = stash 'Dumper';
 % content_for header => begin
   <link   type="text/css" href="<%= url_for '/css/servers.css' %>" media="all" rel="stylesheet" />
 % end
 
+<h2><%=l 'List of servers per accounts' %></h2>
 <div class="box" id="server_list">
-  <h1 class="page-header"><%=l 'List of servers per accounts' %></h1>
-  <% if ( scalar %{$servers_by_role} ) { %>
-
-    <div class="container span6">
-      <div class="btn-toolbar">
-        <div class="btn-group">
-          <a class="show-all btn btn-mini"><%=l 'Show all' %></a>
-          <a class="hide-all btn btn-mini"><%=l 'Hide all' %></a>
-        </div>
-      </div>
-
-      <div class="accordion">
-        <% while ( (my $accname, my $servers ) = each $servers_by_role) { %>
-        <% my $accname_id = $accname; %>
-        <% $accname_id =~ s/\s+/"_"/ge; %>
-        <div id="account_header_<%= $accname_id %>" class="accordion-group">
-          <div class="accordion-heading">
-            <a class="servers-toggle" data-toggle="collapse" href="#account_<%= $accname_id %>">
-            <i class="icon-plus"></i>
-              <%= $accname %>
-            </a>
+  % if ( scalar %{$servers_by_role} ) {
+    <div class="panel-group" id="accordion_servers">
+      % while ( (my $accname, my $servers ) = each $servers_by_role) {
+        % $accname = $self->format_accname( $accname );
+        % my $accname_id = $accname;
+        % $accname_id =~ s/\s+/"_"/ge;
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion_servers" href="#acc_<%= $accname_id %>">
+                <%= $accname %>
+              </a>
+            </h4>
           </div>
-          <div id="account_<%= $accname_id %>"  class="accordion-body collapse">
-            <div class="accordion-inner">
-              <ul>
-                <% foreach my $ser (@{$servers}) { %>
-                <li>
-                <%= link_to server_host => { id => $ser->{id} } => begin %>
-                <%= $ser->{hostname} %>
-                <% end %>
-                </li>
-              <% } %>
-              </ul>
+          <div id="acc_<%= $accname_id %>" class="panel-collapse collapse">
+            <div class="panel-body">
+                <ul class="nav">
+                  % foreach my $ser (@{$servers}) {
+                    <li>
+                      <%= link_to server_host => { id => $ser->{id} } => begin %>
+                        <i class="glyphicon glyphicon-hdd"></i> <%= $ser->{hostname} %>
+                      <% end %>
+                    </li>
+                % }
+                </ul>
             </div>
           </div>
         </div>
       <% } %>
-      </div>
     </div>
-  <% } else { %>
+  % } else {
     <p><%=l 'No server found' %>.</p>
-  <% } %>
-  <div class="clearfix"></div>
+  % }
 </div>
 
 % content_for body_scripts => begin
   <script type="text/javascript" src="<%= url_for '/js/servers.js' %>"></script>
 % end
-

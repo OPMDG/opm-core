@@ -7,10 +7,7 @@ package OPM::Accounts;
 
 use Mojo::Base 'Mojolicious::Controller';
 
-use Data::Dumper;
-use Digest::SHA qw(sha256_hex);
-
-sub list {
+sub adm {
     my $self       = shift;
     my $method     = $self->req->method;
     my $validation = $self->validation;
@@ -41,7 +38,20 @@ sub list {
 
     $self->stash( acc => $sql->fetchall_arrayref( {} ) );
 
-    return $self->render('accounts/list');
+    return $self->render();
+}
+
+sub list {
+    my $self    = shift;
+    my $accname = $self->param('accname');
+
+    my $sql = $self->prepare(qq{SELECT id,hostname
+        FROM public.list_servers()
+        WHERE COALESCE(rolname, '') = ?
+        ORDER BY hostname
+    });
+    $sql->execute( $accname  eq $self->l('Unassigned') ? '' : $accname );
+    return $self->render(servers => $sql->fetchall_arrayref( {} ));
 }
 
 sub delete {

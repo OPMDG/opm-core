@@ -7,11 +7,11 @@ package OPM::Grapher::Graphs;
 
 use Mojo::Base 'Mojolicious::Controller';
 
-use Data::Dumper;
-
 sub show {
     my $self = shift;
     my $id   = $self->param('id');
+    my $hostname;
+    my $accname;
 
     # Get the graph
     my $sth = $self->prepare(
@@ -29,7 +29,10 @@ sub show {
         return $self->render_not_found;
     }
 
-    my $hostname = $graph->{'hostname'};
+    $hostname = $graph->{'hostname'};
+
+    # Get the rolname
+    $accname = get_rolname_by_hostname($self, $hostname);
 
     my $graph_list = [];
     if ( scalar $hostname ) {
@@ -48,6 +51,7 @@ sub show {
         server_id  => $graph->{id_server},
         graphs     => [$graph],
         hostname   => $hostname,
+        accname    => $accname,
         graph_list => $graph_list,
         is_admin   => $self->session('user_admin') );
 }
@@ -56,13 +60,13 @@ sub showservice {
     my $self         = shift;
     my $hostname     = $self->param('server');
     my $service_name = $self->param('service');
-    my $dbh          = $self->database;
     my $server_id;
     my $services;
     my $graphs;
+    my $accname;
 
     # Get the graphs associated with the given hostname and servicename
-    my $sth = $dbh->prepare(
+    my $sth = $self->prepare(
         q{
         SELECT g.id, CASE
             WHEN s2.hostname IS NOT NULL THEN s2.hostname || '::'
@@ -80,19 +84,22 @@ sub showservice {
     $sth->execute( $hostname, $service_name );
     $graphs = $sth->fetchall_arrayref( {} );
 
+    $sth->finish;
+
     # Check if it exists
     if ( $graphs < 1 ) {
         return $self->render_not_found;
     }
 
-    $sth->finish;
+    # Get the rolname
+    $accname = get_rolname_by_hostname($self, $hostname);
 
     $server_id = $graphs->[0]{'id_server'};
 
     if ($server_id) {
 
         # Get other available services from the same server
-        my $sth = $dbh->prepare(
+        my $sth = $self->prepare(
             qq{
             SELECT service
             FROM wh_nagios.list_services()
@@ -109,6 +116,7 @@ sub showservice {
         graphs    => $graphs,
         server_id => $server_id,
         hostname  => $hostname,
+        accname   => $accname,
         services  => $services,
         is_admin  => $self->session('user_admin') );
 }
@@ -117,13 +125,13 @@ sub showserver {
     my $self      = shift;
     my $server_id = $self->param('idserver');
     my $period    = $self->param('period');
-    my $dbh       = $self->database;
     my $servers;
     my $graphs;
     my $hostname;
+    my $accname;
 
     # Get the graphs
-    my $sth = $dbh->prepare(
+    my $sth = $self->prepare(
         qq{
         SELECT g.id, CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description,s.hostname
         FROM pr_grapher.list_wh_nagios_graphs() g
@@ -134,9 +142,10 @@ sub showserver {
     $sth->execute($server_id);
     $graphs = $sth->fetchall_arrayref( {} );
     $hostname = $graphs->[0]{'hostname'};
+    $sth->finish;
 
     # Get other available servers
-    $sth = $dbh->prepare(
+    $sth = $self->prepare(
         qq{
         SELECT id, hostname
         FROM public.list_servers()
@@ -145,11 +154,16 @@ sub showserver {
     } );
     $sth->execute($server_id);
     $servers = $sth->fetchall_arrayref( {} );
+    $sth->finish;
+
+    # Get the rolname
+    $accname = get_rolname_by_hostname($self, $hostname);
 
     return $self->render(
         'grapher/graphs/showserver',
         graphs    => $graphs,
         hostname  => $hostname,
+        accname   => $accname,
         server_id => $server_id,
         servers   => $servers,
         is_admin  => $self->session('user_admin') );
@@ -160,6 +174,8 @@ sub edit {
 
     my $id = $self->param('id');
     my $e  = 0;
+    my $accname;
+    my $hostname;
 
     my $dbh = $self->database;
 
@@ -333,6 +349,10 @@ sub edit {
 
         $sth->finish;
 
+        # Get the rolname
+        ($accname,$hostname) = get_rolname_hostname_by_graph_id($self, $id);
+        $sth->finish;
+
         # Prepare properties
         my $json   = Mojo::JSON->new;
         my $config = $json->decode( $graph->{config} );
@@ -352,6 +372,8 @@ sub edit {
         $self->stash(
             'id_server' => $id_server,
             'labels'    => \@labels,
+            'accname'   => $accname,
+            'hostname'  => $hostname,
             'graph'     => $graph->{'graph'} );
     }
     $self->render;
@@ -628,6 +650,42 @@ sub data {
             series     => $data,
             properties => $self->properties->to_plot($config)
         } );
+}
+
+sub get_rolname_by_hostname {
+    my $self = shift;
+    my $hostname = shift;
+    my $accname;
+
+    my $sth = $self->prepare(
+        q{
+        SELECT COALESCE(rolname,'')
+        FROM public.list_servers()
+        WHERE hostname = ?
+    });
+    $sth->execute($hostname);
+    $accname = $sth->fetchrow();
+    $sth->finish();
+    return $accname;
+}
+
+sub get_rolname_hostname_by_graph_id {
+    my $self = shift;
+    my $id_graph = shift;
+    my $accname;
+    my $hostname;;
+
+    my $sth = $self->prepare(
+        q{
+        SELECT COALESCE(s.rolname,''),s.hostname
+        FROM pr_grapher.list_wh_nagios_graphs() g
+        JOIN public.list_servers() s ON g.id_server = s.id
+        WHERE g.id = ?
+    });
+    $sth->execute($id_graph);
+    ($accname,$hostname) = $sth->fetchrow();
+    $sth->finish();
+    return ($accname,$hostname);
 }
 
 1;

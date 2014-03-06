@@ -6,40 +6,21 @@
 % # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 
-% my @acc = @{stash 'acc'};
+% my @servers = @{stash 'servers'};
 
 <div class="row">
-  <div class="span6" id="acc_list">
+  <div id="acc_list">
+  <h2><%=l 'List of servers for account' %> <u><%= stash 'accname' %></u></h2>
     <div class="box">
-      <b><%=l 'List of accounts' %> :</b><br />
-      <ul>
-        <% foreach my $a (@acc) { %>
-          <%   my %line = %{$a}; %>
+      <ul class="nav">
+        <% foreach my $s (@servers) { %>
           <li>
-          <% if ($line{accname} ne 'opm_admins'){ %>
-            <%= link_to accounts_delete => {accname => $line{accname}} => ( onclick => "return confirmDel('account','$line{accname}');" ) => begin %><span class="badge badge-important"><i class="icon-remove icon-white"></i></span><% end %>
-          <% } %>
-          <%= link_to accounts_edit => { accname => $line{accname} } => begin %><%= $line{accname} %><% end %>
+            %= link_to server_host=> { id => $s->{'id'} } => begin
+              <i class="glyphicon glyphicon-hdd"></i> <%= $s->{'hostname'} %>
+            % end
           </li>
         <% } %>
       </ul>
-    </div>
-  </div>
-
-  <div class="span4" id="acc_create">
-    <div class="box">
-      <%= form_for accounts_list => (method => 'POST') => begin %>
-        <fieldset>
-          <b><%=l 'Create an account' %> :</b><br /><br />
-          <div class="control-group">
-            <label class="control-label" for="name"><%=l 'Account name' %>:</label>
-            <div class="controls">
-              <%= text_field 'accname', type => 'text', class => 'span3', id => 'accname' %>
-            </div>
-            <%= submit_button l('Create'), name => 'create', class => 'btn btn-primary' %>
-          </div>
-        </fieldset>
-      <% end %>
     </div>
   </div>
 </div>

@@ -3,15 +3,13 @@
 % #
 % # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
-<div class="btn-group pull-right">
-  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-    <i class="icon-user"></i> <%= $menu_username %>
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu">
-    <li><%= link_to users_profile => begin %><%=l 'Profile' %><% end %></li>
-    <li><%= link_to site_about => begin %><%=l 'About' %><% end %></li>
-    <li class="divider"></li>
-    <li><%= link_to users_logout => begin %><%=l 'Sign Out' %><% end %></li>
-  </ul>
+<div class="pull-right">
+  <%= link_to users_profile => begin %><i class="glyphicon glyphicon-user"></i> <%=l 'Profile' %><% end %>
+  <%= link_to site_about => begin %><i class="glyphicon glyphicon-info-sign"></i> <%=l 'About' %><% end %>
+  <%= link_to users_logout => begin %><i class="glyphicon glyphicon-off"></i> <%=l 'Sign Out' %><% end %>
+
+<br />
+<form class="navbar-search">
+  <input type="text" class="form-control" placeholder="<%=l 'Search amongs servers' %>" id="search" autocomplete="off">
+</form>
 </div>

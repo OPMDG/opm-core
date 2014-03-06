@@ -1,0 +1,83 @@
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+
+% my $cr = current_route;
+% my @servers = @{stash 'servers'};
+% my $accname = $self->format_accname(stash 'accname');
+% # $accname = '' if !defined $accname;
+% my $hostname = stash 'hostname';
+% $hostname = '' if !defined $hostname;
+% my $active_adm_users = '';
+% my $active_adm_accounts = '';
+% my $active_adm_wh_nagios = '';
+% my $active_all_servers = '';
+% #
+% # Process current_route to check active items
+% if ( $cr =~ '^users_' ) {
+%   $active_adm_users = 'active';
+% }
+% if ( $cr =~ '^accounts_' and $cr ne 'accounts_list' ) {
+%   $active_adm_accounts = 'active';
+% }
+% if ( $cr =~ '^wh_nagios_' ) {
+%   $active_adm_wh_nagios = 'active';
+% }
+% if ( $cr eq 'server_list' ) {
+%   $active_all_servers = 'active';
+% }
+
+  <div class="sidebar">
+    % if ($user_level eq "admin") {
+      <ul class="nav nav-sidebar">
+        <li class="<%= $active_adm_users %>">
+          %= link_to users_list => begin
+            <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%=l 'Users' %>
+          % end
+        </li>
+        <li class="<%= $active_adm_accounts %>">
+          %= link_to accounts_adm => begin
+            <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%=l 'Accounts' %>
+          % end
+        </li>
+          <li class="<%= $active_adm_wh_nagios %>">
+          %= link_to wh_nagios_services => begin
+            <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%= 'wh_nagios' %>
+          % end
+        </li>
+      </ul>
+      <br />
+    % }
+
+    % if (($user_level eq "user" ) or ($user_level eq "admin")) {
+      <ul class="nav nav-sidebar">
+        <li class="<%= $active_all_servers %>">
+          %= link_to server_list => begin
+            <i class="glyphicon glyphicon-list"></i> <%=l 'All Servers' %>
+          % end
+        </li>
+        % if ( scalar @servers ) {
+          % foreach my $a ( @servers ) {
+            % $a->{'rolname'} = $self->format_accname($a->{'rolname'});
+            <li class="<%= ( $accname eq $a->{'rolname'}  and $cr eq 'accounts_list' ? 'active' : '') %>">
+              %= link_to accounts_list => { accname => $a->{'rolname'} } => begin
+                <i class="glyphicon glyphicon-folder-<%= ( $accname eq $a->{'rolname'} ? 'open' : 'close') %>"></i> <%= $a->{'rolname'} %>
+              % end
+            </li>
+            % if ( $accname eq $a->{'rolname'} ) {
+              <ul class="nav nav-sidebar">
+                % foreach my $s ( @{ $a ->{'servers'} } ) {
+                    <li class="<%= ( $hostname eq $s->{'hostname'} ? 'active' : '' ) %>">
+                      %= link_to server_host => { id => $s->{'id'} } => begin
+                        &nbsp;&nbsp;&nbsp;&nbsp;<i class="glyphicon glyphicon-hdd"></i> <%= $s->{'hostname'} %>
+                      % end
+                    </li>
+                % }
+              </ul>
+            % }
+          % }
+        % }
+      </ul>
+    % }
+  </div>

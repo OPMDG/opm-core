@@ -93,10 +93,12 @@ sub startup {
         ->name('users_delacc');
 
     # Account management
-    $r_adm->route('/accounts')->to('accounts#list')->name('accounts_list');
+    $r_adm->route('/accounts/')->to('accounts#adm')->name('accounts_adm');
     $r_adm->route('/accounts/create')->to('accounts#create')
         ->name('accounts_create');
-    $r_adm->route('/accounts/:accname')->to('accounts#edit')
+    $r->route('/accounts/:accname/')->to('accounts#list')
+        ->name('accounts_list');
+    $r_adm->route('/accounts/:accname/edit')->to('accounts#edit')
         ->name('accounts_edit');
     $r_adm->route('/accounts/:accname/add_user')->to('accounts#add_user')
         ->name('accounts_add_user');
@@ -116,7 +118,7 @@ sub startup {
     $r_auth->route('/server')->to('server#list')->name('server_list');
     $r_auth->route('/server/:id', id => qr/\d+/ )
         ->to('server#host')->name('server_host');
-    $r_auth->route('/server/:server', id => qr/[-a-zA-Z0-9_.@]/ )
+    $r_auth->route('/server/:server')
         ->to('server#host_by_name')->name('server_host_by_name');
 
     ## Wh_nagios management

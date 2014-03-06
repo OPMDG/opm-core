@@ -9,7 +9,7 @@
 $(document).ready(function () {
   /* bind the datetimepicker to the date fields */
   $('.datepick').datetimepicker({
-    format: 'dd/MM/yyyy hh:mm:ss'
+    format: 'DD/MM/YYYY HH:mm:ss'
   });
 
   $('[data-graphid]').each(function () {
@@ -63,8 +63,8 @@ $(document).ready(function () {
   $('.scales input[type=button]').click(function () {
     var fromDate = new Date(),
       toDate = new Date(),
-      frompick = $('#fromdatepick').data('datetimepicker'),
-      topick = $('#todatepick').data('datetimepicker');
+      frompick = $('#fromdatepick').data('DateTimePicker'),
+      topick = $('#todatepick').data('DateTimePicker');
 
     switch($(this).attr('id')) {
       case 'sel_year':
@@ -86,28 +86,28 @@ $(document).ready(function () {
           }
           if (topick.getDate() === null) {
             /* set the toDate to the current day */
-            topick.setLocalDate(toDate.getDate());
+            topick.setDate(toDate.getDate());
           }
-          else { toDate = topick.getLocalDate(); }
+          else { toDate = topick.getDate(); }
 
-          fromDate = frompick.getLocalDate();
+          fromDate = frompick.getDate();
         break;
     }
-    frompick.setLocalDate(fromDate);
-    topick.setLocalDate(toDate);
+    frompick.setDate(fromDate);
+    topick.setDate(toDate);
     $('[data-graphrole="plot"]').each(function (i, e) {
         $(this).grapher().zoom(
-            frompick.getLocalDate().getTime(),
-            topick.getLocalDate().getTime()
+            frompick.getDate().valueOf(),
+            topick.getDate().valueOf()
         );
     });
   });
 
   $('.go-forward').click(function (e) {
-    var frompick = $('#fromdatepick').data('datetimepicker'),
-      topick   = $('#todatepick').data('datetimepicker'),
-      fromDate = frompick.getLocalDate().getTime(),
-      toDate   = topick.getLocalDate().getTime(),
+    var frompick = $('#fromdatepick').data('DateTimePicker'),
+      topick   = $('#todatepick').data('DateTimePicker'),
+      fromDate = frompick.getDate().valueOf(),
+      toDate   = topick.getDate().valueOf(),
       delta    = toDate - fromDate;
 
     e.preventDefault();
@@ -115,22 +115,22 @@ $(document).ready(function () {
     fromDate += delta;
     toDate   += delta;
 
-    frompick.setLocalDate(new Date(fromDate));
-    topick.setLocalDate(new Date(toDate));
+    frompick.setDate(new Date(fromDate));
+    topick.setDate(new Date(toDate));
 
     $('[data-graphrole="plot"]').each(function (i, e) {
         $(e).grapher().zoom(
-            frompick.getLocalDate().getTime(),
-            topick.getLocalDate().getTime()
+            frompick.getDate().valueOf(),
+            topick.getDate().valueOf()
         );
     });
   });
 
   $('.go-backward').click(function (e) {
-    var frompick = $('#fromdatepick').data('datetimepicker'),
-      topick   = $('#todatepick').data('datetimepicker'),
-      fromDate = frompick.getLocalDate().getTime(),
-      toDate   = topick.getLocalDate().getTime(),
+    var frompick = $('#fromdatepick').data('DateTimePicker'),
+      topick   = $('#todatepick').data('DateTimePicker'),
+      fromDate = frompick.getDate().valueOf(),
+      toDate   = topick.getDate().valueOf(),
       delta    = toDate - fromDate;
 
     e.preventDefault();
@@ -138,12 +138,12 @@ $(document).ready(function () {
     fromDate -= delta;
     toDate   -= delta;
 
-    frompick.setLocalDate(new Date(fromDate));
-    topick.setLocalDate(new Date(toDate));
+    frompick.setDate(new Date(fromDate));
+    topick.setDate(new Date(toDate));
     $('[data-graphrole="plot"]').each(function (i, e) {
         $(this).grapher().zoom(
-            frompick.getLocalDate().getTime(),
-            topick.getLocalDate().getTime()
+            frompick.getDate().valueOf(),
+            topick.getDate().valueOf()
         );
     });
   });

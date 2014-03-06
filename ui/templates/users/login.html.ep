@@ -5,47 +5,41 @@
 
 % layout config 'layout';
 
-<div class="row">
-  <div class="span8">
-    <h2><%=l 'Welcome to Open PostgreSQL Monitoring' %></h2>
+  <div class="container">
+    <h2><%=l 'Login'%></h2>
+    <div class="col-md-3 box">
+      <%= form_for users_login => (method => 'POST') => begin %>
+      <fieldset>
+        <div class="control-group">
+          <label class="control-label" for="username"><%=l 'Username' %>:</label>
+          <div class="controls">
+            <%= text_field 'username', type => 'text', class => 'form-control', id => 'username' %>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="password"><%=l 'Password' %>:</label>
+          <div class="controls">
+            <%= password_field 'password', type => 'password', class => 'form-control', id => 'password' %>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls">
+            <label class="checkbox" for="stay_connected">
+              <%= check_box 'stay_connected' => 1, id => 'stay_connected' %>
+              <%=l 'Stay connected ?' %>
+            </label>
+          </div>
+        </div>
+
+        <div class="btn-group pull-right">
+          <% if (config 'allow_register') { %>
+            <%= link_to users_register => (class => 'btn') => begin %><%=l 'Register' %><% end %>
+          <% } %>
+          <%= submit_button l('Login'), name => 'login', class => 'btn btn-primary' %>
+        </div>
+      </fieldset>
+      <% end %>
+    </div>
   </div>
-
-
-  <div class="box span3">
-    <%= form_for users_login => (method => 'POST') => begin %>
-    <fieldset>
-    <legend><%=l 'Login'%></legend>
-      <div class="control-group">
-        <label class="control-label" for="username"><%=l 'Username' %>:</label>
-        <div class="controls">
-          <%= text_field 'username', type => 'text', class => 'span3', id => 'username' %>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label class="control-label" for="password"><%=l 'Password' %>:</label>
-        <div class="controls">
-          <%= password_field 'password', type => 'password', class => 'span3', id => 'password' %>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <div class="controls">
-          <label class="checkbox" for="stay_connected">
-            <%= check_box 'stay_connected' => 1, id => 'stay_connected' %>
-            <%=l 'Stay connected ?' %>
-          </label>
-        </div>
-      </div>
-
-      <div class="btn-group pull-right">
-        <% if (config 'allow_register') { %>
-          <%= link_to users_register => (class => 'btn') => begin %><%=l 'Register' %><% end %>
-        <% } %>
-        <%= submit_button l('Login'), name => 'login', class => 'btn btn-primary' %>
-      </div>
-    </fieldset>
-    <% end %>
-  </div>
-
-</div>

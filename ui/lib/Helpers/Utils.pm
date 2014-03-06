@@ -16,6 +16,14 @@ sub register {
             $ctrl->res->code(303);
             return $ctrl->redirect_to(@_);
         });
+    $app->helper(
+        format_accname => sub {
+            my $ctrl = shift;
+            my $accname = shift;
+            return '' if ( !defined $accname );
+            return $ctrl->l('Unassigned') if ( $accname eq '');
+            return $accname;
+        })
 }
 
 1;

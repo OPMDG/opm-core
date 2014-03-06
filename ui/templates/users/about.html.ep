@@ -6,22 +6,19 @@
 % layout config 'layout';
 % my @exn = @{stash 'exn'};
 
+<h2><%=l 'About' %></h2>
 <div class="box" id="labels_list">
-  <h1 class="page-header"><%=l 'About' %></h1>
-    <div class="container span8">
-      <h3>Open PostgreSQL Monitoring version <%= $OPM::VERSION %></h3>
-      <% if ( scalar @exn ) { %>
-         <div class="container span4 well">
-               <ul  class="nav nav-list">
-                 <% foreach my $e (@exn) { %>
-                     <li>
-                       Extension <b><%= $e->{name} %></b> version <u><%= $e->{version} %></u>
-                     </li>
-                 <% } %>
-               </ul>
-         </div>
+  <div class="container-fluid">
+   <h3>Open PostgreSQL Monitoring version <%= $OPM::VERSION %></h3>
+   <% if ( scalar @exn ) { %>
+     <ul class="nav nav-list">
+       <% foreach my $e (@exn) { %>
+         <li>
+           Extension <b><%= $e->{name} %></b> version <u><%= $e->{version} %></u>
+         </li>
        <% } %>
-    </div>
-  <div class="clearfix"></div>
-      <a href="https://github.com/dalibo/OPM/wiki"><%=l 'Visit official website for more information' %></a>.
+     </ul>
+  <% } %>
+  <br /><a href="https://github.com/dalibo/OPM/wiki"><%=l 'Visit official website for more information' %></a>.
+  </div>
 </div>

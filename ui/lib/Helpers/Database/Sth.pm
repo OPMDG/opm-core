@@ -22,12 +22,12 @@ sub DESTROY {
 sub fetchall_groupby {
     my ( $self, $groupby ) = @_;
     my $results  = {};
-    my $last_key = '';
+    my $last_key = undef;
     my $current_values;
 
     foreach my $value ( @{ $self->sth->fetchall_arrayref({}) } ) {
         my $key = $value->{$groupby};
-        if ( $key ne $last_key ) {
+        if ( !defined $last_key or $key ne $last_key ) {
             $last_key        = $key;
             $current_values  = [];
             $results->{$key} = $current_values;

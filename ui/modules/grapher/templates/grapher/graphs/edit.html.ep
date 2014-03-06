@@ -11,11 +11,10 @@
 % my $rowid        = 0;
 % my $curr_service = -1;
 
+<h2><%=l 'Update graph '%><u><%=  stash 'graph' %></u></h2>
 <div class="box">
-  <h1><%=l 'Update graph '%><u><%=  stash 'graph' %></u></h1>
   <%= form_for graphs_edit => (method => 'POST', class => 'form-horizontal') => begin %>
 
-    <hr />
     <%= submit_button l('Save'), name => 'save', class => 'btn btn-primary' %>
     <%= submit_button l('Drop'), name => 'drop', id => 'btn_drop_graph', class => 'btn btn-danger' %>
     <%= submit_button l('Cancel'), name => 'cancel', class => 'btn' %>
@@ -37,13 +36,13 @@
             <div class="control-group">
               <label class="control-label" for="name"><strong><%=l 'Graph name' %></strong></label>
               <div class="controls">
-                <%= text_field 'graph', type => 'text', class => 'span4', id => 'name' %>
+                <%= text_field 'graph', type => 'text', class => 'form-control', id => 'name' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="desc"><%=l 'Description' %></label>
               <div class="controls">
-                <%= text_area description => (rows => 1, id => 'desc', class => 'span4') => begin %><% end %>
+                <%= text_area description => (rows => 1, id => 'desc', class => 'form-control') => begin %><% end %>
               </div>
             </div>
             <div class="control-group">
@@ -54,7 +53,7 @@
             <div class="control-group">
               <label class="control-label">Type</label>
               <div class="controls">
-                <%= select_field type => [[ l('Bars') => 'bars'], [ l('Lines') => 'lines'], [ l('Points') => 'points'], [ l('Pie') => 'pie']], id => 'graph_type_select', class => 'span2' %>
+                <%= select_field type => [[ l('Bars') => 'bars'], [ l('Lines') => 'lines'], [ l('Points') => 'points'], [ l('Pie') => 'pie']], id => 'graph_type_select', class => 'form-control' %>
               </div>
             </div>
 
@@ -62,14 +61,14 @@
             <div class="control-group">
               <label class="control-label" for="query1">Query</label>
               <div class="controls">
-                <%= text_area y1_query => (rows => 7, id => 'query1', class => 'span6 code-font') => begin %><% end %>
+                <%= text_area y1_query => (rows => 7, id => 'query1', class => 'form-control code-font') => begin %><% end %>
               </div>
             </div>
 
             <div class="control-group">
               <label class="control-label" for="query2">Second Y axis query:</label>
               <div class="controls">
-                <%= text_area y2_query => (rows => 7, id => 'query2', class => 'span6 code-font') => begin %><% end %>
+                <%= text_area y2_query => (rows => 7, id => 'query2', class => 'form-control code-font') => begin %><% end %>
               </div>
             </div>
             <% } %>
@@ -78,13 +77,13 @@
               <div class="control-group">
                 <label class="control-label" for="barslinewidth"><%=l 'Line width' %></label>
                 <div class="controls">
-                  <%= text_field 'bars_lineWidth', type => 'text', class => 'span2', id => 'barslinewidth', placeholder=> l '(default value)' %>
+                  <%= text_field 'bars_lineWidth', type => 'text', class => 'form-control', id => 'barslinewidth', placeholder=> l '(default value)' %>
                 </div>
               </div>
               <div class="control-group">
                 <label class="control-label" for="name"><%=l 'Bar width' %></label>
                 <div class="controls">
-                  <%= text_field 'bars_barWidth', type => 'text', class => 'span2', id => 'barsbarwidth', placeholder=> l '(default value)' %>
+                  <%= text_field 'bars_barWidth', type => 'text', class => 'form-control', id => 'barsbarwidth', placeholder=> l '(default value)' %>
                 </div>
               </div>
               <div class="controls">
@@ -98,7 +97,7 @@
               <div class="control-group">
                 <label class="control-label" for="lineslinewidth"><%=l 'Line width' %></label>
                 <div class="controls">
-                  <%= text_field 'lines_lineWidth', type => 'text', class => 'span2', id => 'lineslinewidth', placeholder=> l '(default value)' %>
+                  <%= text_field 'lines_lineWidth', type => 'text', class => 'form-control', id => 'lineslinewidth', placeholder=> l '(default value)' %>
                 </div>
               </div>
               <div class="controls">
@@ -111,13 +110,13 @@
               <div class="control-group">
                 <label class="control-label" for="pointslinewidth"><%=l 'Line width' %></label>
                 <div class="controls">
-                  <%= text_field 'points_lineWidth', type => 'text', class => 'span2', id => 'pointslinewidth', placeholder=> l '(default value)' %>
+                  <%= text_field 'points_lineWidth', type => 'text', class => 'form-control', id => 'pointslinewidth', placeholder=> l '(default value)' %>
                 </div>
               </div>
               <div class="control-group">
                 <label class="control-label" for="pointsradius"><%=l 'Radius' %></label>
                 <div class="controls">
-                  <%= text_field 'points_radius', type => 'text', class => 'span2', id => 'pointsradius', placeholder=> l '(default value)' %>
+                  <%= text_field 'points_radius', type => 'text', class => 'form-control', id => 'pointsradius', placeholder=> l '(default value)' %>
                 </div>
               </div>
               <div class="controls">
@@ -129,7 +128,7 @@
               <div class="control-group">
                 <label class="control-label" for="pielinewidth"><%=l 'Line width' %></label>
                 <div class="controls">
-                  <%= text_field 'pie_lineWidth', type => 'text', class => 'span2', id => 'pielinewidth', placeholder=> l '(default value)' %>
+                  <%= text_field 'pie_lineWidth', type => 'text', class => 'form-control', id => 'pielinewidth', placeholder=> l '(default value)' %>
                 </div>
               </div>
               <div class="controls">
@@ -142,31 +141,31 @@
             <div class="control-group">
               <label class="control-label" for="xaxislabelsangle"><%=l 'Labels angle' %></label>
               <div class="controls">
-                <%= text_field 'xaxis_labelsAngle', type => 'text', id => 'xaxislabelsangle', placeholder=> l '(default value)' %>
+                <%= text_field 'xaxis_labelsAngle', type => 'text', class => 'form-control', id => 'xaxislabelsangle', placeholder=> l '(default value)' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="xaxistitle"><%=l 'Title' %></label>
               <div class="controls">
-                <%= text_field 'xaxis_title', type => 'text', id => 'xaxistitle' %>
+                <%= text_field 'xaxis_title', type => 'text', class => 'form-control', id => 'xaxistitle' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="xaxistitleangle"><%=l 'Title angle' %></label>
               <div class="controls">
-                <%= text_field 'xaxis_titleAngle', type => 'text', id => 'xaxistitleangle', placeholder=> l '(default value)' %>
+                <%= text_field 'xaxis_titleAngle', type => 'text', class => 'form-control', id => 'xaxistitleangle', placeholder=> l '(default value)' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="xaxistimeformat"><%=l 'Time format' %></label>
               <div class="controls">
-                <%= text_field 'xaxis_timeFormat', type => 'text', id => 'xaxistimeformat', placeholder=> l '(default value)' %>
+                <%= text_field 'xaxis_timeFormat', type => 'text', class => 'form-control', id => 'xaxistimeformat', placeholder=> l '(default value)' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="xaxistimeformat"><%=l 'Mode' %></label>
               <div class="controls">
-                <%= select_field xaxis_mode => ['time', 'normal'], id => 'xaxismode' %>
+                <%= select_field xaxis_mode => ['time', 'normal'], class => 'form-control', id => 'xaxismode' %>
               </div>
             </div>
           </div>
@@ -175,49 +174,38 @@
             <div class="control-group">
               <label class="control-label" for="yaxislabelsangle"><%=l 'Labels angle' %></label>
               <div class="controls">
-                <%= text_field 'yaxis_labelsAngle', type => 'text', id => 'yaxislabelsangle', placeholder=> l '(default value)' %>
+                <%= text_field 'yaxis_labelsAngle', type => 'text', class => 'form-control', id => 'yaxislabelsangle', placeholder=> l '(default value)' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="yaxistitle"><%=l 'Title' %></label>
               <div class="controls">
-                <%= text_field 'yaxis_title', type => 'text', id => 'yaxistitle' %>
+                <%= text_field 'yaxis_title', type => 'text', class => 'form-control', id => 'yaxistitle' %>
               </div>
             </div>
             <div class="control-group">
               <label class="control-label" for="yaxistitleangle"><%=l 'Title angle' %></label>
               <div class="controls">
-                <%= text_field 'yaxis_titleAngle', type => 'text', id => 'yaxistitleangle', placeholder=> l '(default value)' %>
+                <%= text_field 'yaxis_titleAngle', type => 'text', class => 'form-control', id => 'yaxistitleangle', placeholder=> l '(default value)' %>
               </div>
             </div>
           </div>
           <% if ( scalar (stash 'id_server')) { %>
             <div class="tab-pane" id="series">
-  %             foreach my $l (@labels) {
-  %               if ($curr_service != $l->{'id_service'}) {
-  %                 $curr_service = $l->{'id_service'};
-  %                 if ($rowid > 0) {
-                </div>
-  %                 }
-  %                 $rowid = 0;
-                <strong><%= $l->{'service'} %></strong>
+  %           foreach my $l (@labels) {
+  %             if ($curr_service != $l->{'id_service'}) {
+  %               if ( $curr_service ne -1 ) {
+                    </div>
   %               }
-  %               if ($rowid%4 == 0) {
-                <div class="row-fluid">
-  %               }
-                  <label class="checkbox span3" >
-                    <%= check_box "labels" => $l->{'id_label'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
-                  </label>
-
-  %               if ($rowid%4 == 3) {
-                </div>
-  %               }
-  %               $rowid++;
+  %               $curr_service = $l->{'id_service'};
+                  <strong><%= $l->{'service'} %></strong>
+                  <div class="container-fluid">
   %             }
-
-  %             if ($rowid%4 != 3) {
-                </div>
+                <label class="checkbox col-md-3" >
+                  <%= check_box "labels" => $l->{'id_label'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
+                </label>
   %             }
+              </div>
 
             </div>
           <% } else { %>
@@ -226,19 +214,19 @@
                 <div class="control-group">
                   <label class="control-label" for="y2axislabelsangle"><%=l 'Labels angle' %></label>
                   <div class="controls">
-                    <%= text_field 'y2axis_labelsAngle', type => 'text', id => 'y2axislabelsangle' %>
+                    <%= text_field 'y2axis_labelsAngle', type => 'text', class => 'form-control', id => 'y2axislabelsangle' %>
                   </div>
                 </div>
                 <div class="control-group">
                   <label class="control-label" for="y2axistitle"><%=l 'Title' %></label>
                   <div class="controls">
-                    <%= text_field 'y2axis_title', type => 'text', id => 'y2axistitle' %>
+                    <%= text_field 'y2axis_title', type => 'text', class => 'form-control', id => 'y2axistitle' %>
                   </div>
                 </div>
                 <div class="control-group">
                   <label class="control-label" for="y2axistitleangle"><%=l 'Title angle' %></label>
                   <div class="controls">
-                    <%= text_field 'y2axis_titleAngle', type => 'text', id => 'y2axistitleangle' %>
+                    <%= text_field 'y2axis_titleAngle', type => 'text', class => 'form-control', id => 'y2axistitleangle' %>
                   </div>
                 </div>
                 <div class="controls">

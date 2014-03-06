@@ -1,20 +1,23 @@
 body {
-    background-color: #f9f9f9;
+    background-color: #232323;
 }
 
 #main {
     min-height: 400px;
+    color: #FFFFFF;
+}
+
+#main-title {
+    color: #D2D2D2;
 }
 
 /* Box
 -------------------------------------------------- */
 .box {
+    color: #BBBBBB;
     background-color: #fff;
-    border: 1px solid #d9d9d9;
+    background-color: #404040;
     padding: 15px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
     margin-bottom: 20px;
 }
 
@@ -22,6 +25,11 @@ body {
     margin-top: 0;
     font-size: 25px;
     line-height: 30px;
+}
+
+.nav-sidebar > .active > a {
+    color: #fff;
+    background-color: #428bca;
 }
 
 /*.box-content {
@@ -44,11 +52,11 @@ body {
 /* Upload
 -------------------------------------------------- */
 .after {
-	clear: both;
+  clear: both;
 }
 
 .progress {
-	width: 45%;
+  width: 45%;
 }
 
 .footer {
@@ -64,13 +72,13 @@ body {
 }
 
 .controls p {
-	padding-top: 5px;
+  padding-top: 5px;
 }
 
 /* Query textareas
 --------------------------------------------------- */
 .code-font {
-	font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 /* Messages
@@ -110,7 +118,7 @@ body {
 
 ul.scales {
     margin:0;padding:0;
-      list-style: none;
+    list-style: none;
 }
 
 ul.scales li {
@@ -124,6 +132,10 @@ ul.scales li {
 
 .scales label{
   display: inline;
+}
+
+.scales {
+  color: #000000;
 }
 
 a.warning {

@@ -7,21 +7,19 @@ package OPM::Server;
 
 use Mojo::Base 'Mojolicious::Controller';
 
-use Digest::SHA qw(sha256_hex);
-
 sub list {
     my $self = shift;
     my $servers;
     my $sql = $self->prepare(
         q{
-        SELECT id, hostname, COALESCE(rolname,'Unassigned') AS rolname
+        SELECT id, hostname, COALESCE(rolname,'') AS rolname
         FROM public.list_servers()
         ORDER BY rolname, hostname
     } );
     $sql->execute();
 
     $servers = $sql->fetchall_groupby('rolname');
-    return $self->render( 'server/list', servers_by_role => $servers );
+    return $self->render( servers_by_role => $servers );
 }
 
 sub service {
@@ -62,16 +60,17 @@ sub host {
     my $id   = $self->param('id');
     my $sql;
     my $hostname;
+    my $accname;
 
     $sql = $self->prepare(
         q{
-        SELECT hostname
+        SELECT hostname, COALESCE(rolname,'')
         FROM public.list_servers()
         WHERE id = ?
         LIMIT 1;
     } );
     $sql->execute($id);
-    $hostname = $sql->fetchrow();
+    ($hostname,$accname) = $sql->fetchrow();
 
     if ( not $hostname ) {
         $self->stash(
@@ -87,7 +86,11 @@ sub host {
     # Fetch all services for the given server
     $sql = $self->prepare(
         q{
-        SELECT s.id AS id_service, s.service, lower(s.state) as state
+        SELECT s.id AS id_service, s.service, lower(s.state) as state,
+        sum(CASE WHEN lower(state) = 'ok' THEN 1 ELSE 0 END) OVER() as oks,
+        sum(CASE WHEN lower(state) = 'warning' THEN 1 ELSE 0 END) OVER() as warnings,
+        sum(CASE WHEN lower(state) = 'critical' THEN 1 ELSE 0 END) OVER() as criticals,
+        sum(CASE WHEN lower(state) = 'unknown' THEN 1 ELSE 0 END) OVER() as unknowns
         FROM wh_nagios.list_services() s
         WHERE s.id_server = ?
         ORDER BY s.service, s.id
@@ -97,6 +100,7 @@ sub host {
     $self->stash(
         services => $sql->fetchall_arrayref( {} ),
         hostname => $hostname,
+        accname  => $accname,
         id       => $id );
     return $self->render();
 }

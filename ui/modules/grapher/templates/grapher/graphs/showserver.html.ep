@@ -6,15 +6,15 @@
 
 % content_for graph_nav_right => begin
         <div class="btn-group pull-right">
-          <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
             <%=l('All graphs for server') .'...' %>
             <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
+          </button>
+          <ul class="dropdown-menu" role="menu">
             <% foreach my $s ( @$servers ) { %>
-            <li>
-              <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'} } => begin %><%= $s->{'hostname'} %><% end %>
-            </li>
+              <li>
+                <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'} } => begin %><%= $s->{'hostname'} %><% end %>
+              </li>
             <% } %>
           </ul>
         </div>

@@ -14,23 +14,41 @@
 % my $id = stash 'id';
 
 
+<h2><%=l 'List of services for server' %> <u><%= stash 'hostname' %></u></h2>
 <div class="box">
-  <h1 class="page-header"><%=l 'List of services for server' %> <u><%= stash 'hostname' %></u></h1>
   <% if ( scalar @services ) { %>
-
-    <div class="container span6 well">
-        <ul class="nav nav-list">
-          <li>
-            <%= link_to graphs_showserver => { idserver => $id } => begin %><%=l 'View all' %><% end %>
-          </li>
-          <li class="divider"></li>
-        <% foreach my $s ( @services ) { %>
-          <li>
-            <%= link_to graphs_showservice => { server => stash('hostname'), service => $s->{'service'} } => ( class => $s->{'state'} ) => begin %><%= $s->{'service'} %><% end %>
-          </li>
+    <% if ( $services[0]->{'oks'} ne 0 ) { %>
+      <span class="label label-success">
+        <% if ( ( $services[0]->{'criticals'} eq 0 )  and ( $services[0]->{'criticals'} eq 0 ) and ( $services[0]->{'criticals'} eq 0 ) ) { %>
+            <i class="glyphicon glyphicon-thumbs-up"></i> <%= l('Good job') %>
+        <% } else {%>
+          OK : <%= $services[0]->{'oks'} %>
         <% } %>
-        </ul>
-    </div>
+      </span>&nbsp;
+    <% } %>
+    <% if ( $services[0]->{'warnings'} ne 0 ) { %>
+      <span class="label label-warning">Warnings : <%= $services[0]->{'warnings'} %></span>&nbsp;
+    <% } %>
+    <% if ( $services[0]->{'criticals'} ne 0 ) { %>
+      <span class="label label-danger">Criticals : <%= $services[0]->{'criticals'} %></span>&nbsp;
+    <% } %>
+    <% if ( $services[0]->{'unknowns'} ne 0 ) { %>
+      <span class="label label-default">Unknowns : <%= $services[0]->{'unknowns'} %></span>&nbsp;
+    <% } %>
+    <br />
+     <ul class="nav nav-list">
+       <li>
+         <%= link_to graphs_showserver => { idserver => $id } => begin %><i class="glyphicon glyphicon-stats"></i> <%=l 'View all' %><% end %>
+       </li>
+       <br />
+     <% foreach my $s ( @services ) { %>
+       <li>
+         <%= link_to graphs_showservice => { server => stash('hostname'), service => $s->{'service'} } => ( class => $s->{'state'} ) => begin %>
+           <i class="glyphicon glyphicon-stats"></i> <%= $s->{'service'} . ' (' . uc($s->{'state'}) . ')' %>
+         <% end %>
+       </li>
+     <% } %>
+     </ul>
   <% } else { %>
     <p><%=l 'No service found' %>.</p>
   <% } %>

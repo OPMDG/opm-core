@@ -6,7 +6,6 @@ package Helpers::Permissions;
 # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 use Mojo::Base 'Mojolicious::Plugin';
-use Data::Dumper;
 
 has target => sub { };
 

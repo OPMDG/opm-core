@@ -9,23 +9,23 @@
 %end
 % my @services = @{stash 'services'};
 
+<h2><%=l 'List of services per servers' %> :</h2>
 <div class="box" id="services_list">
-  <h1 class="page-header"><%=l 'List of services per servers' %> :</h1>
   <% if ( scalar @services ) { %>
 
-    <div class="accordion" id="accordion_hosts">
-    % my $i = 0;
+    <div class="panel-group" id="accordion_hosts">
     <% foreach my $s ( @services ) { %>
-      % $i++;
-      <div id="server_<%= $s->{'hostname'} %>" class="accordion-group">
-        <div class="accordion-heading">
-          <a class="accordion-toggle" data-toggle="collapse" href="#service_<%= $s->{'services'}[0]{'id'} %>">
-            <%=l $s->{'hostname'} %>
-          </a>
+      <div id="server_<%= $s->{'hostname'} %>" class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion_hosts" href="#service_<%= $s->{'services'}[0]{'id'} %>">
+              <%=l $s->{'hostname'} %>
+            </a>
+          </h4>
         </div>
-        <div id="service_<%= $s->{'services'}[0]{'id'} %>" class="accordion-body collapse<%= ($i == 1 ? '  in' : '' ) %>">
-          <div class="accordion-inner">
-            <%= form_for wh_nagios_services => (method => 'POST') => begin %>
+        <div id="service_<%= $s->{'services'}[0]{'id'} %>" class="panel-collapse collapse<%= (@services == 1 ? '  in' : '' ) %>">
+          <div class="panel-body box">
+            <%= form_for wh_nagios_services => (role => 'form', method => 'POST') => begin %>
               <table class="table table-condensed table-hover">
                 <thead>
                   <tr>
@@ -50,23 +50,23 @@
                       </td>
                       <td><%= $ser->{last_cleanup} %>
                         <%= link_to wh_nagios_cleanup => { id => $ser->{id} } => begin %>
-                        <label class="btn btn-inverse floatright" title="<%=l 'Cleanup now' %>"><span><i class="icon-tasks icon-white"></i></span></label>
+                        <label class="btn btn-default floatright" title="<%=l 'Cleanup now' %>"><span><i class="glyphicon glyphicon-tasks"></i></span></label>
                         <% end %>
                       </td>
                       <td>
-                        <%= text_field 'servalid_val_' . $ser->{id}, type => 'text', class => 'span2 va_top',value => $ser->{servalid} %>
+                        <%= text_field 'servalid_val_' . $ser->{id}, type => 'text', class => 'form-control va_top',value => $ser->{servalid} %>
                       </td>
                       <td class="label-<%= $ser->{need_purge} %>">
                         <%= $ser->{stored_interval} %>
                         <% if ( $ser->{need_purge} ne 'info' ) { %>
                           <%= link_to wh_nagios_purge => { id => $ser->{id} } => begin %>
-                            <label class="btn btn-inverse floatright" title="<%=l 'Purge now' %>"><span><i class="icon-trash icon-white"></i></span></label>
+                            <label class="btn btn-default floatright" title="<%=l 'Purge now' %>"><span><i class="glyphicon glyphicon-trash"></i></span></label>
                           <% end %>
                         <% } %>
                       </td>
                       <td class="ta_center">
                         <%= link_to wh_nagios_delete_service => { id => $ser->{id} } => ( onclick => "return confirmDelService('$s->{hostname}', '$ser->{service}');" ) => begin %>
-                          <label class="btn btn-danger" title="<%=l 'Delete service' %>"><span><i class="icon-remove icon-white"></i></span></label>
+                          <label class="btn btn-danger" title="<%=l 'Delete service' %>"><span><i class="glyphicon glyphicon-remove"></i></span></label>
                         <% end %>
                       </td>
                     </tr>
@@ -78,18 +78,18 @@
                       <a href="#" class="checkall"><%=l 'All' %></a>
                       <a href="#" class="uncheckall"><%=l 'None' %></a>
                       <a href="#" class="invertcheck"><%=l 'Invert Sel.' %></a>
-                      <label class="btn btn-inverse" for="cleanup_<%= $s->{'server_id'} %>"><span><i class="icon-tasks icon-white"></i></span> <%=l 'Cleanup' %></label>
-                      <%= submit_button l('Cleanup'), id => 'cleanup_' . $s->{'server_id'}, name => 'cleanup', class => 'hidden btn btn-inverse' %>&nbsp;
-                      <label class="btn btn-inverse" for="purge_<%= $s->{'server_id'} %>"><span><i class="icon-trash icon-white"></i></span> <%=l 'Purge' %></label>
-                      <%= submit_button l('Purge'), id => 'purge_' . $s->{'server_id'}, name => 'purge', class => 'hidden btn btn-inverse' %>&nbsp;
-                      <label class="btn btn-danger" for="delete_<%= $s->{'server_id'} %>"><span><i class="icon-remove icon-white"></i></span> <%=l 'Delete' %></label>
-                      <%= submit_button l('Delete'), id => 'delete_' . $s->{'server_id'}, name => 'delete', class => 'hidden btn btn-inverse', onclick => "return confirmDelService('$s->{hostname}', '');" %>&nbsp;
+                      <label class="btn btn-default" for="cleanup_<%= $s->{'server_id'} %>"><span><i class="glyphicon glyphicon-tasks"></i></span> <%=l 'Cleanup' %></label>
+                      <%= submit_button l('Cleanup'), id => 'cleanup_' . $s->{'server_id'}, name => 'cleanup', class => 'hidden btn btn-default' %>&nbsp;
+                      <label class="btn btn-default" for="purge_<%= $s->{'server_id'} %>"><span><i class="glyphicon glyphicon-trash"></i></span> <%=l 'Purge' %></label>
+                      <%= submit_button l('Purge'), id => 'purge_' . $s->{'server_id'}, name => 'purge', class => 'hidden btn btn-default' %>&nbsp;
+                      <label class="btn btn-danger" for="delete_<%= $s->{'server_id'} %>"><span><i class="glyphicon glyphicon-remove"></i></span> <%=l 'Delete' %></label>
+                      <%= submit_button l('Delete'), id => 'delete_' . $s->{'server_id'}, name => 'delete', class => 'hidden btn btn-default', onclick => "return confirmDelService('$s->{hostname}', '');" %>&nbsp;
                     </td>
                     <td>
-                        <%= text_field 'validity', type => 'text', for => 'lbl_servalid_' . $s->{'server_id'}, class => 'span2', id => 'validity_' . $s->{'server_id'}, placeholder => l('Overall interval') %>
+                        <%= text_field 'validity', type => 'text', for => 'lbl_servalid_' . $s->{'server_id'}, class => 'form-control', id => 'validity_' . $s->{'server_id'}, placeholder => l('Overall interval') %>
                     </td>
-                    <td colspan=2">
-                      <label class="btn btn-info" for="servalid_<%= $s->{'server_id'} %>" id="lbl_servalid_<%= $s->{'server_id'} %>"><span><i class="icon-edit icon-white"></i></span> <%=l 'Update retention' %></label>
+                    <td colspan="2">
+                      <label class="btn btn-info" for="servalid_<%= $s->{'server_id'} %>" id="lbl_servalid_<%= $s->{'server_id'} %>"><span><i class="glyphicon glyphicon-edit"></i></span> <%=l 'Update retention' %></label>
                       <%= submit_button l('Update retention'), id => 'servalid_' . $s->{'server_id'}, name => 'servalid', class => 'hidden btn btn-info' %>&nbsp;
                     </td>
                   </tr>

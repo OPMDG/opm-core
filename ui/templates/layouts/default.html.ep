@@ -19,58 +19,52 @@
     <link rel="shortcut icon" href="<%= url_for '/' %>img/favicon.ico" type="image/x-icon" />
 
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap.min.css' %>" />
-    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-responsive.min.css' %>" />
+    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-theme.min.css' %>" />
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/opm.css' %>" />
 
     <!-- Use HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="<%= url_for '/' %>js/html5.js"></script>
     <![endif]-->
-    <%= content_for 'header' %>
-
+    %= content_for 'header'
   </head>
-
   <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-6">
+          <!-- Title -->
+          <h3 id="main-title">Open PostgreSQL Monitoring</h3>
+        </div>
 
-    <div class="navbar navbar-static-top navbar-inverse">
-      <div class="navbar-inner">
-    <div class="container">
-      <!-- user menu -->
-      <%= user_menu %>
-
-      <!-- Title -->
-      <span class="brand">Open PostgreSQL Monitoring</span>
-
-      <!-- Main menu -->
-      <%= top_menu %>
+        <div class="col-md-6">
+          <!-- user menu -->
+          %= user_menu
         </div>
       </div>
     </div>
 
-    <div class="container">
-      <%= display_messages %>
+    <div class="container-fluid">
+      %= display_messages
     </div>
 
-    <div class="container" id="main">
-      <%= content %>
-    </div>
-
-    <div class="footer">
-      <div class="container-fluid">
-        <div class="pull-right">
-          <a href="https://twitter.com/dalibo" class="twitter-follow-button" data-show-count="false">Follow @dalibo</a>
-                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+    <div class="container-fluid" id="main">
+      <div class="row">
+        <div class="col-md-2">
+          <!-- Main menu -->
+          %= main_menu
         </div>
-
-        <p>Powered by <a href="http://www.mojolicious.org" title="mojolicious web framework">Mojolicious</a></p>
-        <p>Design based on <a href="http://getbootstrap.com/2.3.2/" title="bootstrap">Bootstrap 2.3.2</a></p>
-
+        <div class="col-md-10">
+          <div id="content">
+            %= content
+          </div>
+        </div>
       </div>
     </div>
+
     <script type="text/javascript" src="<%= url_for '/js/jquery.min.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/bootstrap.min.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/bootstrap-typeahead.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/opm.js' %>"></script>
-    <%= content_for 'body_scripts' %>
+    %= content_for 'body_scripts'
   </body>
 </html>

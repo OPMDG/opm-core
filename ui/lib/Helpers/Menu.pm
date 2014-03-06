@@ -7,7 +7,6 @@ package Helpers::Menu;
 
 use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
-use Data::Dumper;
 
 sub register {
     my ( $self, $app ) = @_;
@@ -30,7 +29,7 @@ sub register {
         } );
 
     $app->helper(
-        top_menu => sub {
+        main_menu => sub {
             my $self = shift;
             my $html;
             my $level = "guest";
@@ -54,8 +53,6 @@ sub register {
 
                 while ( my $row = $sql->fetchrow_hashref() ) {
 
-                    $row->{'rolname'} = 'Unassigned' unless $row->{'rolname'};
-
                     if ( not exists $curr_account->{'rolname'}
                             or $curr_account->{'rolname'} ne $row->{'rolname'}
                        ) {
@@ -69,7 +66,7 @@ sub register {
 
                     push @{ $curr_account->{'servers'} }, {
                         'id'       => $row->{'id'},
-                            'hostname' => $row->{'hostname'}
+                        'hostname' => $row->{'hostname'}
                     };
                 }
                 push @servers, \%{ $curr_account } if exists $curr_account->{'rolname'};
@@ -82,7 +79,7 @@ sub register {
                 servers    => \@servers
             );
             $html =
-                $self->render( template => 'helpers/top_menu', partial => 1 );
+                $self->render( template => 'helpers/main_menu', partial => 1 );
 
             return b($html);
         } );

@@ -7,15 +7,15 @@
 % content_for graph_nav_right => begin
       <% if ($server_id and scalar @$graph_list) { %>
         <div class="btn-group pull-right">
-          <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+          <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" href="#">
             <%=l('Change graph') .'...' %>
             <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
+          </button>
+          <ul class="dropdown-menu" role="menu">
             <% foreach my $s ( @$graph_list ) { %>
-            <li>
-              <%= link_to 'graphs_show' => { 'id' => $s->{'id'} } => begin %><%= $s->{'graphname'} %><% end %>
-            </li>
+              <li>
+                <%= link_to 'graphs_show' => { 'id' => $s->{'id'} } => begin %><%= $s->{'graphname'} %><% end %>
+              </li>
             <% } %>
           </ul>
         </div>

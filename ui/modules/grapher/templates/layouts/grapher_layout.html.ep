@@ -11,44 +11,51 @@
   % end
   %= javascript '/js/flotr2.min.js'
   %= javascript '/js/grapher.js'
+  %= javascript '/js/moment.min.js'
   %= javascript '/js/bootstrap-datetimepicker.min.js'
   %= javascript '/js/show.js'
 % end
 
 <%= link_to server_host => { id => $server_id } => begin %> « <%=l 'Back to server' %> <%= $hostname %><% end %>
+<div class=row">
+  <div class="container-fluid scales">
+    <div class="btn-toolbar">
 
-<div class="navbar">
-  <div class="navbar-inner">
-    <form class="navbar-form form-inline scales">
       <div class="btn-group">
-        <input id="sel_year" class="btn" type="button" value="<%=l 'Year' %>" />
-        <input id="sel_month" class="btn" type="button" value="<%=l 'Month' %>" />
-        <input id="sel_week" class="btn" type="button" value="<%=l 'Week' %>" />
-        <input id="sel_day" class="btn" type="button" value="<%=l 'Day' %>" />
+        <input id="sel_year" class="btn btn-default" type="button" value="<%=l 'Year' %>" />
+        <input id="sel_month" class="btn btn-default" type="button" value="<%=l 'Month' %>" />
+        <input id="sel_week" class="btn btn-default" type="button" value="<%=l 'Week' %>" />
+        <input id="sel_day" class="btn btn-default" type="button" value="<%=l 'Day' %>" />
       </div>
+
       <div class="btn-group">
-        <button class="btn go-backward"><i class="icon-fast-backward"></i></button>
-        <button class="btn go-forward"><i class="icon-fast-forward"></i></button>
+        <button class="btn btn-default go-backward"><i class="glyphicon glyphicon-fast-backward"></i></button>
+        <button class="btn btn-default go-forward"><i class="glyphicon glyphicon-fast-forward"></i></button>
       </div>
-      &nbsp;&nbsp;&nbsp;
-      <div class="input-prepend date datepick" id="fromdatepick">
-        <span class="add-on">
-          <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
-        </span>
-        <input id="fromdate" type="text" class="dateinput" />
+
+      <div class="btn-group">
+        <div class="input-group date datepick" id="fromdatepick">
+          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+          <input id="fromdate" type="text" class="form-control"/>
+        </div>
       </div>
-      <span class="add-on input-daterange-to">
+
+      <span class="btn-group input-daterange-to">
         <%=l 'to' %>
       </span>
-      <div class="input-append date datepick" id="todatepick">
-        <input id="todate" type="text" class="dateinput" />
-        <span class="add-on">
-          <i data-time-icon="icon-time" data-date-icon="icon-calendar"></i>
-        </span>
+
+      <div class="btn-group">
+        <div class="input-group date datepick" id="todatepick">
+          <input id="todate" type="text" class="form-control"/>
+          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+        </div>
       </div>
-      <input type="button" id="sel_custom" class="btn" style="" value="<%=l 'Custom' %>" />
+
+      <div class="btn-group">
+        <input type="button" id="sel_custom" class="btn default" value="<%=l 'Custom' %>" />
+      </div>
       <%= content_for 'graph_nav_right' %> 
-    </form>
+    </div>
   </div>
 </div>
 
