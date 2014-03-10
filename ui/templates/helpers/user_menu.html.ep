@@ -10,6 +10,6 @@
 
 <br />
 <form class="navbar-search">
-  <input type="text" class="form-control" placeholder="<%=l 'Search amongs servers' %>" id="search" autocomplete="off">
+  <input type="text" class="form-control" data-searchurl="<%= url_for 'search_server'%>" placeholder="<%=l 'Search amongs servers' %>" id="search" autocomplete="off">
 </form>
 </div>
