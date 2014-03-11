@@ -15,16 +15,15 @@
 .input-daterange-to {
   display: inline-block;
   min-width: 16px;
-  height: 28px;
+  height: 34px;
   padding: 4px 3px;
   font-weight: normal;
-  line-height: 18px;
+  line-height: 21px;
   text-align: center;
   text-shadow: 0 1px 0 #ffffff;
   vertical-align: middle;
   background-color: #eeeeee;
   border: 1px solid #ccc;
-  margin-top: 2px;
 }
 
 .graph-legend {
@@ -35,4 +34,8 @@
 
 label.deactivated {
   text-decoration: line-through
+}
+
+.datepick {
+  width: 200px;
 }

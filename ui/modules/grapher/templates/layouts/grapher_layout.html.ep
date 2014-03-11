@@ -17,9 +17,9 @@
 % end
 
 <%= link_to server_host => { id => $server_id } => begin %> « <%=l 'Back to server' %> <%= $hostname %><% end %>
-<div class=row">
+<div class="row">
   <div class="container-fluid scales">
-    <div class="btn-toolbar">
+    <div class="btn-toolbar" role="toolbar">
 
       <div class="btn-group">
         <input id="sel_year" class="btn btn-default" type="button" value="<%=l 'Year' %>" />
@@ -34,20 +34,22 @@
       </div>
 
       <div class="btn-group">
-        <div class="input-group date datepick" id="fromdatepick">
-          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
-          <input id="fromdate" type="text" class="form-control"/>
+        <div class="btn-group">
+          <div class="input-group date datepick" id="fromdatepick">
+            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+            <input id="fromdate" type="text" class="form-control"/>
+          </div>
         </div>
-      </div>
 
-      <span class="btn-group input-daterange-to">
-        <%=l 'to' %>
-      </span>
+        <span class="btn-group input-daterange-to">
+          <%=l 'to' %>
+        </span>
 
-      <div class="btn-group">
-        <div class="input-group date datepick" id="todatepick">
-          <input id="todate" type="text" class="form-control"/>
-          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+        <div class="btn-group">
+          <div class="input-group date datepick" id="todatepick">
+            <input id="todate" type="text" class="form-control"/>
+            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+          </div>
         </div>
       </div>
 
