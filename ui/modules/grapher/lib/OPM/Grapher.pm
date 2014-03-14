@@ -4,19 +4,19 @@ package OPM::Grapher;
 # For license terms, see the LICENSE file.
 #
 # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
-
-use Mojo::Base 'Mojolicious::Plugin';
+use Mojo::Base 'OPM::Plugin';
 
 sub register {
-    my ( $self, $app, $config ) = @_;
+    my ( $self, $app ) = @_;
 
-    # Load properties helper
+    # TODO: get rid of this plugin
     $app->plugin('properties');
 
-    # Routes
-    my $r      = $app->routes->route('/grapher');
-    my $r_auth = $r->bridge->to('users#check_auth');
-    my $r_adm  = $r_auth->bridge->to('users#check_admin');
+    return $self;
+}
+
+sub register_routes {
+    my ( $self, $r, $r_auth, $r_adm ) = @_;
 
     ## Graphs
     # show
@@ -47,6 +47,16 @@ sub register {
     $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )
         ->name('graphs_showserver')->to('grapher-graphs#showserver');
 
+}
+
+sub links_service {
+    my ( $self, $ctrl ) = ( shift, shift );
+    my $args  = @_;
+    my $value = {
+        icon  => 'stats',
+        title => 'Graph',
+        href  => $ctrl->url_for( 'graphs_showservice', @_ ) };
+    return [$value];
 }
 
 1;

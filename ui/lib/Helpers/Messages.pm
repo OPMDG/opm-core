@@ -11,13 +11,10 @@ use Mojo::ByteStream 'b';
 has msg_lists =>
     sub { { debug => [], info => [], error => [], warning => [] } };
 
-
 our %Error_class = (
-  "debug" => "alert-info",
-  "error" => "alert-error",
-  "info" => "alert-success"
-);
-
+    "debug" => "alert-info",
+    "error" => "alert-error",
+    "info"  => "alert-success" );
 
 sub register {
     my ( $self, $app ) = @_;
@@ -28,50 +25,51 @@ sub register {
         display_messages => sub {
             my ($ctrl) = @_;
             my $html;
-            foreach my $error_type ('debug', 'error', 'warning', 'info') {
-              my $values = $self->msg_lists->{$error_type};
-              if(scalar(@$values))
-              {
-                my $class = $Error_class{$error_type} || '';
-                $html .= qq{<div class="alert fade in $class">\n};
-                $html .=
-                    qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
-                $html .= qq{<ul class="unstyled">\n};
-                $html .= join( "\n",
-                    map { "<li>" . $ctrl->l($_) . "</li>" } @{$values} );
-                $html .= qq{</ul></div>};
-              }
+            foreach my $error_type ( 'debug', 'error', 'warning', 'info' ) {
+                my $values = $self->msg_lists->{$error_type};
+                if ( scalar(@$values) ) {
+                    my $class = $Error_class{$error_type} || '';
+                    $html .= qq{<div class="alert fade in $class">\n};
+                    $html .=
+                        qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
+                    $html .= qq{<ul class="unstyled">\n};
+                    $html .= join( "\n",
+                        map { "<li>" . $ctrl->l($_) . "</li>" } @{$values} );
+                    $html .= qq{</ul></div>};
+                }
             }
+
             # Empty the message list so that it is displayed only once
             $self->msg_lists(
                 { debug => [], info => [], error => [], warning => [] } );
             $html = ($html) ? qq{<div id="messages">$html</div>\n} : '';
 
             return b($html);
-            }
-    );
+        } );
 
     $app->helper(
         validation_error => sub {
-          (my $ctrl, my $validation) = (shift, shift);
-          if($validation->has_error)
-          {
-              while( (my $key, my $values) = each %{$validation->{error}} ){
-                  (my $check_name, my $result) = shift @$values, shift @$values;
-                  my $formatter = $ctrl->l("validation_$check_name");
-                  my $fieldname = $ctrl->l($key);
-                  my @values = map { $ctrl->l($_) } @$values;
-                  my $formatted = sprintf($formatter, $fieldname, @values);
-                  $self->error($formatted);
-              }
-          }
-        });
+            ( my $ctrl, my $validation ) = ( shift, shift );
+            if ( $validation->has_error ) {
+                while ( ( my $key, my $values ) =
+                    each %{ $validation->{error} } )
+                {
+                    ( my $check_name, my $result ) = shift @$values,
+                        shift @$values;
+                    my $formatter = $ctrl->l("validation_$check_name");
+                    my $fieldname = $ctrl->l($key);
+                    my @values    = map { $ctrl->l($_) } @$values;
+                    my $formatted =
+                        sprintf( $formatter, $fieldname, @values );
+                    $self->error($formatted);
+                }
+            }
+        } );
     return;
 }
 
 sub debug {
-    my $self = shift;
-
+    my $self     = shift;
     my $messages = $self->msg_lists;
     my @debug    = @{ $messages->{debug} };
     push @debug, @_;
@@ -92,7 +90,7 @@ sub info {
 }
 
 sub error {
-    my $self = shift;
+    my $self     = shift;
     my $messages = $self->msg_lists;
     my @error    = @{ $messages->{error} };
     push @error, @_;
@@ -102,7 +100,7 @@ sub error {
 }
 
 sub warning {
-    my $self = shift;
+    my $self     = shift;
     my $messages = $self->msg_lists;
     my @warning  = @{ $messages->{warning} };
     push @warning, @_;

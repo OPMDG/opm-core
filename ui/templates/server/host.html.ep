@@ -43,9 +43,8 @@
        <br />
      <% foreach my $s ( @services ) { %>
        <li>
-         <%= link_to graphs_showservice => { server => stash('hostname'), service => $s->{'service'} } => ( class => $s->{'state'} ) => begin %>
-           <i class="glyphicon glyphicon-stats"></i> <%= $s->{'service'} . ' (' . uc($s->{'state'}) . ')' %>
-         <% end %>
+         <%= $s->{service} . ' (' . uc($s->{'state'}) . ')' %>
+         <%= format_links('service', { server => stash('hostname'), service => $s->{'service'} }) %>
        </li>
      <% } %>
      </ul>
