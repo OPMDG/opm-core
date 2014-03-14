@@ -76,15 +76,20 @@ sub opm_plugin {
     my $opm_plugin_instance;
     my $route_base = $self->routes->route("/$plugin");
     my $registry   = $self->opm_plugins;
-    push( @INC,
-        catdir( splitdir( $self->home ), 'modules', $plugin, 'lib' ) );
-    $opm_plugin_instance = $self->plugin( $plugin,
-        home => catdir( splitdir( $self->home ), 'modules', $plugin ) );
+    my $mod_home   = catdir( splitdir( $self->home ), 'modules', $plugin );
+    push( @INC, catdir( $mod_home, 'lib' ) );
+    $opm_plugin_instance = $self->plugin($plugin);
     $opm_plugin_instance->register_routes(
         $route_base,
         $route_base->bridge->to('users#check_auth'),
         $route_base->bridge->to('users#check_admin') );
     $registry->{$plugin} = $opm_plugin_instance;
+
+    # Add the template path
+    push @{ $self->renderer->paths }, catdir( $mod_home, 'templates' );
+
+    # Add the public path
+    push @{ $self->static->paths }, catdir( $mod_home, 'public' );
 }
 
 # TODO: think about moving the routes declaration elsewhere when this get too

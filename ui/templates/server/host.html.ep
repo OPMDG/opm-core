@@ -38,7 +38,7 @@
     <br />
      <ul class="nav nav-list">
        <li>
-         <%= link_to graphs_showserver => { idserver => $id } => begin %><i class="glyphicon glyphicon-stats"></i> <%=l 'View all' %><% end %>
+         <%= format_links('server', { idserver => $id }) %>
        </li>
        <br />
      <% foreach my $s ( @services ) { %>

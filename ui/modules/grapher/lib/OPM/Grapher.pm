@@ -59,4 +59,15 @@ sub links_service {
     return [$value];
 }
 
+sub links_server {
+    my ( $self, $ctrl ) = ( shift, shift );
+    my $args  = @_;
+    my $value = {
+        icon  => 'stats',
+        title => 'All',
+        href  => $ctrl->url_for( 'graphs_showserver', @_ ) };
+    return [$value];
+
+}
+
 1;
