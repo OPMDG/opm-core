@@ -17,37 +17,53 @@
 <h2><%=l 'List of services for server' %> <u><%= stash 'hostname' %></u></h2>
 <div class="box">
   <% if ( scalar @services ) { %>
-    <% if ( $services[0]->{'oks'} ne 0 ) { %>
-      <span class="label label-success">
-        <% if ( ( $services[0]->{'criticals'} eq 0 )  and ( $services[0]->{'criticals'} eq 0 ) and ( $services[0]->{'criticals'} eq 0 ) ) { %>
-            <i class="glyphicon glyphicon-thumbs-up"></i> <%= l('Good job') %>
-        <% } else {%>
-          OK : <%= $services[0]->{'oks'} %>
-        <% } %>
-      </span>&nbsp;
-    <% } %>
-    <% if ( $services[0]->{'warnings'} ne 0 ) { %>
-      <span class="label label-warning">Warnings : <%= $services[0]->{'warnings'} %></span>&nbsp;
-    <% } %>
-    <% if ( $services[0]->{'criticals'} ne 0 ) { %>
-      <span class="label label-danger">Criticals : <%= $services[0]->{'criticals'} %></span>&nbsp;
-    <% } %>
-    <% if ( $services[0]->{'unknowns'} ne 0 ) { %>
-      <span class="label label-default">Unknowns : <%= $services[0]->{'unknowns'} %></span>&nbsp;
-    <% } %>
+        <%= format_details('server', { id_server => stash('id')}) %>
+% #     <% if ( $services[0]->{'oks'} ne 0 ) { %>
+% #       <span class="label label-success">
+% #         <% if ( ( $services[0]->{'criticals'} eq 0 )  and ( $services[0]->{'criticals'} eq 0 ) and ( $services[0]->{'criticals'} eq 0 ) ) { %>
+% #             <i class="glyphicon glyphicon-thumbs-up"></i> <%= l('Good job') %>
+% #         <% } else {%>
+% #           OK : <%= $services[0]->{'oks'} %>
+% #         <% } %>
+% #       </span>&nbsp;
+% #     <% } %>
+% #     <% if ( $services[0]->{'warnings'} ne 0 ) { %>
+% #       <span class="label label-warning">Warnings : <%= $services[0]->{'warnings'} %></span>&nbsp;
+% #     <% } %>
+% #     <% if ( $services[0]->{'criticals'} ne 0 ) { %>
+% #       <span class="label label-danger">Criticals : <%= $services[0]->{'criticals'} %></span>&nbsp;
+% #     <% } %>
+% #     <% if ( $services[0]->{'unknowns'} ne 0 ) { %>
+% #       <span class="label label-default">Unknowns : <%= $services[0]->{'unknowns'} %></span>&nbsp;
+% #     <% } %>
     <br />
-     <ul class="nav nav-list">
-       <li>
-         <%= format_links('server', { idserver => $id }) %>
-       </li>
-       <br />
-     <% foreach my $s ( @services ) { %>
-       <li>
-         <%= $s->{service} . ' (' . uc($s->{'state'}) . ')' %>
-         <%= format_links('service', { server => stash('hostname'), service => $s->{'service'} }) %>
-       </li>
-     <% } %>
-     </ul>
+      <ul class="nav nav-list">
+        <li>
+          <%= link_to 'graphs_showserver' => { idserver => $id} => begin %>
+            <i class="glyphicon glyphicon-stats"></i> <%= l 'Show All' %>
+          <% end %>
+          % # <%= format_links('server', { idserver => $id }) %>
+        </li>
+        <br />
+      % my $cur_service;
+      <% foreach my $s ( @services ) { %>
+        % if ( !defined($cur_service) or $cur_service ne $s->{'service'} ) {
+          % if ( defined($cur_service) ) {
+            </li>
+          % }
+          <li>
+          % $cur_service = $s->{'service'};
+          <%= $s->{service} %>
+        % }
+        % # <%= format_links('service', { server => stash('hostname'), service => $s->{'service'} }) %>
+        <%= link_to 'graphs_showservice' => { server => $s->{'hostname'}, service => $s->{'service'}} => begin %>
+          <i class="glyphicon glyphicon-stats"></i> <%= $s->{'warehouse'} . ' - ' . $s->{'service'} %>
+          % # <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id'} }) %>
+          <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
+        <% end %>
+      <% } %>
+      </li>
+    </ul>
   <% } else { %>
     <p><%=l 'No service found' %>.</p>
   <% } %>

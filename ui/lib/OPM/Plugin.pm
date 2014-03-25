@@ -16,10 +16,15 @@ sub links {
     return \%links;
 }
 
+sub details {
+    my %details;
+    return \%details;
+}
+
 sub AUTOLOAD {
     my $self = shift,
         my ( $package, $method ) = split /::(\w+)$/, our $AUTOLOAD;
-    if ( $method =~ /^links_/ ) {
+    if ( $method =~ /^(links|details)_/ ) {
         return $self->can($method) ? $self->$method(@_) : [];
     }
     croak "Method $method does not exist";

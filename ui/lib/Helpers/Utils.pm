@@ -34,7 +34,7 @@ sub register {
         format_link => sub {
             my ( $ctrl, $link ) = ( shift, shift );
             return b(
-                qq(<a href="$link->{href}"><i class="glyphicon glyphicon-$link->{icon}"></i>$link->{title}</a>)
+                qq(<a href="$link->{href}"><i class="$link->{class}"></i>$link->{title}</a>)
             );
         } );
 
@@ -42,7 +42,7 @@ sub register {
         format_links => sub {
             my $ctrl   = shift;
             my $values = [];
-            foreach my $link ( @{ $app->get_links(@_) } ) {
+            foreach my $link ( @{ $ctrl->get_links(@_) } ) {
                 push( $values, $app->format_link($link) );
             }
             return b( join( '', @{$values} ) );
@@ -55,6 +55,38 @@ sub register {
             return '' if ( !defined $accname );
             return $ctrl->l('Unassigned') if ( $accname eq '' );
             return $accname;
+        } );
+
+    $app->helper(
+        get_details => sub {
+            my ( $ctrl, $context ) = ( shift, shift );
+            my $method_name = "details_$context";
+            my $details       = [];
+            foreach my $opm_plugin ( values $app->opm_plugins ) {
+                foreach
+                    my $detail ( @{ $opm_plugin->$method_name( $ctrl, @_ ) } )
+                {
+                    push( $details, $detail );
+                }
+            }
+            return $details;
+        } );
+    $app->helper(
+        format_detail => sub {
+            my ( $ctrl, $detail ) = ( shift, shift );
+            return b(
+                qq(<span class="$detail->{class}">$detail->{title}</span>)
+            );
+        } );
+
+    $app->helper(
+        format_details => sub {
+            my  $ctrl = shift;
+            my $values = [];
+            foreach my $detail ( @{ $ctrl->get_details(@_) } ) {
+                push( $values, $app->format_detail($detail) );
+            }
+            return b( join( '', @{$values} ) );
         } );
 }
 

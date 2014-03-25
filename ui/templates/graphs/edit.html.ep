@@ -5,7 +5,7 @@
 
 % layout config 'layout';
 % content_for body_scripts => begin
-  <script type="text/javascript" src="<%= url_for '/js/edit.js' %>"></script>
+  <script type="text/javascript" src="<%= url_for '/js/graph_edit.js' %>"></script>
 % end
 % my @labels       = @{ stash 'labels' };
 % my $rowid        = 0;
@@ -56,22 +56,6 @@
                 <%= select_field type => [[ l('Bars') => 'bars'], [ l('Lines') => 'lines'], [ l('Points') => 'points'], [ l('Pie') => 'pie']], id => 'graph_type_select', class => 'form-control' %>
               </div>
             </div>
-
-            <% unless ( scalar (stash 'id_server')) { %>
-            <div class="control-group">
-              <label class="control-label" for="query1">Query</label>
-              <div class="controls">
-                <%= text_area y1_query => (rows => 7, id => 'query1', class => 'form-control code-font') => begin %><% end %>
-              </div>
-            </div>
-
-            <div class="control-group">
-              <label class="control-label" for="query2">Second Y axis query:</label>
-              <div class="controls">
-                <%= text_area y2_query => (rows => 7, id => 'query2', class => 'form-control code-font') => begin %><% end %>
-              </div>
-            </div>
-            <% } %>
 
             <div class="graph_type" id="type_bars">
               <div class="control-group">
@@ -202,7 +186,7 @@
                   <div class="container-fluid">
   %             }
                 <label class="checkbox col-md-3" >
-                  <%= check_box "labels" => $l->{'id_label'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
+                  <%= check_box "labels" => $l->{'id_metric'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
                 </label>
   %             }
               </div>

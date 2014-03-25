@@ -63,6 +63,7 @@ sub register_plugins {
     $self->plugin('menu');
     $self->plugin('permissions');
     $self->plugin('utils');
+    $self->plugin('properties');
 
     # Load OPM-plugins
     foreach my $plugin ( @{ $self->config->{'plugins'} } ) {
@@ -162,6 +163,29 @@ sub register_routes {
     $r_auth->route('/search/server')->to('search#server')
         ->name('search_server');
 
+    ########
+    # Graphs
+    # show
+    $r_auth->route( '/graphs/:id', id => qr/\d+/ )->name('graphs_show')
+        ->to('graphs#show');
+    # edit
+    $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )->name('graphs_edit')
+        ->to('graphs#edit');
+    # remove
+    $r_adm->route( '/graphs/:id/remove', id => qr/\d+/ )
+        ->name('graphs_remove')->to('graphs#remove');
+    # clone
+    $r_adm->route( '/graphs/:id/clone', id => qr/\d+/ )->name('graphs_clone')
+        ->to('graphs#clone');
+    # data
+    $r_auth->post('/graphs/data')->name('graphs_data')
+        ->to('graphs#data');
+    # show service (using name)
+    $r_auth->route('/graphs/showservice/:server/:service')
+        ->name('graphs_showservice')->to('graphs#showservice');
+    # show server
+    $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )
+        ->name('graphs_showserver')->to('graphs#showserver');
 }
 
 return 1;

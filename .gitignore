@@ -11,7 +11,7 @@ MANIFEST*
 pm_to_blib
 *.conf
 !opm.conf.test
-log/*
+ui/log
 work
 _build
 Build

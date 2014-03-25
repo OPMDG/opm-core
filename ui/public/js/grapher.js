@@ -371,7 +371,7 @@
                 grapher = new Grapher(this, options);
                 $this.data('grapher', grapher);
                 $this.data('zooms', []);
-                
+
                 Flotr.EventAdapter.observe($this.find('.plot').get(0), 'flotr:select', function (sel) {
                     $this.data('zooms').push([
                         grapher.config.from,

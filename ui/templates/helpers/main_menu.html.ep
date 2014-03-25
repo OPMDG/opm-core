@@ -11,7 +11,7 @@
 % $hostname = '' if !defined $hostname;
 % my $active_adm_users = '';
 % my $active_adm_accounts = '';
-% my $active_adm_wh_nagios = '';
+%# my $active_adm_wh_nagios = '';
 % my $active_all_servers = '';
 % #
 % # Process current_route to check active items
@@ -20,9 +20,6 @@
 % }
 % if ( $cr =~ '^accounts_' and $cr ne 'accounts_list' ) {
 %   $active_adm_accounts = 'active';
-% }
-% if ( $cr =~ '^wh_nagios_' ) {
-%   $active_adm_wh_nagios = 'active';
 % }
 % if ( $cr eq 'server_list' ) {
 %   $active_all_servers = 'active';
@@ -41,11 +38,14 @@
             <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%=l 'Accounts' %>
           % end
         </li>
-          <li class="<%= $active_adm_wh_nagios %>">
-          %= link_to wh_nagios_services => begin
-            <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%= 'wh_nagios' %>
-          % end
-        </li>
+          % foreach my $link ( @{ get_links('adm_menu') } ) {
+              <li class="<%= ( $cr =~ $link->{'cr_regex'} ? 'active' : '' ) %>">
+                <%= link_to $link->{'href'} => begin %>
+                  <i class="<%= $link->{'class'} %>"></i>
+                  <%= $link->{'title'} %>
+                <% end %>
+              </li>
+          % }
       </ul>
       <br />
     % }

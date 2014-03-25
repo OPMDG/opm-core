@@ -1,4 +1,4 @@
-package OPM::Properties;
+package Helpers::Properties;
 
 # This program is open source, licensed under the PostgreSQL License.
 # For license terms, see the LICENSE file.

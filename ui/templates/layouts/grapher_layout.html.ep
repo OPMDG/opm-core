@@ -13,7 +13,7 @@
   %= javascript '/js/grapher.js'
   %= javascript '/js/moment.min.js'
   %= javascript '/js/bootstrap-datetimepicker.min.js'
-  %= javascript '/js/show.js'
+  %= javascript '/js/graph_show.js'
 % end
 
 <%= link_to server_host => { id => $server_id } => begin %> « <%=l 'Back to server' %> <%= $hostname %><% end %>
@@ -56,11 +56,11 @@
       <div class="btn-group">
         <input type="button" id="sel_custom" class="btn default" value="<%=l 'Custom' %>" />
       </div>
-      <%= content_for 'graph_nav_right' %> 
+      <%= content_for 'graph_nav_right' %>
     </div>
   </div>
 </div>
 
 <% foreach my $graph (@$graphs) { %>
-    %= include 'grapher/graphs/graph', graph => $graph
+    %= include 'graphs/graph', graph => $graph
 <% } %>

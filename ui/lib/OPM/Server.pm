@@ -80,20 +80,17 @@ sub host {
     }
 
     # create missing graphs for given server
-    $self->proc_wrapper( schema => 'pr_grapher' )
-        ->create_graph_for_wh_nagios($id);
+    $self->proc_wrapper( schema => 'public' )
+        ->create_graph_for_new_metric($id);
 
     # Fetch all services for the given server
     $sql = $self->prepare(
         q{
-        SELECT s.id AS id_service, s.service, lower(s.state) as state,
-        sum(CASE WHEN lower(state) = 'ok' THEN 1 ELSE 0 END) OVER() as oks,
-        sum(CASE WHEN lower(state) = 'warning' THEN 1 ELSE 0 END) OVER() as warnings,
-        sum(CASE WHEN lower(state) = 'critical' THEN 1 ELSE 0 END) OVER() as criticals,
-        sum(CASE WHEN lower(state) = 'unknown' THEN 1 ELSE 0 END) OVER() as unknowns
-        FROM wh_nagios.list_services() s
-        WHERE s.id_server = ?
-        ORDER BY s.service, s.id
+        SELECT s2.id AS id_service, s2.service, s1.hostname, s2.warehouse
+        FROM public.list_services() s2
+        JOIN public.list_servers() s1 ON s2.id_server = s1.id
+        WHERE s2.id_server = ?
+        ORDER BY s2.service, s2.id
     } );
     $sql->execute($id);
 

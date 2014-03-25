@@ -210,7 +210,8 @@ our %Lexicon = (
     "validation_required"                         => "Le champ «%s» est vide",
     "validation_size"                             => "Le champ «%s» doit avoir une taille entre %d et %d",
     "validation_equal_to"                         => "Les champs «%s» et «%s» ne correspondent pas",
-    "validation_in"                               => "La valeur n'est pas correcte pour le champ «%s»"
+    "validation_in"                               => "La valeur n'est pas correcte pour le champ «%s»",
+    "Good job !"                                   => "Bon travail !"
     );
 
 1;
