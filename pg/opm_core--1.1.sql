@@ -4,7 +4,7 @@
 -- Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION wh_nagios" to load this file. \quit
+\echo Use "CREATE EXTENSION opm_core" to load this file. \quit
 
 SET client_encoding = 'UTF8';
 SET check_function_bodies = false;

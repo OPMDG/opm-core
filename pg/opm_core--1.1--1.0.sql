@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION wh_nagios" to load this file. \quit
+\echo Use "CREATE EXTENSION opm_core" to load this file. \quit
 
 -- This program is open source, licensed under the PostgreSQL License.
 -- For license terms, see the LICENSE file.
