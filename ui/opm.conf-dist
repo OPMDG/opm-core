@@ -21,5 +21,5 @@
     "allow_register" : 0,
     "layout" : "default",
 
-    "plugins" : [ "grapher" ]
+    "plugins" : [ "wh_nagios" ]
 }
