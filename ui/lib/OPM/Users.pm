@@ -8,6 +8,8 @@ package OPM::Users;
 use Mojo::Base 'Mojolicious::Controller';
 use Helpers::Database;
 
+use Digest::MD5 qw(md5_hex);
+
 sub list {
     my $self = shift;
     my $sql;
@@ -187,10 +189,13 @@ sub login {
 
     if ( $method eq 'POST' ) {
         # process the input data
-        my $validation = $self->validation;
+        my $validation    = $self->validation;
+        my $procs         = $self->proc_wrapper;
+        my $authenticated = 0;
+        my $is_admin      = 0;
         my $form_data;
-        my $admin;
         my $dbh;
+        my $sql;
 
         $validation->required('username');
         $validation->required('password');
@@ -198,26 +203,31 @@ sub login {
         return $self->render() if $validation->has_error;
 
         $form_data = $validation->output;
-        $dbh = $self->database( $form_data->{username}, $form_data->{password} );
 
-        unless ($dbh) {
+        $authenticated = $procs->authenticate(
+            $form_data->{username},
+            md5_hex($form_data->{password} . $form_data->{username})
+        );
+
+        unless ($authenticated) {
             $self->msg->error("Wrong username or password.");
             return $self->render();
         }
 
-        $self->perm->update_info(
-            stay_connected => $form_data->{stay_connected},
-            username       => $form_data->{username},
-            password       => $form_data->{password}
-        );
+        $procs->set_opm_session( $form_data->{username} );
 
-        $admin = $self->proc_wrapper->is_admin( $form_data->{username} );
+        $is_admin = $procs->is_admin( $form_data->{username} );
 
         # Store information in the session.
         # As the session is only updated at login, if a user is granted
         # admin, he won't have access to specific pages before logging
         # off and on again.
-        $self->perm->update_info( admin => $admin );
+        $self->perm->update_info(
+            stay_connected => $form_data->{stay_connected},
+            username       => $form_data->{username},
+            password       => $form_data->{password},
+            admin          => $is_admin
+        );
 
         if ( defined $self->flash('saved_route')
             and defined $self->flash('stack')
@@ -284,6 +294,7 @@ sub logout {
     }
 
     $self->perm->remove_info;
+
     return $self->redirect_post('site_home');
 }
 

@@ -44,7 +44,7 @@ sub register {
             $level = "admin" if ( $self->session('user_admin') );
 
             if ($level ne "guest" ) {
-                $dbh  = $self->database();
+                $dbh = $self->database();
                 $sql = $dbh->prepare(
                     "SELECT id, hostname, COALESCE(rolname,'') AS rolname
                     FROM public.list_servers()

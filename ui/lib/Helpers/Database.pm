@@ -12,64 +12,51 @@ use DBI;
 use Helpers::Database::ProcWrapper;
 use Helpers::Database::Sth;
 
-
 has conninfo => sub { [] };
 
 sub register {
-    my ( $self, $app, $config ) = @_;
+    my ( $self, $app, $dbconf ) = @_;
 
     # data source name
-    my $dsn = $config->{dsn};
-
-    # Check if we have a split dsn with fallback on defaults
-    unless ($dsn) {
-        my $database = $config->{database} || lc $ENV{MOJO_APP};
-        my $dsn = "dbi:Pg:database=" . $database;
-        $dsn .= ';host=' . $config->{host} if $config->{host};
-        $dsn .= ';port=' . $config->{port} if $config->{port};
-    }
+    my $dsn = "dbi:Pg:";
+    $dsn .= 'database=' . $dbconf->{dbname} || lc $ENV{MOJO_APP};
+    $dsn .= ';host='    . $dbconf->{host} if $dbconf->{host};
+    $dsn .= ';port='    . $dbconf->{port} if $dbconf->{port};
 
     # Save connection parameters
     $self->conninfo($dsn);
 
     # Force AutoCommit to be able to handle transactions if needed.
     # and avoid unnecessary commit/rollback.
-    $config->{options}->{AutoCommit} = 1;
-
+    $dbconf->{options}->{AutoCommit} = 1;
+    # Force UTF-8
+    $dbconf->{options}->{pg_enable_utf8} = 1;
 
     # Register a helper that give the database handle
     $app->helper( database => sub {
-        my ( $ctrl, $username, $password ) = @_;
+        my ( $ctrl ) = @_;
         my $dbh;
 
-        if ( ( !defined($username) ) or ( !defined($password) ) ) {
-            $username = $ctrl->session('user_username');
-            $password = $ctrl->session('user_password');
-        }
-
-        return unless defined $username;
-
-        $dbh = $ctrl->stash->{'dbh'}->{$username};
+        $dbh = $ctrl->stash->{'dbh'};
 
         return $dbh if defined $dbh;
 
         # Return a new database connection handle
         $dbh = DBI->connect( $self->conninfo,
-            $username, $password,
-            $config->{options} || {}
+            $dbconf->{user}, $dbconf->{password},
+            $dbconf->{options} || {}
         );
 
-        if($dbh && $self->db_sub_one($dbh, 'is_user', $username)) {
-          $ctrl->stash('dbh')->{$username} = $dbh;
-          return $dbh;
+        if($dbh) {
+            $ctrl->stash->{'dbh'} = $dbh;
+
+            $ctrl->proc_wrapper->set_opm_session($ctrl->session('user_username'))
+                if defined $ctrl->session('user_username');
+
+            return $dbh;
         }
 
-        # If the user is the current logged in user and is not valid,
-        # disconnect
-        if($username eq $ctrl->session('user_username')) {
-          $ctrl->perm->remove_info;
-          $ctrl->redirect_post('site_home');
-        }
+        $ctrl->redirect_post('site_home');
 
         return;
     });
@@ -99,10 +86,8 @@ sub register {
     $app->hook( after_dispatch => sub {
         my $self = shift;
         my $dbh = $self->stash->{'dbh'};
-        while( (my $key, my $value) = each %{$dbh} ){
-          $value->disconnect() if $dbh;
-          delete $dbh->{$key};
-        }
+
+        $dbh->disconnect() if $dbh;
     });
 
     # Register a helper that executes a database functions, and returns a single

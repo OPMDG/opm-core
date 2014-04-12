@@ -7,10 +7,11 @@
     "secrets" : ["|Erp--Wjgb)+eiB/|H=|V7!#+M|L{a8=J2|gd+P1=M|&pJWq|M&,f3q^XS"],
 
     "database" : {
-    "dsn"     : "dbi:Pg:database=opm;host=127.0.0.1;port=5432",
-    "options"  : {
-        "pg_enable_utf8" : 1
-    }
+        "dbname"   : "opm",
+        "host"     : "127.0.0.1",
+        "port"     : 5432,
+        "user"     : "role_ui",
+        "password" : "pass_role_ui",
     },
 
     "languages" : {

@@ -34,9 +34,8 @@ sub update_info {
 
     # save every needed information transmitted
     foreach my $info (qw/username password admin/) {
-        if ( exists $data->{$info} ) {
-            $self->target->session( 'user_' . $info => $data->{$info} );
-        }
+        $self->target->session( 'user_' . $info => $data->{$info} )
+            if exists $data->{$info};
     }
 
     return;
@@ -62,11 +61,9 @@ sub is_authd {
 sub is_admin {
     my $self = shift;
 
-    return 0 unless defined $self->target->session('user_admin');
+    return 1 if defined $self->target->session('user_admin')
+        and $self->target->session('user_admin');
 
-    if ( $self->target->session('user_admin') ) {
-        return 1;
-    }
     return 0;
 }
 

@@ -174,8 +174,10 @@ sub edit {
 
     my $id = $self->param('id');
     my $e  = 0;
+    my $graph;
     my $accname;
     my $hostname;
+    my $id_server;
 
     # Get the graph, and the service if a service is associated
     my $sth = $self->prepare(
@@ -185,7 +187,7 @@ sub edit {
             WHERE id = ?
             GROUP BY 1,2,3} );
     $sth->execute($id);
-    my $graph = $sth->fetchrow_hashref();
+    $graph = $sth->fetchrow_hashref();
     $sth->finish();
 
     # Check if it exists
@@ -193,13 +195,12 @@ sub edit {
         return $self->render_not_found;
     }
 
-    my $id_server = $graph->{id_server};
+    $id_server = $graph->{id_server};
 
     $self->flash( 'id_server', $id_server );
 
     # Save the form
-    my $method = $self->req->method;
-    if ( $method =~ m/^POST$/i ) {
+    if ( $self->req->method =~ m/^POST$/i ) {
 
         # process the input data
         my $form = $self->req->params->to_hash;
@@ -224,12 +225,13 @@ sub edit {
             }
 
             if ( !$e ) {
+                my $rc;
 
                 # Prepare the configuration: save and clean the $form
                 # hashref to keep only the properties, so that we can
                 # use the plugin
                 delete $form->{save};
-                my $graph = $form->{graph};
+                $graph = $form->{graph};
                 delete $form->{graph};
                 my $description =
                     ( $form->{description} =~ m!^\s*$! )
@@ -250,20 +252,22 @@ sub edit {
                 my $config = $json->encode($props);
 
                 $sth = $self->prepare(
-                    qq{UPDATE public.graphs
-                        SET graph = ?, description = ?, config = ?
-                        WHERE id = ?} );
+                    qq{SELECT public.edit_graph(?, ?, ?, ?)} );
                 if (
-                    !defined $sth->execute(
-                        $graph,  $description,
-                        $config, $id ) )
+                    !defined $sth->execute( $id, $graph, $description, $config ) )
                 {
                     $self->render_exception( $self->database->errstr );
                     $sth->finish();
                     $self->database->rollback();
                     return;
                 }
+                $rc = $sth->fetchrow();
                 $sth->finish;
+
+                unless ($rc) {
+                    $self->msg->error("Error while saving graph.");
+                    return $self->redirect_to( 'graphs_show', id => $id );
+                }
 
                 ## Set labels for this graph
                 my @labels = ();
@@ -274,10 +278,9 @@ sub edit {
                     push @labels => $form->{'labels'};
                 }
 
-                $sth = $self->prepare(
-                    qq{
+                $sth = $self->prepare(qq{
                     SELECT public.update_graph_metrics(?, ?)
-                } );
+                });
 
                 if ( !defined $sth->execute( $id, \@labels ) ) {
                     $self->render_exception( $self->database->errstr );
