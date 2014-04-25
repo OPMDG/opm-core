@@ -16,3 +16,4 @@ work
 _build
 Build
 *.json
+ui/modules/*
