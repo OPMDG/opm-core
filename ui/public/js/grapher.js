@@ -8,6 +8,32 @@
 **/
 
 (function($) {
+    // Stupid Flotr, why u fake object orientation ?
+    Flotr.drawText =  function(ctx, text, x, y, style) {
+        if (!ctx.fillText) {
+        ctx.drawText(text, x, y, style);
+        return;
+        }
+
+        style = this._.extend({
+            size: Flotr.defaultOptions.fontSize,
+            color: '#000000',
+            textAlign: 'left',
+            textBaseline: 'bottom',
+            weight: 1,
+            angle: 0
+            }, style);
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(style.angle);
+        ctx.fillStyle = style.color;
+        ctx.font = (style.weight > 1 ? "bold " : "") + (style.size*1.3) + "px " + "Verdana";
+        ctx.textAlign = style.textAlign;
+        ctx.textBaseline = style.textBaseline;
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    };
 
     var Grapher = function (element, options) {
         this.config = options;
@@ -182,8 +208,7 @@
 
             this.$element.find('.plot').unbind().empty();
 
-            // Draw the graph
-            this.flotr = Flotr.draw(container, series, properties);
+            this.flotr = new Flotr.Graph(container, series, properties);
         },
 
         _activateSerie: function($e) {
