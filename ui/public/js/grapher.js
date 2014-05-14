@@ -28,7 +28,7 @@
         ctx.translate(x, y);
         ctx.rotate(style.angle);
         ctx.fillStyle = style.color;
-        ctx.font = (style.weight > 1 ? "bold " : "") + (style.size*1.3) + "px " + "Verdana";
+        ctx.font = (style.weight > 1 ? "bold " : "") + (style.size*1.2) + "px " + "Verdana";
         ctx.textAlign = style.textAlign;
         ctx.textBaseline = style.textBaseline;
         ctx.fillText(text, 0, 0);
