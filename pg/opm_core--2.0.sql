@@ -1448,33 +1448,35 @@ BEGIN
   END IF;
 
   FOR metricsrow IN (
-    SELECT DISTINCT s.service, m.id_service, COALESCE(m.unit,'') AS unit
-    FROM wh_nagios.services s
-    JOIN wh_nagios.metrics m ON s.id = m.id_service
+    SELECT DISTINCT s.service, s.warehouse, m.id_service, COALESCE(m.unit,'') AS unit
+    FROM public.services s
+    JOIN public.metrics m ON s.id = m.id_service
     WHERE s.id_server = p_server_id
         AND NOT EXISTS (
             SELECT 1 FROM public.series gs
-            JOIN wh_nagios.metrics m2 ON m2.id=gs.id_metric
+            JOIN public.metrics m2 ON m2.id=gs.id_metric
             WHERE m2.id=m.id
         )
     )
   LOOP
-    WITH new_graphs (id_graph) AS (
-      INSERT INTO public.graphs (graph, config)
-        VALUES (metricsrow.service || ' (' || CASE WHEN metricsrow.unit = '' THEN 'no unit' ELSE 'in ' || metricsrow.unit END || ')', '{"type": "lines"}')
-        RETURNING graphs.id
-    )
-    INSERT INTO public.series (id_graph, id_metric)
-      SELECT new_graphs.id_graph, m.id
-      FROM new_graphs
-      CROSS JOIN public.metrics m
-      WHERE m.id_service = metricsrow.id_service
-        AND COALESCE(m.unit,'') = metricsrow.unit
-        AND NOT EXISTS (
-            SELECT 1 FROM public.series gs
-            JOIN wh_nagios.metrics m2 ON m2.id=gs.id_metric
-            WHERE m2.id=m.id
-        );
+    EXECUTE format('
+      WITH new_graphs (id_graph) AS (
+        INSERT INTO public.graphs (graph, config)
+          VALUES (%L || '' ('' || CASE WHEN %L = '''' THEN ''no unit'' ELSE ''in '' || %2$L END || '')'', ''{"type": "lines"}'')
+          RETURNING graphs.id
+      )
+      INSERT INTO %I.series (id_graph, id_metric)
+        SELECT new_graphs.id_graph, m.id
+        FROM new_graphs
+        CROSS JOIN public.metrics m
+        WHERE m.id_service = %s
+          AND COALESCE(m.unit,'''') = %2$L
+          AND NOT EXISTS (
+              SELECT 1 FROM public.series gs
+              JOIN public.metrics m2 ON m2.id=gs.id_metric
+              WHERE m2.id=m.id
+          )'
+    , metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service) ;
   END LOOP;
   rc := true;
 EXCEPTION
@@ -1532,10 +1534,10 @@ BEGIN
         RETURN QUERY
             SELECT ds.id_graph, m.id AS id_metric, m.label, m.unit,
                 m.id_service, gs.id_graph IS NOT NULL AS available
-            FROM wh_nagios.metrics AS m
+            FROM public.metrics AS m
             JOIN (
                     SELECT DISTINCT m.id_service, gs.id_graph
-                    FROM wh_nagios.metrics AS m
+                    FROM public.metrics AS m
                     JOIN public.series AS gs
                             ON m.id = gs.id_metric
                     WHERE gs.id_graph=p_id_graph
