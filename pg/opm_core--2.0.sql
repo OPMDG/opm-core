@@ -52,7 +52,7 @@ CREATE TYPE public.metric_value AS (
 ) ;
 ALTER TYPE public.metric_value OWNER TO opm ;
 COMMENT ON TYPE public.metric_value IS 'Composite type to stored timestamped
-values from metrics perdata. Every warehouse has to return its data with this type' ;
+values from metrics perfdata. Every warehouse has to return its data with this type' ;
 
 -- Map properties and info between accounts/users and internal pgsql roles
 CREATE TABLE public.roles (
