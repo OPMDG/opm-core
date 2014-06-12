@@ -48,6 +48,13 @@ COMMENT ON TYPE public.metric_value IS
 Every warehouse has to return its data with this type' ;
 
 ----------------------------------------------
+-- API refrential table
+
+CREATE TABLE public.api (
+    proc regprocedure
+);
+
+----------------------------------------------
 -- Application role definition
 CREATE TABLE public.roles (
     id          bigserial PRIMARY KEY,
@@ -231,6 +238,27 @@ These functions are available for manual use only. NOT from
 an application.
 */
 
+/* v2.1
+ * public.register_api(name, name)
+ * Add given function to the API function list
+ * avaiable from application.
+ */
+CREATE OR REPLACE FUNCTION public.register_api(IN p_proc regprocedure,
+    OUT proc regprocedure, OUT registered boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
+SET search_path TO public
+AS $$
+BEGIN
+    INSERT INTO public.api VALUES (p_proc)
+    RETURNING p_proc, true
+        INTO register_api.proc, register_api.registered;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.register_api(regprocedure) FROM public;
+
+COMMENT ON FUNCTION public.register_api(regprocedure) IS
+'Add given function to the API function list avaiable from application.';
 
 /* v2.1
  * this function is only called by the extensions themselves
@@ -297,7 +325,7 @@ This should only be called when setting up OPM.
 CREATE OR REPLACE
 FUNCTION public.create_admin (IN p_admin text, IN p_passwd text,
     OUT bigint, OUT text)
-LANGUAGE SQL STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+LANGUAGE SQL STRICT VOLATILE LEAKPROOF
 SET search_path TO public 
 AS $$
     WITH ins_admin AS (
@@ -343,12 +371,13 @@ Grant a postgresql role to access our API.
 CREATE OR REPLACE
 FUNCTION public.grant_appli (IN p_role name)
 RETURNS TABLE (operat text, approle name, appright text, objtype text, objname text)
-LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
 DECLARE
-    v_dbname    name := current_database();
+    v_dbname    name := pg_catalog.current_database();
     v_warehouse name;
+    v_proname   regprocedure;
 BEGIN
     operat   := 'GRANT';
     approle  := p_role;
@@ -368,27 +397,15 @@ BEGIN
     RETURN NEXT;
 
     appright := 'EXECUTE';
-    -- grant execute on some functionsFunctions
-    FOR objtype, objname IN (
-        SELECT i.type, i.identity
-        FROM pg_catalog.pg_depend AS d
-            JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
-            LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
-        WHERE e.extname = 'opm_core'
-            AND d.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
-            AND deptype = 'e'
-            AND i.type = 'function'
-            -- exclude non-API functions
-            AND i.identity !~ '^public.(set_extension_owner|create_admin|grant_appli|revoke_appli|grant_dispatcher|revoke_dispatcher)'
+    -- grant execute on API functions
+    FOR v_proname IN (
+        SELECT proc
+        FROM public.api
     )
     LOOP
-        -- warning: identity is already escaped by pg_identify_object(...)
-        EXECUTE pg_catalog.format('GRANT EXECUTE ON FUNCTION %s TO %I', objname, approle);
+        EXECUTE pg_catalog.format('GRANT EXECUTE ON FUNCTION %s TO %I', v_proname, approle);
+        objname := v_proname::text;
         RETURN NEXT;
-    END LOOP;
-
-    FOR v_warehouse IN ( SELECT whname FROM public.list_warehouses() ) LOOP
-        RETURN QUERY EXECUTE pg_catalog.format('SELECT * FROM %I.grant_appli($1)', v_warehouse) USING approle;
     END LOOP;
 END
 $$;
@@ -409,12 +426,13 @@ Revoke a postgresql role to access our API.
 CREATE OR REPLACE
 FUNCTION public.revoke_appli (IN p_role name)
 RETURNS TABLE (operat text, approle name, appright text, objtype text, objname text)
-LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
 DECLARE
     v_dbname    name := pg_catalog.current_database();
     v_warehouse name;
+    v_proname   regprocedure;
 BEGIN
     operat   := 'REVOKE';
     approle  := p_role;
@@ -434,25 +452,15 @@ BEGIN
     RETURN NEXT;
 
     appright := 'EXECUTE';
-    -- grant execute on some functionsFunctions
-    FOR objtype, objname IN (
-        SELECT i.type, i.identity
-        FROM pg_catalog.pg_depend AS d
-            JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
-            LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
-        WHERE e.extname = 'opm_core'
-            AND d.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
-            AND deptype = 'e'
-            AND i.type = 'function'
+    -- revoke execute on API functions
+    FOR v_proname IN (
+        SELECT proc
+        FROM public.api
     )
     LOOP
-        -- warning: identity is already escaped by pg_identify_object(...)
-        EXECUTE pg_catalog.format('REVOKE EXECUTE ON FUNCTION %s FROM %I', objname, approle);
+        EXECUTE pg_catalog.format('REVOKE EXECUTE ON FUNCTION %s FROM %I', v_proname, approle);
+        objname := v_proname::text;
         RETURN NEXT;
-    END LOOP;
-
-    FOR v_warehouse IN ( SELECT whname FROM public.list_warehouses() ) LOOP
-        RETURN QUERY EXECUTE pg_catalog.format('SELECT * FROM %I.revoke_appli($1)', v_warehouse) USING approle;
     END LOOP;
 END
 $$;
@@ -471,7 +479,7 @@ public.grant_dispatcher(wh, role)
 CREATE OR REPLACE
 FUNCTION public.grant_dispatcher(IN p_whname name, IN p_rolname name,
     OUT rc boolean)
-LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF
 SET search_path TO public
 AS $$
 BEGIN
@@ -503,7 +511,7 @@ public.revoke_dispatcher(wh, role)
 CREATE OR REPLACE
 FUNCTION public.revoke_dispatcher(IN p_whname name, IN p_rolname name,
     OUT rc boolean)
-LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF
 SET search_path TO public
 AS $$
 BEGIN
@@ -549,6 +557,8 @@ REVOKE ALL ON FUNCTION public.session_role() FROM public;
 COMMENT ON FUNCTION public.session_role() IS
 'return the current OPM session role';
 
+SELECT * FROM public.register_api('public.session_role()');
+
 /*********** ACCOUNT *************/
 
 /* v2.1
@@ -590,6 +600,7 @@ It creates a role with no login/pass in table public.roles.
 @return id: id of the new account.
 @return name: name of the new account.';
 
+SELECT * FROM public.register_api('public.create_account(text)');
 
 /* v2.1
 public.drop_account
@@ -647,7 +658,7 @@ It drops the account and also OPM roles that are only in this account.
 @return id: oid of the dropped roles
 @return rolname: name of the dropped roles';
 
-
+SELECT * FROM public.register_api('public.drop_account(text)');
 
 /* v2.1
 public.list_accounts()
@@ -680,7 +691,7 @@ If current user is member of opm_admins, list all account on the system.
 
 If current user is not admin, list all account who are related to the current user.';
 
-
+SELECT * FROM public.register_api('public.list_accounts()');
 
 /* v2.1
 is_account(rolname)
@@ -711,8 +722,6 @@ BEGIN
 END
 $$;
 
-
-
 REVOKE ALL ON FUNCTION public.is_account(IN text, OUT boolean) FROM public;
 
 COMMENT ON FUNCTION public.is_account(IN text, OUT boolean)
@@ -720,7 +729,7 @@ IS 'Tells if the given rolname is an OPM account.
 
 Only check if current user is member of given role';
 
-
+SELECT * FROM public.register_api('public.is_account(text)');
 
 /*********** USERS *************/
 
@@ -746,6 +755,8 @@ REVOKE ALL ON FUNCTION public.authenticate(IN text, IN text, OUT boolean) FROM p
 COMMENT ON FUNCTION public.authenticate(IN text, IN text, OUT boolean)
 IS 'Check if given user/password credential is a valid OPM role';
 
+SELECT * FROM public.register_api('public.authenticate(text,text)');
+
 /*
 set_opm_session(p_user)
 
@@ -766,6 +777,8 @@ COMMENT ON FUNCTION public.set_opm_session(IN text)
 IS 'Set the current OPM role for the session.
 
 This OPM-session role define what the user can see/access through the API';
+
+SELECT * FROM public.register_api('public.set_opm_session(text)');
 
 /* v2.1
 public.create_user
@@ -831,7 +844,7 @@ accounts.
 @return id: id of the new account.
 @return name: name of the new account.';
 
-
+SELECT * FROM public.register_api('public.create_user(text,text,text[])');
 
 /* v2.1
 public.drop_user(name)
@@ -865,7 +878,7 @@ REVOKE ALL ON FUNCTION public.drop_user(IN text)
 COMMENT ON FUNCTION public.drop_user(IN text) IS
 'Drop an existing OPM user. You must be an admin to call this function.';
 
-
+SELECT * FROM public.register_api('public.drop_user(text)');
 
 
 /* v2.1
@@ -907,10 +920,13 @@ $$;
 
 REVOKE ALL ON FUNCTION public.update_user(IN text, IN text) FROM public ;
 
-COMMENT ON FUNCTION public.update_user (IN text, IN text) IS
+COMMENT ON FUNCTION public.update_user(IN text, IN text) IS
 'Change the password of an user.
 
 Must be admin.' ;
+
+SELECT * FROM public.register_api('public.update_user(text,text)');
+
 
 /* v2.1 */
 CREATE OR REPLACE
@@ -928,7 +944,7 @@ REVOKE ALL ON FUNCTION public.update_current_user(text)
 COMMENT ON FUNCTION public.update_current_user(text) IS
 'Change the password of the current opm user.' ;
 
-
+SELECT * FROM public.register_api('public.update_current_user(text)');
 
 
 /* v2.1
@@ -971,6 +987,7 @@ If current user is admin, list all users / account on the system.
 
 If current user is not admin, list all users and account who are related to the current user.';
 
+SELECT * FROM public.register_api('public.list_users()');
 
 
 
@@ -1016,7 +1033,7 @@ If current user is admin, list all users from the given account.
 
 If current user is not admin, list all users from given account if the user is member of this account.';
 
-
+SELECT * FROM public.register_api('public.list_users(text)');
 
 
 /* v2.1
@@ -1054,6 +1071,7 @@ REVOKE ALL ON FUNCTION public.is_user(IN text, OUT boolean) FROM public;
 COMMENT ON FUNCTION public.is_user(IN text, OUT boolean)
 IS 'Tells if the given rolname is a valid OPM user.';
 
+SELECT * FROM public.register_api('public.is_user(text)');
 
 
 /*********** MEMBERSHIP *************/
@@ -1099,7 +1117,7 @@ COMMENT ON FUNCTION public.is_member(IN p_rolname text, IN p_accname text, OUT r
 A non admin user can only check if given rolname is member of one
 of his own account.';
 
-
+SELECT * FROM public.register_api('public.is_member(text,text)');
 
 
 /* v2.1
@@ -1125,6 +1143,7 @@ REVOKE ALL ON FUNCTION public.is_member(IN p_accname text, OUT rc boolean) FROM 
 COMMENT ON FUNCTION public.is_member(IN p_accname text, OUT rc boolean) IS
 'Tells if the current OPM session is member of given an OPM account.';
 
+SELECT * FROM public.register_api('public.is_member(text)');
 
 
 /* v2.1
@@ -1154,7 +1173,7 @@ COMMENT ON FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean) IS
 A non admin user can only check if given rolname is member of one
 of his own account.';
 
-
+SELECT * FROM public.register_api('public.is_member(bigint)');
 
 
 
@@ -1176,9 +1195,11 @@ $$;
 
 REVOKE ALL ON FUNCTION public.is_admin(IN text, OUT boolean) FROM public;
 
-
 COMMENT ON FUNCTION public.is_admin(IN text, OUT boolean) IS
 'Tells if the given OPM session role is an OPM admin.';
+
+SELECT * FROM public.register_api('public.is_admin(text)');
+
 
 /* v2.1
 is_admin()
@@ -1202,6 +1223,8 @@ REVOKE ALL ON FUNCTION public.is_admin(OUT boolean) FROM public;
 
 COMMENT ON FUNCTION public.is_admin(OUT boolean) IS
 'Tells if the current OPM session role is an OPM admin.';
+
+SELECT * FROM public.register_api('public.is_admin()');
 
 
 /* v2.1
@@ -1238,6 +1261,7 @@ REVOKE ALL ON FUNCTION public.grant_account(IN text, IN text, OUT boolean) FROM 
 
 COMMENT ON FUNCTION public.grant_account(p_rolname text, p_accountname text) IS 'Grant an OPM account to an OPM user.';
 
+SELECT * FROM public.register_api('public.grant_account(text,text)');
 
 
 /* v2.1
@@ -1299,9 +1323,9 @@ REVOKE ALL ON FUNCTION public.revoke_account(p_rolname text, p_accountname text)
 COMMENT ON FUNCTION public.revoke_account(p_rolname text, p_accountname text) IS
 'Revoke an account from a role.
 
-Note that you can not revoke a user from an account if this is the only existing one.
-';
+Note that you can not revoke a user from an account if this is the only existing one.';
 
+SELECT * FROM public.register_api('public.revoke_account(text,text)');
 
 
 /*********** WAREHOUSES *************/
@@ -1330,6 +1354,7 @@ REVOKE ALL ON FUNCTION public.list_warehouses() FROM public;
 COMMENT ON FUNCTION public.list_warehouses() IS
 'List all warehouses.';
 
+SELECT * FROM public.register_api('public.list_warehouses()');
 
 
 /* v2.1
@@ -1353,7 +1378,7 @@ REVOKE ALL ON FUNCTION public.wh_exists(IN text, OUT boolean) FROM public;
 COMMENT ON FUNCTION public.wh_exists(IN text, OUT boolean) IS
 'Returns true if the given warehouse exists.';
 
-
+SELECT * FROM public.register_api('public.wh_exists(text)');
 
 
 /*********** SERVERS *************/
@@ -1391,6 +1416,8 @@ REVOKE ALL ON FUNCTION public.list_servers() FROM public;
 COMMENT ON FUNCTION public.list_servers() IS
 'List servers available for the session user.';
 
+SELECT * FROM public.register_api('public.list_servers()');
+
 /* v2.1
 public.get_server(id)
 
@@ -1426,6 +1453,7 @@ REVOKE ALL ON FUNCTION public.get_server(bigint) FROM public;
 COMMENT ON FUNCTION public.get_server(bigint) IS
 'Returns all data about given server by id.';
 
+SELECT * FROM public.register_api('public.get_server(bigint)');
 
 
 /* v2.1
@@ -1487,7 +1515,7 @@ COMMENT ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname text
 
 Must be admin.';
 
-
+SELECT * FROM public.register_api('public.grant_server(bigint,text)');
 
 /* v2.1
 revoke_server(server_id, accname)
@@ -1537,6 +1565,7 @@ COMMENT ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname tex
 
 Must be admin';
 
+SELECT * FROM public.register_api('public.revoke_server(bigint,text)');
 
 
 /*********** SERVICES *************/
@@ -1573,6 +1602,8 @@ REVOKE ALL ON FUNCTION public.list_services() FROM public;
 
 COMMENT ON FUNCTION public.list_services() IS
 'List services available for the session user.';
+
+SELECT * FROM public.register_api('public.list_services()');
 
 
 /*********** METRICS *************/
@@ -1623,7 +1654,7 @@ REVOKE ALL ON FUNCTION public.list_metrics(bigint) FROM public;
 COMMENT ON FUNCTION public.list_metrics(bigint) IS
 'Return every metrics used in given graphs (by id) if current user is allowed to..';
 
-
+SELECT * FROM public.register_api('public.list_metrics(bigint)');
 
 
 
@@ -1718,7 +1749,7 @@ REVOKE ALL ON FUNCTION public.update_graph_metrics(bigint, bigint[]) FROM public
 COMMENT ON FUNCTION public.update_graph_metrics(bigint, bigint[]) IS
 'Update what are the metrics associated to the given graph.' ;
 
-
+SELECT * FROM public.register_api('public.update_graph_metrics(bigint,bigint[])');
 
 
 /*********** GRAPHS *************/
@@ -1775,7 +1806,7 @@ REVOKE ALL ON FUNCTION public.list_graphs() FROM public ;
 COMMENT ON FUNCTION public.list_graphs()
     IS 'List all visible graphs depending on the user rights';
 
-
+SELECT * FROM public.register_api('public.list_graphs()');
 
 
 /* v2.1
@@ -1854,7 +1885,7 @@ REVOKE ALL ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OU
 COMMENT ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OUT rc boolean) IS
 'Create default graphs for all new services.';
 
-
+SELECT * FROM public.register_api('public.create_graph_for_new_metric(bigint)');
 
 
 /* v2.1
@@ -1911,7 +1942,7 @@ COMMENT ON FUNCTION public.clone_graph(bigint) IS 'Clone given graph by id.
 
 @return: id of the new graph.';
 
-
+SELECT * FROM public.register_api('public.clone_graph(bigint)');
 
 
 /* v2.1
@@ -1948,6 +1979,8 @@ REVOKE ALL ON FUNCTION public.delete_graph(bigint) FROM public ;
 COMMENT ON FUNCTION public.delete_graph(bigint)
     IS 'Delete given graph by id' ;
 
+SELECT * FROM public.register_api('public.delete_graph(bigint)');
+
 
 /* v2.1
 public.edit_graph(id, graph_title, description, config)
@@ -1982,6 +2015,8 @@ COMMENT ON FUNCTION public.edit_graph(bigint, text, text, json) IS
 'Edit given graph by id.
 
 Return true on success';
+
+SELECT * FROM public.register_api('public.edit_graph(bigint, text, text, json)');
 
 /*********** SERIES *************/
 
@@ -2042,7 +2077,7 @@ COMMENT ON FUNCTION public.get_sampled_metric_data(bigint, timestamp with time z
 'Return sampled metric data for the specified metric with the specified number of samples.
 Result set is empty if not found or not granted.';
 
-
+SELECT * FROM public.register_api('public.get_sampled_metric_data(bigint,timestamp with time zone,timestamp with time zone,integer)');
 
 
 /* v2.1
@@ -2061,6 +2096,9 @@ REVOKE ALL ON FUNCTION public.js_time(timestamptz) FROM public;
 COMMENT ON FUNCTION public.js_time(timestamptz) IS
 'Return a timestamp without time zone formatted for javascript use.' ;
 
+SELECT * FROM public.register_api('public.js_time(timestamptz)');
+
+
 /* v2.1
 js_timetz: Convert the input date to ms (with timezone), suitable for javascript
 */
@@ -2076,6 +2114,8 @@ REVOKE ALL ON FUNCTION public.js_timetz(timestamptz) FROM public;
 
 COMMENT ON FUNCTION public.js_timetz(timestamptz) IS
 'Return a timestamp with time zone formatted for javascript use.';
+
+SELECT * FROM public.register_api('public.js_timetz(timestamptz)');
 
 
 SELECT * FROM public.set_extension_owner('opm_core');

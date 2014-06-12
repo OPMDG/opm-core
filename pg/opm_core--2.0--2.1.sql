@@ -12,6 +12,12 @@ SET client_encoding = 'UTF8';
 SET check_function_bodies = false;
 
 
+----------------------------------------------
+-- API refrential table
+
+CREATE TABLE public.api (
+    proc regprocedure
+);
 
 ----------------------------------------------
 -- Application role definition
@@ -247,7 +253,7 @@ This should only be called when setting up OPM.
 CREATE OR REPLACE
 FUNCTION public.create_admin (IN p_admin text, IN p_passwd text,
     OUT bigint, OUT text)
-LANGUAGE SQL STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+LANGUAGE SQL STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
     WITH ins_admin AS (
@@ -744,12 +750,13 @@ Grant a postgresql role to access our API.
 CREATE OR REPLACE
 FUNCTION public.grant_appli (IN p_role name)
 RETURNS TABLE (operat text, approle name, appright text, objtype text, objname text)
-LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
 DECLARE
-    v_dbname    name := current_database();
+    v_dbname    name := pg_catalog.current_database();
     v_warehouse name;
+    v_proname   regprocedure;
 BEGIN
     operat   := 'GRANT';
     approle  := p_role;
@@ -770,26 +777,15 @@ BEGIN
 
     appright := 'EXECUTE';
     -- grant execute on some functionsFunctions
-    FOR objtype, objname IN (
-        SELECT i.type, i.identity
-        FROM pg_catalog.pg_depend AS d
-            JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
-            LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
-        WHERE e.extname = 'opm_core'
-            AND d.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
-            AND deptype = 'e'
-            AND i.type = 'function'
-            -- exclude non-API functions
-            AND i.identity !~ '^public.(set_extension_owner|create_admin|grant_appli|revoke_appli|grant_dispatcher|revoke_dispatcher)'
+    FOR v_proname IN (
+        SELECT proc
+        FROM public.api
     )
     LOOP
         -- warning: identity is already escaped by pg_identify_object(...)
-        EXECUTE pg_catalog.format('GRANT EXECUTE ON FUNCTION %s TO %I', objname, approle);
+        EXECUTE pg_catalog.format('GRANT EXECUTE ON FUNCTION %s TO %I', v_proname, approle);
+        objname := v_proname::text;
         RETURN NEXT;
-    END LOOP;
-
-    FOR v_warehouse IN ( SELECT whname FROM public.list_warehouses() ) LOOP
-        RETURN QUERY EXECUTE pg_catalog.format('SELECT * FROM %I.grant_appli($1)', v_warehouse) USING approle;
     END LOOP;
 END
 $$;
@@ -810,7 +806,7 @@ public.grant_dispatcher(wh, role)
 CREATE OR REPLACE
 FUNCTION public.grant_dispatcher(IN p_whname name, IN p_rolname name,
     OUT rc boolean)
-LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF
 SET search_path TO public
 AS $$
 BEGIN
@@ -1478,8 +1474,25 @@ COMMENT ON FUNCTION public.list_warehouses() IS
 
 DROP FUNCTION pr_exists(name);
 
-DROP FUNCTION revoke_account(name,name);
 
+/* v2.1
+ * public.register_api(name, name)
+ * Add given function to the API function list
+ * avaiable from application.
+ */
+CREATE OR REPLACE FUNCTION public.register_api(IN p_proc regproc,
+    OUT registered boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
+SET search_path TO public
+AS $$
+BEGIN
+    INSERT INTO public.api VALUES (p_proc)
+    RETURNING true INTO register_api.registered;
+END
+$$;
+
+
+DROP FUNCTION revoke_account(name,name);
 
 /* v2.1
 revoke_account(p_rolname text, p_accountname text)
@@ -1545,6 +1558,7 @@ Note that you can not revoke a user from an account if this is the only existing
 
 
 
+
 /* v2.1
 public.revoke_appli
 Revoke a postgresql role to access our API.
@@ -1554,12 +1568,13 @@ Revoke a postgresql role to access our API.
 CREATE OR REPLACE
 FUNCTION public.revoke_appli (IN p_role name)
 RETURNS TABLE (operat text, approle name, appright text, objtype text, objname text)
-LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
 DECLARE
     v_dbname    name := pg_catalog.current_database();
     v_warehouse name;
+    v_proname   regprocedure;
 BEGIN
     operat   := 'REVOKE';
     approle  := p_role;
@@ -1579,25 +1594,15 @@ BEGIN
     RETURN NEXT;
 
     appright := 'EXECUTE';
-    -- grant execute on some functionsFunctions
-    FOR objtype, objname IN (
-        SELECT i.type, i.identity
-        FROM pg_catalog.pg_depend AS d
-            JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
-            LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
-        WHERE e.extname = 'opm_core'
-            AND d.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
-            AND deptype = 'e'
-            AND i.type = 'function'
+    -- revoke execute on API functions
+    FOR v_proname IN (
+        SELECT proc
+        FROM public.api
     )
     LOOP
-        -- warning: identity is already escaped by pg_identify_object(...)
-        EXECUTE pg_catalog.format('REVOKE EXECUTE ON FUNCTION %s FROM %I', objname, approle);
+        EXECUTE pg_catalog.format('REVOKE EXECUTE ON FUNCTION %s FROM %I', v_proname, approle);
+        objname := v_proname::text;
         RETURN NEXT;
-    END LOOP;
-
-    FOR v_warehouse IN ( SELECT whname FROM public.list_warehouses() ) LOOP
-        RETURN QUERY EXECUTE pg_catalog.format('SELECT * FROM %I.revoke_appli($1)', v_warehouse) USING approle;
     END LOOP;
 END
 $$;
@@ -1616,7 +1621,7 @@ public.revoke_dispatcher(wh, role)
 CREATE OR REPLACE
 FUNCTION public.revoke_dispatcher(IN p_whname name, IN p_rolname name,
     OUT rc boolean)
-LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF
 SET search_path TO public
 AS $$
 BEGIN
