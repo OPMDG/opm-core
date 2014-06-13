@@ -557,7 +557,8 @@ REVOKE ALL ON FUNCTION public.session_role() FROM public;
 COMMENT ON FUNCTION public.session_role() IS
 'return the current OPM session role';
 
-SELECT * FROM public.register_api('public.session_role()');
+SELECT * FROM public.register_api('public.session_role()'::regprocedure);
+
 
 /*********** ACCOUNT *************/
 
@@ -600,7 +601,7 @@ It creates a role with no login/pass in table public.roles.
 @return id: id of the new account.
 @return name: name of the new account.';
 
-SELECT * FROM public.register_api('public.create_account(text)');
+SELECT * FROM public.register_api('public.create_account(text)'::regprocedure);
 
 /* v2.1
 public.drop_account
@@ -658,7 +659,7 @@ It drops the account and also OPM roles that are only in this account.
 @return id: oid of the dropped roles
 @return rolname: name of the dropped roles';
 
-SELECT * FROM public.register_api('public.drop_account(text)');
+SELECT * FROM public.register_api('public.drop_account(text)'::regprocedure);
 
 /* v2.1
 public.list_accounts()
@@ -691,7 +692,7 @@ If current user is member of opm_admins, list all account on the system.
 
 If current user is not admin, list all account who are related to the current user.';
 
-SELECT * FROM public.register_api('public.list_accounts()');
+SELECT * FROM public.register_api('public.list_accounts()'::regprocedure);
 
 /* v2.1
 is_account(rolname)
@@ -729,7 +730,7 @@ IS 'Tells if the given rolname is an OPM account.
 
 Only check if current user is member of given role';
 
-SELECT * FROM public.register_api('public.is_account(text)');
+SELECT * FROM public.register_api('public.is_account(text)'::regprocedure);
 
 /*********** USERS *************/
 
@@ -755,7 +756,7 @@ REVOKE ALL ON FUNCTION public.authenticate(IN text, IN text, OUT boolean) FROM p
 COMMENT ON FUNCTION public.authenticate(IN text, IN text, OUT boolean)
 IS 'Check if given user/password credential is a valid OPM role';
 
-SELECT * FROM public.register_api('public.authenticate(text,text)');
+SELECT * FROM public.register_api('public.authenticate(text,text)'::regprocedure);
 
 /*
 set_opm_session(p_user)
@@ -778,7 +779,7 @@ IS 'Set the current OPM role for the session.
 
 This OPM-session role define what the user can see/access through the API';
 
-SELECT * FROM public.register_api('public.set_opm_session(text)');
+SELECT * FROM public.register_api('public.set_opm_session(text)'::regprocedure);
 
 /* v2.1
 public.create_user
@@ -844,7 +845,7 @@ accounts.
 @return id: id of the new account.
 @return name: name of the new account.';
 
-SELECT * FROM public.register_api('public.create_user(text,text,text[])');
+SELECT * FROM public.register_api('public.create_user(text,text,text[])'::regprocedure);
 
 /* v2.1
 public.drop_user(name)
@@ -878,7 +879,7 @@ REVOKE ALL ON FUNCTION public.drop_user(IN text)
 COMMENT ON FUNCTION public.drop_user(IN text) IS
 'Drop an existing OPM user. You must be an admin to call this function.';
 
-SELECT * FROM public.register_api('public.drop_user(text)');
+SELECT * FROM public.register_api('public.drop_user(text)'::regprocedure);
 
 
 /* v2.1
@@ -925,7 +926,7 @@ COMMENT ON FUNCTION public.update_user(IN text, IN text) IS
 
 Must be admin.' ;
 
-SELECT * FROM public.register_api('public.update_user(text,text)');
+SELECT * FROM public.register_api('public.update_user(text,text)'::regprocedure);
 
 
 /* v2.1 */
@@ -944,7 +945,7 @@ REVOKE ALL ON FUNCTION public.update_current_user(text)
 COMMENT ON FUNCTION public.update_current_user(text) IS
 'Change the password of the current opm user.' ;
 
-SELECT * FROM public.register_api('public.update_current_user(text)');
+SELECT * FROM public.register_api('public.update_current_user(text)'::regprocedure);
 
 
 /* v2.1
@@ -987,7 +988,7 @@ If current user is admin, list all users / account on the system.
 
 If current user is not admin, list all users and account who are related to the current user.';
 
-SELECT * FROM public.register_api('public.list_users()');
+SELECT * FROM public.register_api('public.list_users()'::regprocedure);
 
 
 
@@ -1033,7 +1034,7 @@ If current user is admin, list all users from the given account.
 
 If current user is not admin, list all users from given account if the user is member of this account.';
 
-SELECT * FROM public.register_api('public.list_users(text)');
+SELECT * FROM public.register_api('public.list_users(text)'::regprocedure);
 
 
 /* v2.1
@@ -1071,7 +1072,7 @@ REVOKE ALL ON FUNCTION public.is_user(IN text, OUT boolean) FROM public;
 COMMENT ON FUNCTION public.is_user(IN text, OUT boolean)
 IS 'Tells if the given rolname is a valid OPM user.';
 
-SELECT * FROM public.register_api('public.is_user(text)');
+SELECT * FROM public.register_api('public.is_user(text)'::regprocedure);
 
 
 /*********** MEMBERSHIP *************/
@@ -1117,7 +1118,7 @@ COMMENT ON FUNCTION public.is_member(IN p_rolname text, IN p_accname text, OUT r
 A non admin user can only check if given rolname is member of one
 of his own account.';
 
-SELECT * FROM public.register_api('public.is_member(text,text)');
+SELECT * FROM public.register_api('public.is_member(text,text)'::regprocedure);
 
 
 /* v2.1
@@ -1143,7 +1144,7 @@ REVOKE ALL ON FUNCTION public.is_member(IN p_accname text, OUT rc boolean) FROM 
 COMMENT ON FUNCTION public.is_member(IN p_accname text, OUT rc boolean) IS
 'Tells if the current OPM session is member of given an OPM account.';
 
-SELECT * FROM public.register_api('public.is_member(text)');
+SELECT * FROM public.register_api('public.is_member(text)'::regprocedure);
 
 
 /* v2.1
@@ -1173,7 +1174,7 @@ COMMENT ON FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean) IS
 A non admin user can only check if given rolname is member of one
 of his own account.';
 
-SELECT * FROM public.register_api('public.is_member(bigint)');
+SELECT * FROM public.register_api('public.is_member(bigint)'::regprocedure);
 
 
 
@@ -1198,7 +1199,7 @@ REVOKE ALL ON FUNCTION public.is_admin(IN text, OUT boolean) FROM public;
 COMMENT ON FUNCTION public.is_admin(IN text, OUT boolean) IS
 'Tells if the given OPM session role is an OPM admin.';
 
-SELECT * FROM public.register_api('public.is_admin(text)');
+SELECT * FROM public.register_api('public.is_admin(text)'::regprocedure);
 
 
 /* v2.1
@@ -1224,7 +1225,7 @@ REVOKE ALL ON FUNCTION public.is_admin(OUT boolean) FROM public;
 COMMENT ON FUNCTION public.is_admin(OUT boolean) IS
 'Tells if the current OPM session role is an OPM admin.';
 
-SELECT * FROM public.register_api('public.is_admin()');
+SELECT * FROM public.register_api('public.is_admin()'::regprocedure);
 
 
 /* v2.1
@@ -1261,7 +1262,7 @@ REVOKE ALL ON FUNCTION public.grant_account(IN text, IN text, OUT boolean) FROM 
 
 COMMENT ON FUNCTION public.grant_account(p_rolname text, p_accountname text) IS 'Grant an OPM account to an OPM user.';
 
-SELECT * FROM public.register_api('public.grant_account(text,text)');
+SELECT * FROM public.register_api('public.grant_account(text,text)'::regprocedure);
 
 
 /* v2.1
@@ -1325,7 +1326,7 @@ COMMENT ON FUNCTION public.revoke_account(p_rolname text, p_accountname text) IS
 
 Note that you can not revoke a user from an account if this is the only existing one.';
 
-SELECT * FROM public.register_api('public.revoke_account(text,text)');
+SELECT * FROM public.register_api('public.revoke_account(text,text)'::regprocedure);
 
 
 /*********** WAREHOUSES *************/
@@ -1354,7 +1355,7 @@ REVOKE ALL ON FUNCTION public.list_warehouses() FROM public;
 COMMENT ON FUNCTION public.list_warehouses() IS
 'List all warehouses.';
 
-SELECT * FROM public.register_api('public.list_warehouses()');
+SELECT * FROM public.register_api('public.list_warehouses()'::regprocedure);
 
 
 /* v2.1
@@ -1378,7 +1379,7 @@ REVOKE ALL ON FUNCTION public.wh_exists(IN text, OUT boolean) FROM public;
 COMMENT ON FUNCTION public.wh_exists(IN text, OUT boolean) IS
 'Returns true if the given warehouse exists.';
 
-SELECT * FROM public.register_api('public.wh_exists(text)');
+SELECT * FROM public.register_api('public.wh_exists(text)'::regprocedure);
 
 
 /*********** SERVERS *************/
@@ -1416,7 +1417,7 @@ REVOKE ALL ON FUNCTION public.list_servers() FROM public;
 COMMENT ON FUNCTION public.list_servers() IS
 'List servers available for the session user.';
 
-SELECT * FROM public.register_api('public.list_servers()');
+SELECT * FROM public.register_api('public.list_servers()'::regprocedure);
 
 /* v2.1
 public.get_server(id)
@@ -1453,7 +1454,7 @@ REVOKE ALL ON FUNCTION public.get_server(bigint) FROM public;
 COMMENT ON FUNCTION public.get_server(bigint) IS
 'Returns all data about given server by id.';
 
-SELECT * FROM public.register_api('public.get_server(bigint)');
+SELECT * FROM public.register_api('public.get_server(bigint)'::regprocedure);
 
 
 /* v2.1
@@ -1515,7 +1516,7 @@ COMMENT ON FUNCTION public.grant_server(IN p_server_id bigint, IN p_rolname text
 
 Must be admin.';
 
-SELECT * FROM public.register_api('public.grant_server(bigint,text)');
+SELECT * FROM public.register_api('public.grant_server(bigint,text)'::regprocedure);
 
 /* v2.1
 revoke_server(server_id, accname)
@@ -1565,7 +1566,7 @@ COMMENT ON FUNCTION public.revoke_server(IN p_server_id bigint, IN p_rolname tex
 
 Must be admin';
 
-SELECT * FROM public.register_api('public.revoke_server(bigint,text)');
+SELECT * FROM public.register_api('public.revoke_server(bigint,text)'::regprocedure);
 
 
 /*********** SERVICES *************/
@@ -1603,7 +1604,7 @@ REVOKE ALL ON FUNCTION public.list_services() FROM public;
 COMMENT ON FUNCTION public.list_services() IS
 'List services available for the session user.';
 
-SELECT * FROM public.register_api('public.list_services()');
+SELECT * FROM public.register_api('public.list_services()'::regprocedure);
 
 
 /*********** METRICS *************/
@@ -1654,7 +1655,7 @@ REVOKE ALL ON FUNCTION public.list_metrics(bigint) FROM public;
 COMMENT ON FUNCTION public.list_metrics(bigint) IS
 'Return every metrics used in given graphs (by id) if current user is allowed to..';
 
-SELECT * FROM public.register_api('public.list_metrics(bigint)');
+SELECT * FROM public.register_api('public.list_metrics(bigint)'::regprocedure);
 
 
 
@@ -1749,7 +1750,7 @@ REVOKE ALL ON FUNCTION public.update_graph_metrics(bigint, bigint[]) FROM public
 COMMENT ON FUNCTION public.update_graph_metrics(bigint, bigint[]) IS
 'Update what are the metrics associated to the given graph.' ;
 
-SELECT * FROM public.register_api('public.update_graph_metrics(bigint,bigint[])');
+SELECT * FROM public.register_api('public.update_graph_metrics(bigint,bigint[])'::regprocedure);
 
 
 /*********** GRAPHS *************/
@@ -1806,7 +1807,7 @@ REVOKE ALL ON FUNCTION public.list_graphs() FROM public ;
 COMMENT ON FUNCTION public.list_graphs()
     IS 'List all visible graphs depending on the user rights';
 
-SELECT * FROM public.register_api('public.list_graphs()');
+SELECT * FROM public.register_api('public.list_graphs()'::regprocedure);
 
 
 /* v2.1
@@ -1885,7 +1886,7 @@ REVOKE ALL ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OU
 COMMENT ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OUT rc boolean) IS
 'Create default graphs for all new services.';
 
-SELECT * FROM public.register_api('public.create_graph_for_new_metric(bigint)');
+SELECT * FROM public.register_api('public.create_graph_for_new_metric(bigint)'::regprocedure);
 
 
 /* v2.1
@@ -1942,7 +1943,7 @@ COMMENT ON FUNCTION public.clone_graph(bigint) IS 'Clone given graph by id.
 
 @return: id of the new graph.';
 
-SELECT * FROM public.register_api('public.clone_graph(bigint)');
+SELECT * FROM public.register_api('public.clone_graph(bigint)'::regprocedure);
 
 
 /* v2.1
@@ -1979,7 +1980,7 @@ REVOKE ALL ON FUNCTION public.delete_graph(bigint) FROM public ;
 COMMENT ON FUNCTION public.delete_graph(bigint)
     IS 'Delete given graph by id' ;
 
-SELECT * FROM public.register_api('public.delete_graph(bigint)');
+SELECT * FROM public.register_api('public.delete_graph(bigint)'::regprocedure);
 
 
 /* v2.1
@@ -2016,7 +2017,7 @@ COMMENT ON FUNCTION public.edit_graph(bigint, text, text, json) IS
 
 Return true on success';
 
-SELECT * FROM public.register_api('public.edit_graph(bigint, text, text, json)');
+SELECT * FROM public.register_api('public.edit_graph(bigint, text, text, json)'::regprocedure);
 
 /*********** SERIES *************/
 
@@ -2077,7 +2078,7 @@ COMMENT ON FUNCTION public.get_sampled_metric_data(bigint, timestamp with time z
 'Return sampled metric data for the specified metric with the specified number of samples.
 Result set is empty if not found or not granted.';
 
-SELECT * FROM public.register_api('public.get_sampled_metric_data(bigint,timestamp with time zone,timestamp with time zone,integer)');
+SELECT * FROM public.register_api('public.get_sampled_metric_data(bigint,timestamp with time zone,timestamp with time zone,integer)'::regprocedure);
 
 
 /* v2.1
@@ -2096,7 +2097,7 @@ REVOKE ALL ON FUNCTION public.js_time(timestamptz) FROM public;
 COMMENT ON FUNCTION public.js_time(timestamptz) IS
 'Return a timestamp without time zone formatted for javascript use.' ;
 
-SELECT * FROM public.register_api('public.js_time(timestamptz)');
+SELECT * FROM public.register_api('public.js_time(timestamptz)'::regprocedure);
 
 
 /* v2.1
@@ -2115,7 +2116,7 @@ REVOKE ALL ON FUNCTION public.js_timetz(timestamptz) FROM public;
 COMMENT ON FUNCTION public.js_timetz(timestamptz) IS
 'Return a timestamp with time zone formatted for javascript use.';
 
-SELECT * FROM public.register_api('public.js_timetz(timestamptz)');
+SELECT * FROM public.register_api('public.js_timetz(timestamptz)'::regprocedure);
 
 
 SELECT * FROM public.set_extension_owner('opm_core');
