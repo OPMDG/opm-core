@@ -139,6 +139,7 @@ AS $$
 DECLARE
     v_ok boolean;
     v_new_id bigint;
+    v_whname text;
         v_state   TEXT;
         v_msg     TEXT;
         v_detail  TEXT;
@@ -154,22 +155,29 @@ BEGIN
         RETURN NULL ;
     END IF ;
 
-    WITH graph AS (
-        INSERT INTO public.graphs
-            (graph, description, config)
-        SELECT 'Clone - ' || graph,
-          description, config
-        FROM public.graphs
-        WHERE id = p_id_graph RETURNING id
-    ),
-    ins AS (INSERT INTO public.series
-        SELECT graph.id, id_metric
-        FROM public.series, graph
-        WHERE id_graph = p_id_graph
-        RETURNING id_graph
-    )
-    SELECT DISTINCT id_graph INTO v_new_id
-    FROM ins ;
+    -- Which warehouse ?
+    SELECT warehouse INTO v_whname
+    FROM public.list_graphs()
+    WHERE id = p_id_graph ;
+
+    EXECUTE format('
+        WITH graph AS (
+            INSERT INTO public.graphs
+                (graph, description, config)
+            SELECT ''Clone - '' || graph,
+              description, config
+            FROM public.graphs
+            WHERE id = %s RETURNING id
+        ),
+        ins AS (INSERT INTO %I.series
+            SELECT graph.id, id_metric
+            FROM public.series, graph
+            WHERE id_graph = %1$s
+            RETURNING id_graph
+        )
+        SELECT DISTINCT id_graph
+        FROM ins',
+    p_id_graph, v_whname) INTO v_new_id;
     RETURN v_new_id ;
 EXCEPTION
     WHEN OTHERS THEN
@@ -235,33 +243,34 @@ BEGIN
   END IF;
 
   FOR metricsrow IN (
-    SELECT DISTINCT s.service, m.id_service, COALESCE(m.unit,'') AS unit
-    FROM wh_nagios.services s
-    JOIN wh_nagios.metrics m ON s.id = m.id_service
+    SELECT DISTINCT s.service, s.warehouse, m.id_service, COALESCE(m.unit,'') AS unit
+    FROM public.services s
+    JOIN public.metrics m ON s.id = m.id_service
     WHERE s.id_server = p_server_id
         AND NOT EXISTS (
             SELECT 1 FROM public.series gs
-            JOIN wh_nagios.metrics m2 ON m2.id=gs.id_metric
+            JOIN public.metrics m2 ON m2.id=gs.id_metric
             WHERE m2.id=m.id
         )
     )
   LOOP
-    WITH new_graphs (id_graph) AS (
-      INSERT INTO public.graphs (graph, config)
-        VALUES (metricsrow.service || ' (' || CASE WHEN metricsrow.unit = '' THEN 'no unit' ELSE 'in ' || metricsrow.unit END || ')', '{"type": "lines"}')
-        RETURNING graphs.id
-    )
-    INSERT INTO public.series (id_graph, id_metric)
-      SELECT new_graphs.id_graph, m.id
-      FROM new_graphs
-      CROSS JOIN public.metrics m
-      WHERE m.id_service = metricsrow.id_service
-        AND COALESCE(m.unit,'') = metricsrow.unit
-        AND NOT EXISTS (
-            SELECT 1 FROM public.series gs
-            JOIN wh_nagios.metrics m2 ON m2.id=gs.id_metric
-            WHERE m2.id=m.id
-        );
+    EXECUTE format('WITH new_graphs (id_graph) AS (
+          INSERT INTO public.graphs (graph, config)
+            VALUES (%L || '' ('' || CASE WHEN %L = '''' THEN ''no unit'' ELSE ''in '' || %2$L END || '')'', ''{"type": "lines"}'')
+            RETURNING graphs.id
+        )
+        INSERT INTO %I.series (id_graph, id_metric)
+          SELECT new_graphs.id_graph, m.id
+          FROM new_graphs
+          CROSS JOIN public.metrics m
+          WHERE m.id_service = %s
+            AND COALESCE(m.unit,'''') = %2$L
+            AND NOT EXISTS (
+                SELECT 1 FROM public.series gs
+                JOIN public.metrics m2 ON m2.id=gs.id_metric
+                WHERE m2.id=m.id
+            )',
+    metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service) ;
   END LOOP;
   rc := true;
 EXCEPTION
@@ -490,10 +499,10 @@ BEGIN
         RETURN QUERY
             SELECT ds.id_graph, m.id AS id_metric, m.label, m.unit,
                 m.id_service, gs.id_graph IS NOT NULL AS available
-            FROM wh_nagios.metrics AS m
+            FROM public.metrics AS m
             JOIN (
                     SELECT DISTINCT m.id_service, gs.id_graph
-                    FROM wh_nagios.metrics AS m
+                    FROM public.metrics AS m
                     JOIN public.series AS gs
                             ON m.id = gs.id_metric
                     WHERE gs.id_graph=p_id_graph
@@ -533,6 +542,7 @@ DECLARE
     v_result record;
     v_remove  bigint[];
     v_add     bigint[];
+    v_whname  text;
 BEGIN
     IF NOT is_admin(session_user) THEN
         SELECT 1 FROM public.list_graphs()
@@ -541,6 +551,11 @@ BEGIN
             RAISE EXCEPTION 'Graph id % does not exists or not granted.', p_id_graph;
         END IF;
     END IF;
+
+    -- Which warehouse ?
+    SELECT warehouse INTO v_whname
+    FROM public.list_graphs()
+    WHERE id = p_id_graph ;
 
     FOR v_result IN
         SELECT gs.id_metric AS to_remove, a.id_metric AS to_add
@@ -565,8 +580,9 @@ BEGIN
     END LOOP;
 
     -- Add new metrics to the graph
-    INSERT INTO public.series (id_graph, id_metric)
-    SELECT p_id_graph, unnest(v_add);
+    EXECUTE format('INSERT INTO %I.series (id_graph, id_metric)
+        SELECT %s, unnest( $1 )',
+    v_whname, p_id_graph) USING v_add ;
 
     -- Remove metrics from the graph
     PERFORM 1 FROM public.graphs
