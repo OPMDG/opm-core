@@ -129,6 +129,7 @@ DROP FUNCTION public.create_user(text,text,name[]);
 DROP FUNCTION public.drop_account(name);
 DROP FUNCTION public.drop_user(name);
 DROP FUNCTION public.grant_account(name,name);
+DROP FUNCTION public.grant_dispatcher(name,name);
 DROP FUNCTION public.grant_server(bigint,name);
 DROP FUNCTION public.is_account(name);
 DROP FUNCTION public.is_admin(name);
@@ -142,6 +143,7 @@ DROP FUNCTION public.list_services();
 DROP FUNCTION public.list_users(name);
 DROP FUNCTION public.pr_exists(name);
 DROP FUNCTION public.revoke_account(name,name);
+DROP FUNCTION public.revoke_dispatcher(name,name);
 DROP FUNCTION public.revoke_server(bigint,name);
 DROP FUNCTION public.update_user(name,text);
 DROP FUNCTION public.wh_exists(name);
@@ -869,8 +871,8 @@ public.grant_dispatcher(wh, role)
 @return rc: state of the operation
  */
 CREATE OR REPLACE
-FUNCTION public.grant_dispatcher(IN p_whname name, IN p_rolname name,
-    OUT rc boolean)
+FUNCTION public.grant_dispatcher(IN p_whname name, IN p_rolname name)
+RETURNS TABLE (operat text, approle name, appright text, objtype text, objname text)
 LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF
 SET search_path TO public
 AS $$
@@ -879,8 +881,8 @@ BEGIN
         RAISE EXCEPTION 'Warehouse ''%'' does not exists!', p_whname;
     END IF;
 
-    EXECUTE pg_catalog.format('SELECT %I.grant_dispatcher($1)', p_whname)
-        INTO STRICT rc USING p_rolname;
+    RETURN QUERY EXECUTE pg_catalog.format('SELECT * FROM %I.grant_dispatcher($1)', p_whname)
+        USING p_rolname;
 
     RETURN;
 END
@@ -1687,8 +1689,8 @@ public.revoke_dispatcher(wh, role)
 @return rc: state of the operation
  */
 CREATE OR REPLACE
-FUNCTION public.revoke_dispatcher(IN p_whname name, IN p_rolname name,
-    OUT rc boolean)
+FUNCTION public.revoke_dispatcher(IN p_whname name, IN p_rolname name)
+RETURNS TABLE (operat text, approle name, appright text, objtype text, objname text)
 LANGUAGE plpgsql VOLATILE STRICT LEAKPROOF
 SET search_path TO public
 AS $$
@@ -1699,8 +1701,8 @@ BEGIN
     END IF;
 
 
-    EXECUTE pg_catalog.format('SELECT %I.revoke_dispatcher($1)', p_whname)
-        INTO STRICT rc USING p_rolname;
+    RETURN QUERY EXECUTE pg_catalog.format('SELECT * FROM %I.revoke_dispatcher($1)', p_whname)
+        USING p_rolname;
 
     RETURN;
 END
