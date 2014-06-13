@@ -16,7 +16,7 @@ my $builder = Module::Build->new(
         'Test::More' => 0,
     },
     requires => {
-        'Mojolicious' => 0,
+        'Mojolicious' => "<5.0",
         'Mojolicious::Plugin::I18N' => 0,
         'DBD::Pg' => 0,
         'TAP::Harness::Archive' => 0
