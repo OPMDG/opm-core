@@ -181,7 +181,7 @@ sub register_routes {
     $r_auth->post('/graphs/data')->name('graphs_data')
         ->to('graphs#data');
     # show service (using name)
-    $r_auth->route('/graphs/showservice/:server/:service')
+    $r_auth->route('/graphs/showservice/#server/:service')
         ->name('graphs_showservice')->to('graphs#showservice');
     # show server
     $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )
