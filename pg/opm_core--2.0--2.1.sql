@@ -816,7 +816,6 @@ SET search_path TO public
 AS $$
 DECLARE
     v_dbname    name := pg_catalog.current_database();
-    v_warehouse name;
     v_proname   regprocedure;
 BEGIN
     operat   := 'GRANT';
@@ -833,21 +832,26 @@ BEGIN
     objtype  := 'schema';
     objname  := 'public';
     EXECUTE pg_catalog.format('GRANT %s ON %s %I TO %I', appright, objtype, objname, approle);
-
     RETURN NEXT;
 
+    FOR objname IN ( SELECT whname FROM public.list_warehouses() ) LOOP
+        EXECUTE pg_catalog.format('GRANT %s ON %s %I TO %I', appright, objtype, objname, approle);
+        RETURN NEXT;
+    END LOOP;
+
+
     appright := 'EXECUTE';
-    -- grant execute on some functionsFunctions
+    -- grant execute on API functions
     FOR v_proname IN (
         SELECT proc
         FROM public.api
     )
     LOOP
-        -- warning: identity is already escaped by pg_identify_object(...)
         EXECUTE pg_catalog.format('GRANT EXECUTE ON FUNCTION %s TO %I', v_proname, approle);
         objname := v_proname::text;
         RETURN NEXT;
     END LOOP;
+
 END
 $$;
 
