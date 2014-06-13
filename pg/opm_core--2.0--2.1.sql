@@ -910,12 +910,12 @@ BEGIN
     IF public.is_admin() THEN
         SELECT pg_catalog.count(1) > 0 INTO rc
         FROM public.roles
-        WHERE accname = p_rolname
+        WHERE rolname = p_rolname
             AND NOT canlogin;
     ELSE
         SELECT pg_catalog.count(1) > 0 INTO rc
         FROM public.roles
-        WHERE accname = p_rolname
+        WHERE rolname = p_rolname
             AND NOT canlogin
             AND public.is_member(rolname);
     END IF;
@@ -1426,13 +1426,13 @@ BEGIN
             FROM public.roles AS r
                 JOIN public.members AS m ON (r.rolname=m.rolname)
             WHERE r.canlogin
-                AND l.accname = p_accname;
+                AND r.rolname = p_accname;
     ELSE
         RETURN QUERY SELECT r.id, m.member, r.rolname
             FROM public.roles AS r
                 JOIN public.members AS m ON (r.rolname=m.rolname)
             WHERE r.canlogin
-                AND l.accname = p_accname
+                AND r.rolname = p_accname
                 AND public.is_member(m.member);
     END IF;
 END
