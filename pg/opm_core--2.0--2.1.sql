@@ -80,6 +80,14 @@ COMMENT ON TABLE  public.members         IS 'Membership relation between roles.'
 COMMENT ON COLUMN public.members.rolname IS 'The role name.' ;
 COMMENT ON COLUMN public.members.member  IS 'Role members.rolname is member of members.member';
 
+INSERT INTO public.members
+SELECT r.rolname, b.rolname AS member
+    FROM public.roles AS o
+    JOIN pg_catalog.pg_roles r ON r.rolname = o.rolname
+    JOIN pg_catalog.pg_auth_members m ON m.member = r.oid
+    JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
+WHERE b.rolname <> 'opm_roles' AND r.rolname <> 'opm_admins'
+ORDER BY 1;
 
 ----------------------------------------------
 -- Servers
