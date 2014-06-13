@@ -385,7 +385,7 @@ BEGIN
     END IF;
 
   -- Is the user allowed to create graphs ?
-    IF public.is_member(v_owner) THEN
+    IF NOT (public.is_admin() OR public.is_member(v_owner)) THEN
         RAISE EXCEPTION 'Server unknown or not allowed for current user.';
     END IF;
 
