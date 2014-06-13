@@ -290,6 +290,7 @@ BEGIN
             AND deptype = 'e'
             -- exclude this function. It always needs to belong to a superuser.
             AND i.identity !~ '^public.set_extension_owner'
+        ORDER BY 1 DESC
     )
     LOOP
         -- warning: identity is already escaped by pg_identify_object(...)
@@ -376,7 +377,6 @@ SET search_path TO public
 AS $$
 DECLARE
     v_dbname    name := pg_catalog.current_database();
-    v_warehouse name;
     v_proname   regprocedure;
 BEGIN
     operat   := 'GRANT';
@@ -393,8 +393,13 @@ BEGIN
     objtype  := 'schema';
     objname  := 'public';
     EXECUTE pg_catalog.format('GRANT %s ON %s %I TO %I', appright, objtype, objname, approle);
-
     RETURN NEXT;
+
+    FOR objname IN ( SELECT whname FROM public.list_warehouses() ) LOOP
+        EXECUTE pg_catalog.format('GRANT %s ON %s %I TO %I', appright, objtype, objname, approle);
+        RETURN NEXT;
+    END LOOP;
+
 
     appright := 'EXECUTE';
     -- grant execute on API functions
@@ -407,6 +412,7 @@ BEGIN
         objname := v_proname::text;
         RETURN NEXT;
     END LOOP;
+
 END
 $$;
 
@@ -431,7 +437,6 @@ SET search_path TO public
 AS $$
 DECLARE
     v_dbname    name := pg_catalog.current_database();
-    v_warehouse name;
     v_proname   regprocedure;
 BEGIN
     operat   := 'REVOKE';

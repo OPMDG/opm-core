@@ -1804,26 +1804,16 @@ BEGIN
         WHERE datname = pg_catalog.current_database();
 
     FOR objtype, objname IN (
-      WITH recursive dep_tree AS (
-              SELECT DISTINCT i.type, i.identity, d.refobjid as oid, 0  as depth, false as has_table
-                      FROM pg_catalog.pg_depend AS d
-                          JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
-                          LATERAL pg_catalog.pg_identify_object(d.refclassid, d.refobjid, 0) AS i
-                      WHERE e.extname = p_extname
-              UNION ALL
-              SELECT DISTINCT i.type, i.identity, d.objid, depth + 1, has_table or t.type in ('table', 'view')
-                      FROM pg_catalog.pg_depend AS d
-                          JOIN dep_tree t ON t.oid = d.refobjid,
-                          LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
-            )
-            SELECT
-              CASE when type = 'composite type' then 'type' else type end as type, identity, oid, max(depth)
-            from dep_tree t
-            where identity !~ '^public.set_extension_owner' and type != 'extension'
-            AND (type != 'type' OR identity !~ '\[\]$')
-            group by oid, identity, type
-            having not bool_or(has_table)
-            order by max(depth)
+        SELECT i.type, i.identity
+        FROM pg_catalog.pg_depend AS d
+            JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
+            LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
+        WHERE e.extname = p_extname
+            AND d.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
+            AND deptype = 'e'
+            -- exclude this function. It always needs to belong to a superuser.
+            AND i.identity !~ '^public.set_extension_owner'
+        ORDER BY 1 DESC
     )
     LOOP
         -- warning: identity is already escaped by pg_identify_object(...)
