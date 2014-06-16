@@ -104,7 +104,7 @@ Handle pr_grapher.graph_wh_nagios (renamed to series) :
 
 CREATE TABLE public.series (
     id_graph bigint,
-    id_metric bigint,
+    id_metric bigint NOT NULL,
     config json
 ) ;
 ALTER TABLE public.series OWNER TO opm ;
