@@ -451,6 +451,9 @@
                     res += Math.floor(val/steps[i]) + scale[i];
                     val = val%steps[i];
                 }
+                if ( res == ''){
+                  return '0' + unit;
+                }
                 return res;
 
             case 'PGNUMVER':
