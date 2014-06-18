@@ -199,6 +199,7 @@ sub login {
 
         $validation->required('username');
         $validation->required('password');
+        $validation->optional('stay_connected');
         $self->validation_error($validation);
         return $self->render() if $validation->has_error;
 
