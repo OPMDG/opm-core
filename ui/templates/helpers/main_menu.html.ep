@@ -9,47 +9,15 @@
 % # $accname = '' if !defined $accname;
 % my $hostname = stash 'hostname';
 % $hostname = '' if !defined $hostname;
-% my $active_adm_users = '';
-% my $active_adm_accounts = '';
 %# my $active_adm_wh_nagios = '';
 % my $active_all_servers = '';
 % #
 % # Process current_route to check active items
-% if ( $cr =~ '^users_' ) {
-%   $active_adm_users = 'active';
-% }
-% if ( $cr =~ '^accounts_' and $cr ne 'accounts_list' ) {
-%   $active_adm_accounts = 'active';
-% }
 % if ( $cr eq 'server_list' ) {
 %   $active_all_servers = 'active';
 % }
 
   <div class="sidebar">
-    % if ($user_level eq "admin") {
-      <ul class="nav nav-sidebar">
-        <li class="<%= $active_adm_users %>">
-          %= link_to users_list => begin
-            <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%=l 'Users' %>
-          % end
-        </li>
-        <li class="<%= $active_adm_accounts %>">
-          %= link_to accounts_adm => begin
-            <i class="glyphicon glyphicon-cog"></i> <%= l 'Admin' %>::<%=l 'Accounts' %>
-          % end
-        </li>
-          % foreach my $link ( @{ get_links('adm_menu') } ) {
-              <li class="<%= ( $cr =~ $link->{'cr_regex'} ? 'active' : '' ) %>">
-                <%= link_to $link->{'href'} => begin %>
-                  <i class="<%= $link->{'class'} %>"></i>
-                  <%= $link->{'title'} %>
-                <% end %>
-              </li>
-          % }
-      </ul>
-      <br />
-    % }
-
     % if (($user_level eq "user" ) or ($user_level eq "admin")) {
       <ul class="nav nav-sidebar">
         <li class="<%= $active_all_servers %>">
