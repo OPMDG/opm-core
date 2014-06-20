@@ -255,10 +255,10 @@
                     label = legend_opt.labelFormatter(s.label);
                     color = ((s.bars && s.bars.show && s.bars.fillColor && s.bars.fill) ? s.bars.fillColor : s.color);
 
-                    $cell = $('<div>').addClass('flotr-legend-color-box')
+                    $cell = $('<span>').addClass('flotr-legend-color-box')
                             .css({
-                                'margin' : '0 10px 0 0',
-                                'float'  : 'left',
+                                'margin' : '0 5px 0 0',
+                                'display' : 'inline-block',
                                 'border' : '1px solid '+ legend_opt.labelBoxBorderColor,
                                 'width'  : '1.4em',
                                 'height' : '1.2em',
@@ -266,16 +266,13 @@
                             })
                             .add($('<label>').html(label));
 
-                    $label = $('<div>').addClass('label-' + i).prepend($cell)
+                    $label = $('<span>').addClass('label-list').addClass('label-' + i).prepend($cell)
                             .data('i', i)
                             .click(toggleSerie)
                             .appendTo($legend);
                     if (s.hide) { this._deactivateSerie( $label ); }
                 }
-
-                $legend.css({
-                    height: this.flotr.canvasHeight
-                });
+                $legend.find('.label-list').wrap('<div class="col-md-3"></div>');
             }
         },
 
