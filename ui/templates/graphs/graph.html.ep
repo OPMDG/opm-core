@@ -5,10 +5,6 @@
     <div class="col-md-11" data-graphrole="plot"></div>
     <div class="col-md-1">
       <div class="btn-group-vertical">
-        <a href="#" data-graphrole="offon-series"
-          class="btn btn-default btn-xs"
-          title="<%= l 'Show/Hide series' %>"
-          ><i class="glyphicon glyphicon-eye-open"></i></a>
         <a href="#" data-graphrole="invert-series"
           class="btn btn-default btn-xs"
           title="<%= l 'Invert Sel.' %>"

@@ -25,16 +25,6 @@ $(document).ready(function () {
     $grapher = $plot_box.data('grapher');
 
     // Setup actions on buttons toolbar
-    $this.find('[data-graphrole="offon-series"]').data('selectall', 'true').click(function (e) {
-      e.preventDefault();
-      var selectall = !$(this).data('selectall');
-      if (selectall)
-          $grapher.activateSeries();
-      else
-          $grapher.deactivateSeries();
-      $(this).data('selectall', selectall);
-    });
-
     $this.find('[data-graphrole="invert-series"]').click(function(e){
       e.preventDefault();
       $grapher.invertActivatedSeries();

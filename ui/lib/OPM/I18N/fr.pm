@@ -137,7 +137,6 @@ our %Lexicon = (
     "New password"                                => "Nouveau mot de passe",
     "Repeat password"                             => "Répéter le mot de passe",
     "Export"                                      => "Exporter",
-    "Show/Hide series"                            => "Afficher/Cacher séries",
     "Invert Sel."                                 => "Inverser Sel.",
     "Show all"                                    => "Afficher tout",
     "Hide all"                                    => "Cacher tout",
