@@ -6,10 +6,8 @@
 % my $cr = current_route;
 % my @servers = @{stash 'servers'};
 % my $accname = $self->format_accname(stash 'accname');
-% # $accname = '' if !defined $accname;
 % my $hostname = stash 'hostname';
 % $hostname = '' if !defined $hostname;
-%# my $active_adm_wh_nagios = '';
 % my $active_all_servers = '';
 % #
 % # Process current_route to check active items
