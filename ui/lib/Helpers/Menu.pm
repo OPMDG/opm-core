@@ -15,9 +15,12 @@ sub register {
         user_menu => sub {
             my $self = shift;
             my $html = '';
+            my $level = "user";
 
             if ( $self->session('user_username') ) {
+                $level = "admin" if ( $self->session('user_admin') );
                 $self->stash(
+                    user_level => $level,
                     menu_username => $self->session('user_username') );
 
                 $html = $self->render(
