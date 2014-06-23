@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(224);
+SELECT plan(232);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -30,37 +30,37 @@ SELECT has_table('public', 'series', 'Schema public contains table "series" of o
 
 
 SELECT has_function('public', 'set_extension_owner', '{name}', 'Function "set_extension_owner" exists.');
-SELECT has_function('public', 'create_admin', '{name, text}', 'Function "create_admin" exists.');
+SELECT has_function('public', 'create_admin', '{text, text}', 'Function "create_admin" exists.');
 SELECT has_function('public', 'grant_dispatcher', '{name,name}', 'Function "grant_dispatcher" exists.');
 SELECT has_function('public', 'revoke_dispatcher', '{name,name}', 'Function "revoke_dispatcher" exists.');
 SELECT has_function('public', 'grant_appli', '{name}', 'Function "grant_appli" exists.');
 SELECT has_function('public', 'revoke_appli', '{name}', 'Function "grant_appli" exists.');
 SELECT has_function('public', 'session_role', '{}', 'Function "session_role" exists.');
 SELECT has_function('public', 'create_account', '{text}', 'Function "create_account" exists.');
-SELECT has_function('public', 'drop_account', '{name}', 'Function "drop_account" exists.');
+SELECT has_function('public', 'drop_account', '{text}', 'Function "drop_account" exists.');
 SELECT has_function('public', 'list_accounts', '{}', 'Function "list_accounts" exists.');
-SELECT has_function('public', 'is_account', '{name}', 'Function "is_account" exists.');
-SELECT has_function('public', 'authenticate', '{name, text}', 'Function "authenticate" exists.');
+SELECT has_function('public', 'is_account', '{text}', 'Function "is_account" exists.');
+SELECT has_function('public', 'authenticate', '{text, text}', 'Function "authenticate" exists.');
 SELECT has_function('public', 'set_opm_session', '{text}', 'Function "set_opm_session" exists.');
-SELECT has_function('public', 'create_user', '{text, text, name[]}', 'Function "create_user" exists.');
-SELECT has_function('public', 'drop_user', '{name}', 'Function "drop_user" exists.');
-SELECT has_function('public', 'update_user', '{name, text}', 'Function "update_user" exists.');
+SELECT has_function('public', 'create_user', '{text, text, text[]}', 'Function "create_user" exists.');
+SELECT has_function('public', 'drop_user', '{text}', 'Function "drop_user" exists.');
+SELECT has_function('public', 'update_user', '{text, text}', 'Function "update_user" exists.');
 SELECT has_function('public', 'update_current_user', '{text}', 'Function "update_current_user" exists.');
 SELECT has_function('public', 'list_users', '{}', 'Function "list_users" exists.');
-SELECT has_function('public', 'list_users', '{name}', 'Function "list_users(name)" exists.');
-SELECT has_function('public', 'is_user', '{name}', 'Function "is_user" exists.');
+SELECT has_function('public', 'list_users', '{text}', 'Function "list_users(name)" exists.');
+SELECT has_function('public', 'is_user', '{text}', 'Function "is_user" exists.');
 SELECT has_function('public', 'is_member', '{bigint}', 'Function "is_member(bigint)" exists.');
-SELECT has_function('public', 'is_member', '{name}', 'Function "is_member(name)" exists.');
-SELECT has_function('public', 'is_member', '{name, name}', 'Function "is_member(name, name)" exists.');
-SELECT has_function('public', 'is_admin', '{name}', 'Function "is_admin(name)" exists.');
+SELECT has_function('public', 'is_member', '{text}', 'Function "is_member(name)" exists.');
+SELECT has_function('public', 'is_member', '{text, text}', 'Function "is_member(name, name)" exists.');
+SELECT has_function('public', 'is_admin', '{text}', 'Function "is_admin(name)" exists.');
 SELECT has_function('public', 'is_admin', '{}', 'Function "is_admin" exists.');
-SELECT has_function('public', 'grant_account', '{name,name}', 'Function "grant_account" exists.');
-SELECT has_function('public', 'revoke_account', '{name,name}', 'Function "revoke_account" exists.');
+SELECT has_function('public', 'grant_account', '{text,text}', 'Function "grant_account" exists.');
+SELECT has_function('public', 'revoke_account', '{text,text}', 'Function "revoke_account" exists.');
 SELECT has_function('public', 'list_warehouses', '{}', 'Function "list_warehouses" exists.');
-SELECT has_function('public', 'wh_exists', '{name}', 'Function "wh_exists" exists.');
+SELECT has_function('public', 'wh_exists', '{text}', 'Function "wh_exists" exists.');
 SELECT has_function('public', 'list_servers', '{}', 'Function "list_servers" exists.');
-SELECT has_function('public', 'grant_server', '{bigint,name}', 'Function "grant_server" exists.');
-SELECT has_function('public', 'revoke_server', '{bigint,name}', 'Function "revoke_server" exists.');
+SELECT has_function('public', 'grant_server', '{bigint,text}', 'Function "grant_server" exists.');
+SELECT has_function('public', 'revoke_server', '{bigint,text}', 'Function "revoke_server" exists.');
 SELECT has_function('public', 'list_services', '{}', 'Function "list_services" exists.');
 SELECT has_function('public', 'list_metrics', '{bigint}', 'Function "list_metrics" exists.');
 SELECT has_function('public', 'update_graph_metrics', '{bigint,bigint[]}', 'Function "update_graph_metrics" exists.');

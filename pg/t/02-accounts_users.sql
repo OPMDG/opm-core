@@ -23,7 +23,7 @@ BEGIN
     RETURN QUERY 
         SELECT results_eq(
             $$SELECT session_role()$$,
-            format($$VALUES (%L::name)$$, p_user),
+            format($$VALUES (%L::text)$$, p_user),
             format('Current OPM session is "%s".', p_user)
         );
 END$f$;
@@ -59,7 +59,7 @@ SELECT set_eq(
 );
 
 SELECT set_eq(
-    $$SELECT public.authenticate('opmtestadmin', md5('opmtestadmin'))$$,
+    $$SELECT public.authenticate('opmtestadmin', md5('opmtestadminopmtestadmin'))$$,
     $$VALUES (true)$$,
     'Authenticate "opmtestadmin".'
 );
@@ -184,33 +184,33 @@ SELECT diag(E'\n==== Grant and revoke accounts ====\n');
 
 SET client_min_messages TO 'warning';
 
-SELECT set_eq(
+SELECT throws_ok(
     $$SELECT * FROM revoke_account('u1','acc1')$$,
-    $$VALUES (FALSE)$$,
+    $$Could not revoke account acc1 from user u1 : user must have at least one account$$,
     'Account "acc1" shoud not be removed from user "u1": only 1 account.'
 );
 
 SELECT set_eq(
     $$SELECT * FROM grant_account('u1','acc2')$$,
     $$VALUES (TRUE)$$,
-    'Account "acc2" shoud be added to user "u1".'
+    'Account "acc2" should be added to user "u1".'
 );
 
 SELECT set_eq(
     $$SELECT * FROM revoke_account('u1','acc2')$$,
     $$VALUES (TRUE)$$,
-    'Account "acc2" shoud be removed from user "u1".'
+    'Account "acc2" should be removed from user "u1".'
 );
 
-SELECT set_eq(
+SELECT throws_ok(
     $$SELECT * FROM revoke_account('u1','not_an_account')$$,
-    $$VALUES (NULL::boolean)$$,
-    'Function revoke_account should notice "not_an_account" does not exist.'
+    $$One or both given roles does not exist.$$,
+    'Function revoke_account should notice "not_an_account" does not exists.'
 );
 
-SELECT set_eq(
+SELECT throws_ok(
     $$SELECT * FROM revoke_account('not_a_user','acc2')$$,
-    $$VALUES (NULL::boolean)$$,
+    $$One or both given roles does not exist.$$,
     'Function revoke_account should notice "not_a_user" does not exist.'
 );
 
@@ -380,7 +380,7 @@ SELECT diag(E'\n==== Update user ====\n');
 
 SELECT set_eq(
     $$SELECT password FROM public.roles WHERE rolname = 'u1'$$,
-    $$SELECT md5('pass1')$$,
+    $$SELECT md5('pass1u1')$$,
     'Password for user "u1" should be "pass1".'
 );
 
@@ -398,7 +398,7 @@ SELECT set_eq(
 
 SELECT set_eq(
     $$SELECT password FROM public.roles WHERE rolname = 'u1'$$,
-    $$SELECT md5('newpassword')$$,
+    $$SELECT md5('newpasswordu1')$$,
     'Password for user "u1" should be "newpassword".'
 );
 
