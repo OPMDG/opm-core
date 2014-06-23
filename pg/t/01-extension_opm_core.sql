@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(232);
+SELECT plan(233);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -19,6 +19,26 @@ SELECT lives_ok(
 
 SELECT has_extension('opm_core', 'Extension "opm_core" is installed.');
 
+-- All tables/sequences except "api" should be dumped by pg_dump
+SELECT set_eq(
+    $$
+    WITH dumped AS (SELECT unnest(extconfig) AS oid
+            FROM pg_extension
+                WHERE extname = 'opm_core'
+            ),
+            ext AS (SELECT c.oid,c.relname
+                FROM pg_depend d
+                JOIN pg_extension e ON d.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_extension') AND d.refobjid = e.oid AND d.deptype = 'e'
+                JOIN pg_class c ON d.objid = c.oid AND c.relkind in ('S','r')
+                WHERE e.extname = 'opm_core'
+            )
+            SELECT  relname FROM ext
+            LEFT JOIN dumped ON dumped.oid = ext.oid
+            WHERE dumped.oid IS NULL;
+    $$,
+    $$ VALUES ('api') $$,
+    'All tables and sequences except "api" should be dumped by pg_dump.'
+);
 SELECT has_table('public', 'roles', 'Schema public contains table "roles" of opm_core.' );
 SELECT has_table('public', 'members', 'Schema public contains table "members" of opm_core.' );
 SELECT has_table('public', 'servers', 'Schema public contains table "servers" of opm_core.' );
