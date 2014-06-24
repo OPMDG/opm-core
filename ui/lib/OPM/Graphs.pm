@@ -307,6 +307,7 @@ sub edit {
                 FROM public.list_metrics(?) AS l
                 JOIN public.list_services() AS s
                     ON l.id_service = s.id
+                ORDER BY l.label, l.unit
             } );
 
         if ( !defined $sth->execute($id) ) {
@@ -487,7 +488,8 @@ sub data {
         qq{
         SELECT id_metric, label, unit
         FROM public.list_metrics(?)
-        WHERE available;
+        WHERE available
+        ORDER BY label, unit;
     } );
     $sth->execute($id);
 
