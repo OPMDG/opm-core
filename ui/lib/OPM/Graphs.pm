@@ -305,7 +305,7 @@ sub edit {
                 SELECT l.id_service, l.id_metric, l.label, l.unit,
                     l.available AS checked, s.service
                 FROM public.list_metrics(?) AS l
-                JOIN wh_nagios.list_services() AS s
+                JOIN public.list_services() AS s
                     ON l.id_service = s.id
             } );
 
