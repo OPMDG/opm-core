@@ -223,6 +223,10 @@ sub edit {
                 $self->msg->error("Missing graph name");
                 $e = 1;
             }
+            if ( not defined $form->{'labels'} ) {
+                $self->msg->error("Can't remove all labels");
+                return $self->redirect_to( 'graphs_edit', id => $id );
+            }
 
             if ( !$e ) {
                 my $rc;
