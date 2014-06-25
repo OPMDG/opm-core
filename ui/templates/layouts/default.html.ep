@@ -20,6 +20,7 @@
 
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap.min.css' %>" />
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-theme.min.css' %>" />
+    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/font-awesome.min.css' %>" />
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/opm.css' %>" />
 
     <!-- Use HTML5 shim, for IE6-8 support of HTML5 elements -->
