@@ -11,7 +11,7 @@
 % my $rowid        = 0;
 % my $curr_service = -1;
 
-<h2><%=l 'Update graph '%><u><%=  stash 'graph' %></u></h2>
+<h1><%=l 'Update graph '%><u><%=  stash 'graph' %></u></h1>
 <div class="box">
   <%= form_for graphs_edit => (method => 'POST', class => 'form-horizontal') => begin %>
 

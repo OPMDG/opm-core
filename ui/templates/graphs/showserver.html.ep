@@ -5,9 +5,9 @@
 % layout 'grapher_layout', graphs => $graphs, server_id => $server_id, hostname => $hostname;
 
 % content_for graph_nav_right => begin
-        <div class="btn-group pull-right">
+        <div class="btn-group pull-right service-changer">
           <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-            <%=l('All graphs for server') .'...' %>
+            <i class="fa fa-bar-chart-o"></i> <%=l('All graphs for server') .'...' %>
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">

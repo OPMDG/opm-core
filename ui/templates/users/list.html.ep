@@ -9,7 +9,7 @@
 
 <div class="row">
   <div class="col-md-6">
-    <h2><%=l 'List of users' %> :</h2>
+    <h1><%=l 'List of users' %> :</h1>
     <div class="box" id="user_list">
         <ul class="list-unstyled">
           <% foreach my $r (@roles) { %>
@@ -17,7 +17,7 @@
             <li><h5>
               <% if ($line{rolname} ne (session 'user_username')) { %>
                 <%= link_to users_delete => {rolname => $line{rolname}} => ( onclick => "return confirmDel('user','$line{rolname}');" ) => begin %>
-                  <span class="label label-danger"><i class="glyphicon glyphicon-remove"></i></span>
+                  <span class="label label-danger"><i class="fa fa-times"></i></span>
                 <% end %>
               <% } %>
               <%= link_to users_edit => { rolname => $line{rolname} } => begin %><%= $line{rolname} %><% end %>
@@ -27,7 +27,7 @@
     </div>
   </div>
   <div class="col-md-4" id="user_create">
-    <h2><%=l 'Add a user' %></h2>
+    <h1><%=l 'Add a user' %></h1>
     <div class="box">
       <%= form_for users_create => (role => 'form', method => 'POST') => begin %>
         <div class="form-group">

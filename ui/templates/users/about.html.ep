@@ -6,15 +6,15 @@
 % layout config 'layout';
 % my @exn = @{stash 'exn'};
 
-<h2><%=l 'About' %></h2>
+<h1><%=l 'About' %></h1>
 <div class="box" id="labels_list">
   <div class="container-fluid">
-   <h3>Open PostgreSQL Monitoring version <%= $OPM::VERSION %></h3>
+   <h2>Open PostgreSQL Monitoring version <%= $OPM::VERSION %></h2>
    <% if ( scalar @exn ) { %>
      <ul class="nav nav-list">
        <% foreach my $e (@exn) { %>
          <li>
-           Extension <b><%= $e->{name} %></b> version <u><%= $e->{version} %></u>
+           Extension <b><%= $e->{name} %></b> version <em><%= $e->{version} %></em>
          </li>
        <% } %>
      </ul>

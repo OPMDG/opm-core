@@ -5,26 +5,26 @@
 
 % layout config 'layout';
 
-  <div class="container">
-    <h2><%=l 'Login'%></h2>
-    <div class="col-md-3 box">
+  <div class="container" id="login-page">
+    <h1><%=l 'Login'%></h1>
+    <div class="col-md-4 col-sm-6 box">
       <%= form_for users_login => (method => 'POST') => begin %>
       <fieldset>
-        <div class="control-group">
+        <div class="control-group form-group">
           <label class="control-label" for="username"><%=l 'Username' %>:</label>
           <div class="controls">
             <%= text_field 'username', type => 'text', class => 'form-control', id => 'username' %>
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="control-group form-group">
           <label class="control-label" for="password"><%=l 'Password' %>:</label>
           <div class="controls">
             <%= password_field 'password', type => 'password', class => 'form-control', id => 'password' %>
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="control-group form-group">
           <div class="controls">
             <label class="checkbox" for="stay_connected">
               <%= check_box 'stay_connected' => 1, id => 'stay_connected' %>

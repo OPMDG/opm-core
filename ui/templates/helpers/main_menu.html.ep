@@ -20,23 +20,23 @@
       <ul class="nav nav-sidebar">
         <li class="<%= $active_all_servers %>">
           %= link_to server_list => begin
-            <i class="glyphicon glyphicon-list"></i> <%=l 'All Servers' %>
+            <i class="fa fa-tasks"></i> <%=l 'All Servers' %>
           % end
         </li>
         % if ( scalar @servers ) {
           % foreach my $a ( @servers ) {
             % $a->{'rolname'} = $self->format_accname($a->{'rolname'});
-            <li class="<%= ( $accname eq $a->{'rolname'}  and $cr eq 'accounts_list' ? 'active' : '') %>">
+            <li class="<%= ( $accname eq $a->{'rolname'} and $cr eq 'accounts_list' ? 'active' : '') %><%= ($accname eq $a->{'rolname'} and $cr ne 'accounts_list' ? 'active-parent' : '') %>">
               %= link_to accounts_list => { accname => $a->{'rolname'} } => begin
-                <i class="glyphicon glyphicon-folder-<%= ( $accname eq $a->{'rolname'} ? 'open' : 'close') %>"></i> <%= $a->{'rolname'} %>
+                <i class="fa fa-folder<%= ( $accname eq $a->{'rolname'} ? '-open' : '') %>"></i> <%= $a->{'rolname'} %>
               % end
             </li>
             % if ( $accname eq $a->{'rolname'} ) {
-              <ul class="nav nav-sidebar">
+              <ul class="nav nav-sidebar sub-level">
                 % foreach my $s ( @{ $a ->{'servers'} } ) {
                     <li class="<%= ( $hostname eq $s->{'hostname'} ? 'active' : '' ) %>">
                       %= link_to server_host => { id => $s->{'id'} } => begin
-                        &nbsp;&nbsp;&nbsp;&nbsp;<i class="glyphicon glyphicon-hdd"></i> <%= $s->{'hostname'} %>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<i class="fa fa-hdd-o"></i> <%= $s->{'hostname'} %>
                       % end
                     </li>
                 % }

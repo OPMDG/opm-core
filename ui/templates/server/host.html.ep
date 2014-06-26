@@ -4,9 +4,6 @@
 % # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 % layout config 'layout';
-% content_for header => begin
-  <link   type="text/css" href="<%= url_for '/css/host.css' %>" media="all" rel="stylesheet" />
-% end
 % content_for body_scripts => begin
   <script type="text/javascript" src="<%= url_for '/js/host.js' %>"></script>
 % end
@@ -14,58 +11,47 @@
 % my $id = stash 'id';
 
 
-<h2><%=l 'List of services for server' %> <u><%= stash 'hostname' %></u></h2>
-<div class="box">
+<h1><%=l 'List of services for server' %> <span class="at-hand"><%= stash 'hostname' %></span></h1>
+<div class="box services_list">
   <% if ( scalar @services ) { %>
-        <%= format_details('server', { id_server => stash('id')}) %>
-% #     <% if ( $services[0]->{'oks'} ne 0 ) { %>
-% #       <span class="label label-success">
-% #         <% if ( ( $services[0]->{'criticals'} eq 0 )  and ( $services[0]->{'criticals'} eq 0 ) and ( $services[0]->{'criticals'} eq 0 ) ) { %>
-% #             <i class="glyphicon glyphicon-thumbs-up"></i> <%= l('Good job') %>
-% #         <% } else {%>
-% #           OK : <%= $services[0]->{'oks'} %>
-% #         <% } %>
-% #       </span>&nbsp;
-% #     <% } %>
-% #     <% if ( $services[0]->{'warnings'} ne 0 ) { %>
-% #       <span class="label label-warning">Warnings : <%= $services[0]->{'warnings'} %></span>&nbsp;
-% #     <% } %>
-% #     <% if ( $services[0]->{'criticals'} ne 0 ) { %>
-% #       <span class="label label-danger">Criticals : <%= $services[0]->{'criticals'} %></span>&nbsp;
-% #     <% } %>
-% #     <% if ( $services[0]->{'unknowns'} ne 0 ) { %>
-% #       <span class="label label-default">Unknowns : <%= $services[0]->{'unknowns'} %></span>&nbsp;
-% #     <% } %>
-    <br />
-      <ul class="nav nav-list">
-        <li>
-          <%= link_to 'graphs_showserver' => { idserver => $id} => begin %>
-            <i class="glyphicon glyphicon-stats"></i> <%= l 'Show All' %>
-          <% end %>
-          % # <%= format_links('server', { idserver => $id }) %>
-        </li>
-        <br />
+    <div class="overview-labels">
+      <%= format_details('server', { id_server => stash('id')}) %>
+      <div class="pull-right show-all">
+        <%= link_to 'graphs_showserver' => { idserver => $id} => begin %>
+          <i class="fa fa-bar-chart-o fa-2x"></i> <%= l 'Show All' %>
+        <% end %>
+        % # <%= format_links('server', { idserver => $id }) %>
+      </div>
+    </div>
+    <div class="row">
       % my $cur_service;
+      % my $i = 0;
       <% foreach my $s ( @services ) { %>
         % if ( !defined($cur_service) or $cur_service ne $s->{'service'} ) {
           % if ( defined($cur_service) ) {
-            </li>
+            </div>
           % }
-          <li>
-          % $cur_service = $s->{'service'};
-          <%= $s->{service} %>
+          % if ( ($i % 3 eq 0 ) and ( $i ne 0 ) ){
+            </div>
+            <div class="row">
+          % }
+          % $i = $i+1;
+          <div class="col-sm-4 service-item">
+            % $cur_service = $s->{'service'};
+            <i class="fa fa-bar-chart-o fa-5x"></i>
+            <h3><%= $s->{service} %></h3>
         % }
         % # <%= format_links('service', { server => stash('hostname'), service => $s->{'service'} }) %>
         <%= link_to 'graphs_showservice' => { server => $s->{'hostname'}, service => $s->{'service'}} => begin %>
-          <i class="glyphicon glyphicon-stats"></i> <%= $s->{'warehouse'} . ' - ' . $s->{'service'} %>
+          <span class="warehouse-service"><%= $s->{'warehouse'} . ' - ' . $s->{'service'} %></span>
           % # <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id'} }) %>
           <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
         <% end %>
+        % $i = $i+1;
       <% } %>
-      </li>
-    </ul>
+    </div>
   <% } else { %>
     <p><%=l 'No service found' %>.</p>
   <% } %>
-  <div class="clearfix"></div>
+  <!-- <div class="clearfix"></div> -->
 </div>

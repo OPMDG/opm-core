@@ -19,9 +19,8 @@
     <link rel="shortcut icon" href="<%= url_for '/' %>img/favicon.ico" type="image/x-icon" />
 
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap.min.css' %>" />
-    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-theme.min.css' %>" />
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/font-awesome.min.css' %>" />
-    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/opm.css' %>" />
+    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/themes/default/css/opm-theme.min.css' %>" />
 
     <!-- Use HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -30,14 +29,14 @@
     %= content_for 'header'
   </head>
   <body>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-6">
+    <div class="container-fluid main-content">
+      <div class="row" id="header">
+        <div class="col-sm-8">
           <!-- Title -->
-          <h3 id="main-title">Open PostgreSQL Monitoring</h3>
+          <h1 id="logo"><%= link_to site_home => begin %>Open PostgreSQL Monitoring<% end %></h1>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-sm-4">
           <!-- user menu -->
           %= user_menu
         </div>
@@ -48,16 +47,35 @@
       %= display_messages
     </div>
 
-    <div class="container-fluid" id="main">
+    <div class="container-fluid main-content" id="main">
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-sm-3">
           <!-- Main menu -->
           %= main_menu
         </div>
-        <div class="col-md-10">
+        <div class="col-sm-9">
           <div id="content">
             %= content
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid global-footer">
+      <div class="global-footer-content">
+        <div class="col-sm-3">
+          <ul class="list-unstyled">
+            <li><%= l 'Version' %>  <%= $OPM::VERSION %></li>
+            <li>&copy 2012-2014 OPMDG</li>
+            <li><a href="http://opm.io">http://opm.io</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-3 col-sm-offset-5">
+          <ul class="list-unstyled useful-links">
+            <li><a href="http://opm.io/support"><i class="fa fa-stethoscope"></i>Get support</a></li>
+            <li><a href="https://twitter.com/opmdg"><i class="fa fa-twitter"></i>Follow us</a></li>
+            <li><a href="https://github.com/OPMDG/opm-core/issues"><i class="fa fa-bug"></i>Report a bug</a></li>
+          </ul>
         </div>
       </div>
     </div>

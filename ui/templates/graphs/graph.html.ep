@@ -1,31 +1,30 @@
-<div class="graph_container" data-graphid="<%= $graph->{id} %>"
+<div class="box graph_container" data-graphid="<%= $graph->{id} %>"
   data-graphurl="<%= url_for('graphs_data') %>">
-
-  <div class="container-fluid row">
+  <div class="row">
     <div class="col-md-11" data-graphrole="plot"></div>
     <div class="col-md-1">
       <div class="btn-group-vertical">
         <a href="#" data-graphrole="invert-series"
-          class="btn btn-default btn-xs"
+          class="btn btn-default btn-sm"
           title="<%= l 'Invert Sel.' %>"
-          ><i class="glyphicon glyphicon-eye-close"></i></a>
+          ><i class="fa fa-eye-slash"></i></a>
         <%= link_to graphs_show => { id => $graph->{id} }, (
-            'class' => "btn btn-default btn-xs",
+            'class' => "btn btn-default btn-sm",
             'title' => l('Link')
-          ), begin %><i class="glyphicon glyphicon-globe"></i><% end %>
+          ), begin %><i class="fa fa-globe"></i><% end %>
         <a href="#" data-graphrole="export-graph"
-          class="btn btn-default btn-xs save"
+          class="btn btn-default btn-sm save"
           title="<%= l 'Save' %>"
-          ><i class="glyphicon glyphicon-download-alt"></i></a>
+          ><i class="fa fa-download"></i></a>
         <% if (stash 'is_admin') { %>
           <%= link_to graphs_edit => { id => $graph->{id} } => (
-              'class' => "btn btn-default btn-xs",
+              'class' => "btn btn-default btn-sm",
               'title' => l('Edit')
-            ), begin %><i class="glyphicon glyphicon-wrench"></i><% end %>
+            ), begin %><i class="fa fa-wrench"></i><% end %>
           <%= link_to graphs_clone => { id => $graph->{id} } => (
-              'class' => "btn btn-default btn-xs btn_clone_graph",
+              'class' => "btn btn-default btn-sm btn_clone_graph",
               'title' => l('Clone')
-            ), begin %><i class="glyphicon glyphicon-asterisk"></i>
+            ), begin %><i class="fa fa-asterisk"></i>
           <% end %>
         <% } %>
       </div>
@@ -33,4 +32,3 @@
     <div class="col-md-12 graph-legend" data-graphrole="legend"></div>
   </div>
 </div>
-

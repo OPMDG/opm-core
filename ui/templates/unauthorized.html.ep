@@ -6,7 +6,7 @@
 % layout config 'layout';
 
 <div class="page-header">
-  <h2>Unauthorized</h2>
+  <h1>Unauthorized</h1>
 </div>
 
 <p>Please continue to the <%= link_to site_home => begin %>home page<% end %>.</p>

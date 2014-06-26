@@ -10,14 +10,14 @@
 
 <div class="row">
   <div class="col-md-6" id="acc_list">
-    <h2><%=l 'List of accounts' %></h2>
+    <h1><%=l 'List of accounts' %></h1>
     <div class="box">
       <ul class="list-unstyled">
         <% foreach my $a (@acc) { %>
           <%   my %line = %{$a}; %>
           <li><h5>
             <% if ($line{accname} ne 'opm_admins'){ %>
-              <%= link_to accounts_delete => {accname => $line{accname}} => ( onclick => "return confirmDel('account','$line{accname}');" ) => begin %><span class="label label-danger"><i class="glyphicon glyphicon-remove"></i></span><% end %>
+              <%= link_to accounts_delete => {accname => $line{accname}} => ( onclick => "return confirmDel('account','$line{accname}');" ) => begin %><span class="label label-danger"><i class="fa fa-times"></i></span><% end %>
             <% } %>
             <%= link_to accounts_edit => { accname => $line{accname} } => begin %><%= $line{accname} %><% end %>
           </h5></li>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="col-md-4" id="acc_create">
-    <h2><%=l 'Create an account' %></h2>
+    <h1><%=l 'Create an account' %></h1>
     <div class="box">
       <%= form_for accounts_adm => (role => 'form', method => 'POST') => begin %>
         <div class="form-group">
