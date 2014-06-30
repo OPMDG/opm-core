@@ -11,7 +11,7 @@
 public.update_user
 Change the password of an opm user.
 
-Can only be executed by roles opm and opm_admins.
+Can only be executed by superusers or own role.
 
 @p_rolname: user to update
 @p_password: new password
