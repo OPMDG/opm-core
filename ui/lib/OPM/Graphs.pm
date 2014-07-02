@@ -32,7 +32,7 @@ sub show {
     $hostname = $graph->{'hostname'};
 
     # Get the rolname
-    $accname = get_rolname_by_hostname($self, $hostname);
+    $accname = get_rolname_by_hostname( $self, $hostname );
 
     my $graph_list = [];
     if ( scalar $hostname ) {
@@ -60,14 +60,17 @@ sub showservice {
     my $self         = shift;
     my $hostname     = $self->param('server');
     my $service_name = $self->param('service');
+    my @tags         = $self->param('tags');
     my $server_id;
     my $services;
     my $graphs;
     my $accname;
+    my $query;
+    my @params = ( $hostname, $service_name );
+    my $sth;
 
     # Get the graphs associated with the given hostname and servicename
-    my $sth = $self->prepare(
-        q{
+    $query = q{
         SELECT g.id, CASE
             WHEN s2.hostname IS NOT NULL THEN s2.hostname || '::'
             ELSE ''
@@ -78,10 +81,14 @@ sub showservice {
         JOIN public.list_graphs() g ON g.id_server = s2.id
             AND g.id_service = s1.id
         WHERE s2.hostname = ? AND s1.service = ?
-        ORDER BY g.graph;
-    } );
-
-    $sth->execute( $hostname, $service_name );
+    };
+    if (@tags) {
+        $query = $query . " AND g.tags && ? ";
+        push @params, \@tags;
+    }
+    $query = $query . " ORDER BY g.graph;";
+    $sth   = $self->prepare($query);
+    $sth->execute(@params);
     $graphs = $sth->fetchall_arrayref( {} );
 
     $sth->finish;
@@ -92,7 +99,7 @@ sub showservice {
     }
 
     # Get the rolname
-    $accname = get_rolname_by_hostname($self, $hostname);
+    $accname = get_rolname_by_hostname( $self, $hostname );
 
     $server_id = $graphs->[0]{'id_server'};
 
@@ -125,21 +132,30 @@ sub showserver {
     my $self      = shift;
     my $server_id = $self->param('idserver');
     my $period    = $self->param('period');
+    my @tags      = $self->param('tags');
     my $servers;
     my $graphs;
     my $hostname;
     my $accname;
+    my $query;
+    my @params = ($server_id);
+    my $sth;
+    my $server_tags;
 
     # Get the graphs
-    my $sth = $self->prepare(
-        qq{
+    $query = qq{
         SELECT g.id, CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description,s.hostname
         FROM public.list_graphs() g
         JOIN public.list_servers() s ON g.id_server = s.id
         WHERE g.id_server = ?
-        ORDER BY  g.graph
-    } );
-    $sth->execute($server_id);
+    };
+    if (@tags) {
+        $query = $query . " AND g.tags && ? ";
+        push @params, \@tags;
+    }
+    $query = $query . " ORDER BY g.graph;";
+    $sth   = $self->prepare($query);
+    $sth->execute(@params);
     $graphs = $sth->fetchall_arrayref( {} );
     $hostname = $graphs->[0]{'hostname'};
     $sth->finish;
@@ -156,17 +172,21 @@ sub showserver {
     $servers = $sth->fetchall_arrayref( {} );
     $sth->finish;
 
-    # Get the rolname
-    $accname = get_rolname_by_hostname($self, $hostname);
+    # Get existing tags for the server
+    $server_tags = $self->get_tags_for_server($server_id);
 
+    # Get the rolname
+    $accname = get_rolname_by_hostname( $self, $hostname );
     return $self->render(
         'graphs/showserver',
-        graphs    => $graphs,
-        hostname  => $hostname,
-        accname   => $accname,
-        server_id => $server_id,
-        servers   => $servers,
-        is_admin  => $self->session('user_admin') );
+        graphs        => $graphs,
+        hostname      => $hostname,
+        accname       => $accname,
+        server_id     => $server_id,
+        servers       => $servers,
+        is_admin      => $self->session('user_admin'),
+        tags          => $server_tags,
+        selected_tags => \@tags );
 }
 
 sub edit {
@@ -255,10 +275,11 @@ sub edit {
                 my $json   = Mojo::JSON->new;
                 my $config = $json->encode($props);
 
-                $sth = $self->prepare(
-                    qq{SELECT public.edit_graph(?, ?, ?, ?)} );
+                $sth =
+                    $self->prepare(qq{SELECT public.edit_graph(?, ?, ?, ?)});
                 if (
-                    !defined $sth->execute( $id, $graph, $description, $config ) )
+                    !defined $sth->execute( $id, $graph, $description,
+                        $config ) )
                 {
                     $self->render_exception( $self->database->errstr );
                     $sth->finish();
@@ -282,9 +303,10 @@ sub edit {
                     push @labels => $form->{'labels'};
                 }
 
-                $sth = $self->prepare(qq{
+                $sth = $self->prepare(
+                    qq{
                     SELECT public.update_graph_metrics(?, ?)
-                });
+                } );
 
                 if ( !defined $sth->execute( $id, \@labels ) ) {
                     $self->render_exception( $self->database->errstr );
@@ -335,7 +357,8 @@ sub edit {
         $sth->finish();
 
         # Get the rolname
-        ($accname,$hostname) = get_rolname_hostname_by_graph_id($self, $id);
+        ( $accname, $hostname ) =
+            get_rolname_hostname_by_graph_id( $self, $id );
         $sth->finish;
 
         # Prepare properties
@@ -430,11 +453,9 @@ sub clone {
     my $new_id;
 
     # Clone the graph and its associated labels
-    my $sth = $self->prepare(
-        "SELECT * FROM public.clone_graph(?)"
-    );
+    my $sth = $self->prepare("SELECT * FROM public.clone_graph(?)");
 
-    unless ( defined $sth->execute( $id ) ) {
+    unless ( defined $sth->execute($id) ) {
         $self->render_exception( $self->database->errstr );
         $sth->finish;
         $self->database->rollback();
@@ -451,9 +472,9 @@ sub clone {
 
 sub data {
     my $self = shift;
-    my $id       = $self->param('id');
-    my $from     = $self->param("from");
-    my $to       = $self->param("to");
+    my $id   = $self->param('id');
+    my $from = $self->param("from");
+    my $to   = $self->param("to");
     my $config;
     my $isservice = 0;
     my $data      = [];
@@ -466,8 +487,7 @@ sub data {
 
     # When a graph id is received, retrieve the properties from the DB
     my $sth = $self->prepare(
-        qq{SELECT config FROM public.list_graphs() WHERE id = ?}
-    );
+        qq{SELECT config FROM public.list_graphs() WHERE id = ?});
     $sth->execute($id);
 
     $config = $sth->fetchrow();
@@ -497,7 +517,6 @@ sub data {
     } );
     $sth->execute($id);
 
-
     my $series = {};
     $from = substr $from, 0, -3;
     $to   = substr $to,   0, -3;
@@ -507,7 +526,7 @@ sub data {
     );
 
     while ( my ( $id_metric, $label, $unit ) = $sth->fetchrow() ) {
-        $sql->execute( $id_metric, $from, $to, 300 ) ;
+        $sql->execute( $id_metric, $from, $to, 300 );
         $series->{$label} = [];
         while ( my ( $x, $y ) = $sql->fetchrow() ) {
             push @{ $series->{$label} },
@@ -536,7 +555,7 @@ sub data {
 }
 
 sub get_rolname_by_hostname {
-    my $self = shift;
+    my $self     = shift;
     my $hostname = shift;
     my $accname;
 
@@ -545,7 +564,7 @@ sub get_rolname_by_hostname {
         SELECT COALESCE(rolname,'')
         FROM public.list_servers()
         WHERE hostname = ?
-    });
+    } );
     $sth->execute($hostname);
     $accname = $sth->fetchrow();
     $sth->finish();
@@ -553,10 +572,10 @@ sub get_rolname_by_hostname {
 }
 
 sub get_rolname_hostname_by_graph_id {
-    my $self = shift;
+    my $self     = shift;
     my $id_graph = shift;
     my $accname;
-    my $hostname;;
+    my $hostname;
 
     my $sth = $self->prepare(
         q{
@@ -564,11 +583,11 @@ sub get_rolname_hostname_by_graph_id {
         FROM public.list_graphs() g
         JOIN public.list_servers() s ON g.id_server = s.id
         WHERE g.id = ?
-    });
+    } );
     $sth->execute($id_graph);
-    ($accname,$hostname) = $sth->fetchrow();
+    ( $accname, $hostname ) = $sth->fetchrow();
     $sth->finish();
-    return ($accname,$hostname);
+    return ( $accname, $hostname );
 }
 
 1;

@@ -152,6 +152,13 @@ sub register_routes {
     $r_adm->route('/accounts/revokeserver/:accname/:idserver')
         ->to('accounts#revokeserver')->name('accounts_revokeserver');
 
+    # show server
+    $r_auth->route(
+        '/edit_tags/server/#idserver/#idservice/',
+        idserver => qr/\d+/,
+        idserver => qr/\d+/
+    )->name('service_edit_tags')->to('server#service_edit_tags');
+
     # Server management
     $r_auth->route('/server')->to('server#list')->name('server_list');
     $r_auth->route( '/server/:id', id => qr/\d+/ )->to('server#host')
@@ -168,21 +175,26 @@ sub register_routes {
     # show
     $r_auth->route( '/graphs/:id', id => qr/\d+/ )->name('graphs_show')
         ->to('graphs#show');
+
     # edit
     $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )->name('graphs_edit')
         ->to('graphs#edit');
+
     # remove
     $r_adm->route( '/graphs/:id/remove', id => qr/\d+/ )
         ->name('graphs_remove')->to('graphs#remove');
+
     # clone
     $r_adm->route( '/graphs/:id/clone', id => qr/\d+/ )->name('graphs_clone')
         ->to('graphs#clone');
+
     # data
-    $r_auth->post('/graphs/data')->name('graphs_data')
-        ->to('graphs#data');
+    $r_auth->post('/graphs/data')->name('graphs_data')->to('graphs#data');
+
     # show service (using name)
     $r_auth->route('/graphs/showservice/#server/:service')
         ->name('graphs_showservice')->to('graphs#showservice');
+
     # show server
     $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )
         ->name('graphs_showserver')->to('graphs#showserver');

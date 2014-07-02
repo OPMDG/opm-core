@@ -105,6 +105,7 @@ CREATE TABLE public.servers (
     id       bigserial PRIMARY KEY,
     hostname text      NOT NULL,
     id_role  bigint    REFERENCES public.roles (id) ON UPDATE CASCADE ON DELETE SET NULL,
+    tags     text[]    NOT NULL DEFAULT '{}',
     UNIQUE (hostname)
 );
 
@@ -130,6 +131,7 @@ CREATE TABLE public.services (
     servalid      interval,
     oldest_record timestamp with time zone,
     newest_record timestamp with time zone,
+    tags          text[]    DEFAULT '{}',
     UNIQUE (id_server, service)
 );
 
@@ -158,7 +160,8 @@ CREATE TABLE public.metrics (
     id         bigserial PRIMARY KEY,
     id_service bigint,
     label      text,
-    unit       text
+    unit       text,
+    tags       text[]    DEFAULT '{}'
 );
 
 REVOKE ALL ON TABLE public.metrics FROM public;
@@ -1405,17 +1408,17 @@ list_servers()
 */
 CREATE OR REPLACE
 FUNCTION public.list_servers()
-RETURNS TABLE (id bigint, hostname text, rolname text)
+RETURNS TABLE (id bigint, hostname text, rolname text, tags text[])
 LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 BEGIN
     IF public.is_admin() THEN
-        RETURN QUERY SELECT s.id, s.hostname, r.rolname
+        RETURN QUERY SELECT s.id, s.hostname, r.rolname, s.tags
             FROM public.servers s
                 LEFT JOIN public.roles r ON s.id_role = r.id;
     ELSE
-        RETURN QUERY SELECT s.id, s.hostname, r.rolname
+        RETURN QUERY SELECT s.id, s.hostname, r.rolname, s.tags
             FROM public.servers s
                 JOIN public.roles r ON s.id_role = r.id
             WHERE public.is_member(r.rolname);
@@ -1592,22 +1595,16 @@ CREATE OR REPLACE
 FUNCTION public.list_services()
 RETURNS TABLE (id bigint, id_server bigint, warehouse text,
                service text, last_modified date,
-               creation_ts timestamp with time zone, servalid interval)
+               creation_ts timestamp with time zone, servalid interval,
+               tags text[])
 LANGUAGE plpgsql STABLE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 BEGIN
-    IF public.is_admin() THEN
-        RETURN QUERY SELECT ser.id, ser.id_server, ser.warehouse, ser.service,
-                ser.last_modified, ser.creation_ts, ser.servalid
-            FROM public.services ser;
-    ELSE
-        RETURN QUERY SELECT ser.id, ser.id_server, ser.warehouse, ser.service,
-                ser.last_modified, ser.creation_ts, ser.servalid
-            FROM public.list_servers() AS srv
-                JOIN public.services ser
-                    ON srv.id = ser.id_server;
-    END IF;
+  RETURN QUERY SELECT ser.id, ser.id_server, ser.warehouse, ser.service,
+          ser.last_modified, ser.creation_ts, ser.servalid, srv.tags || ser.tags
+      FROM public.services ser JOIN public.list_servers() AS srv
+        ON srv.id = ser.id_server;
 END $$;
 
 REVOKE ALL ON FUNCTION public.list_services() FROM public;
@@ -1783,7 +1780,7 @@ services and servers related informations.
 CREATE OR REPLACE
 FUNCTION public.list_graphs()
 RETURNS TABLE (id bigint, graph text, description text, config json,
-               id_server bigint, id_service bigint, warehouse text)
+               id_server bigint, id_service bigint, warehouse text, tags text[])
 LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
@@ -1792,7 +1789,8 @@ BEGIN
     IF public.is_admin() THEN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
-                s3.id, s2.id, s2.warehouse
+                s3.id, s2.id, s2.warehouse,
+                (s3.tags || s2.tags || m.tags)  as tags
             FROM public.graphs g
                 LEFT JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -1805,7 +1803,8 @@ BEGIN
     ELSE
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
-                s3.id, s2.id, s2.warehouse
+                s3.id, s2.id, s2.warehouse,
+                (s3.tags || s2.tags || m.tags)  as tags
             FROM public.graphs g
                 JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2145,6 +2144,26 @@ COMMENT ON FUNCTION public.js_timetz(timestamptz) IS
 'Return a timestamp with time zone formatted for javascript use.';
 
 SELECT * FROM public.register_api('public.js_timetz(timestamptz)'::regprocedure);
+
+
+CREATE OR REPLACE
+FUNCTION public.update_service_tags( p_id_service bigint, p_tags text[]) RETURNS VOID
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'You must be an admin.';
+  END IF;
+  UPDATE public.services SET tags = p_tags WHERE id = p_id_service;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.update_service_tags(bigint, text[]) FROM public;
+
+COMMENT ON FUNCTION public.update_service_tags(bigint, text[]) IS
+'Update the tags on a specific service. Admin role is required';
+
+SELECT * FROM public.register_api('public.update_service_tags(bigint, text[])'::regprocedure);
 
 
 SELECT * FROM public.set_extension_owner('opm_core');

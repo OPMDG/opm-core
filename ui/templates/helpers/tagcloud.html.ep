@@ -1,0 +1,18 @@
+<span class="tag-cloud" data-role="tag-cloud" data-targeturl="<%=$url%>"
+    data-baseclass="<%=$class%>" data-selectedclass="fa-check-square-o">
+    <% foreach my $tag ( @{ $tags } ) { %>
+        % my $is_present   = grep { $_ eq $tag } @$selected_tags;
+        % my $filter_url   = $url->clone;
+        % my @new_sel_tags = ( @$selected_tags );
+        % my $curr_class   = $class;
+        % if ($is_present) {
+        %   $curr_class = 'fa-check-square-o';
+        %   @new_sel_tags = grep({ $_ ne $tag } @$selected_tags);
+        % } else {
+        %   push @new_sel_tags => $tag;
+        % }
+        % if (@new_sel_tags) { $filter_url = $filter_url->query(tags => [ @new_sel_tags ]) }
+
+        <%= link_to $filter_url => begin %><i class="fa <%= $curr_class %>"></i> <%= $tag %> <% end %>
+    <% } %>
+</span>

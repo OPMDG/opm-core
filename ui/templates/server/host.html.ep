@@ -20,6 +20,7 @@
         <%= link_to 'graphs_showserver' => { idserver => $id} => begin %>
           <i class="fa fa-bar-chart-o fa-2x"></i> <%= l 'Show All' %>
         <% end %>
+        %= include ('helpers/tagcloud', tags => $tags, selected_tags => [], class => 'fa-tag', url => url_for 'graphs_showserver', idserver => $id )
         % # <%= format_links('server', { idserver => $id }) %>
       </div>
     </div>
@@ -40,13 +41,33 @@
             % $cur_service = $s->{'service'};
             <i class="fa fa-bar-chart-o fa-5x"></i>
             <h3><%= $s->{service} %></h3>
+          % if ( session 'user_admin' ) { 
+            <h4><select multiple 
+                    data-role="tagsinput"
+                    data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
+                    placeholder="New tag...">
+        <% foreach my $t ( @{$s->{tags}} ) { %>
+
+        <option value="<%= $t%>">
+            <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'}, 'tags' => $t } => begin %>
+                <%= $t %>
+            <% end %>
+        </option>
+
+        <% } %>
+        </select></h4>
+          % }
+
         % }
+
         % # <%= format_links('service', { server => stash('hostname'), service => $s->{'service'} }) %>
         <%= link_to 'graphs_showservice' => { server => $s->{'hostname'}, service => $s->{'service'}} => begin %>
           <span class="warehouse-service"><%= $s->{'warehouse'} . ' - ' . $s->{'service'} %></span>
           % # <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id'} }) %>
+
           <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
         <% end %>
+
         % $i = $i+1;
       <% } %>
     </div>

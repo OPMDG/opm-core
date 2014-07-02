@@ -19,3 +19,7 @@
           </ul>
         </div>
 % end
+
+% content_for graph_nav_bottom => begin
+  %= include 'helpers/tagcloud', tags => $tags, selected_tags => $selected_tags, class => 'fa-square-o', url => url_for 'graphs_showserver', idserver => $server_id
+% end

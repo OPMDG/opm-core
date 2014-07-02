@@ -1,5 +1,6 @@
 EXTENSION = opm_core
-DATA = opm_core--2.2.sql \
+DATA = opm_core--2.1--2.2.sql \
+	   opm_core--2.2.sql \
 	   opm_core--2.2--2.3.sql \
 	   opm_core--2.3.sql
 

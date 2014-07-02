@@ -19,6 +19,7 @@
     <link rel="shortcut icon" href="<%= url_for '/' %>img/favicon.ico" type="image/x-icon" />
 
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap.min.css' %>" />
+    <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/bootstrap-tagsinput.css' %>" />
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/css/font-awesome.min.css' %>" />
     <link rel="stylesheet" media="all" type="text/css" href="<%= url_for '/themes/default/css/opm-theme.min.css' %>" />
 
@@ -78,6 +79,7 @@
     <script type="text/javascript" src="<%= url_for '/js/jquery.min.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/bootstrap.min.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/bootstrap-typeahead.js' %>"></script>
+    <script type="text/javascript" src="<%= url_for '/js/bootstrap-tagsinput.js' %>"></script>
     <script type="text/javascript" src="<%= url_for '/js/opm.js' %>"></script>
     %= content_for 'body_scripts'
   </body>

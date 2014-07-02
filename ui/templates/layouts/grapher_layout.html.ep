@@ -59,6 +59,11 @@
         <input type="button" id="sel_custom" class="btn btn-default" value="<%=l 'Custom' %>" />
       </div>
     </div>
+    <div class="btn-toolbar tag-navigation">
+      <div class="btn-group">
+        <%= content_for 'graph_nav_bottom' %>
+      </div>
+    </div>
   </div>
 </div>
 

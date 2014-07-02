@@ -61,6 +61,7 @@ sub host {
     my $sql;
     my $hostname;
     my $accname;
+    my $server_tags;
 
     $sql = $self->prepare(
         q{
@@ -70,7 +71,7 @@ sub host {
         LIMIT 1;
     } );
     $sql->execute($id);
-    ($hostname,$accname) = $sql->fetchrow();
+    ( $hostname, $accname ) = $sql->fetchrow();
 
     if ( not $hostname ) {
         $self->stash(
@@ -79,6 +80,8 @@ sub host {
         return $self->render_not_found;
     }
 
+    $server_tags = $self->get_tags_for_server($id);
+
     # create missing graphs for given server
     $self->proc_wrapper( schema => 'public' )
         ->create_graph_for_new_metric($id);
@@ -86,7 +89,8 @@ sub host {
     # Fetch all services for the given server
     $sql = $self->prepare(
         q{
-        SELECT s2.id AS id_service, s2.service, s1.hostname, s2.warehouse
+        SELECT s2.id AS id_service, s2.service, s1.hostname, s2.warehouse,
+               s2.tags
         FROM public.list_services() s2
         JOIN public.list_servers() s1 ON s2.id_server = s1.id
         WHERE s2.id_server = ?
@@ -98,8 +102,23 @@ sub host {
         services => $sql->fetchall_arrayref( {} ),
         hostname => $hostname,
         accname  => $accname,
-        id       => $id );
+        id       => $id,
+        tags     => $server_tags );
     return $self->render();
+}
+
+sub service_edit_tags {
+    my $self = shift;
+    my $id   = $self->param('idservice');
+    my @tags = $self->param('tags');
+    my $sql;
+    $sql = $self->prepare(
+        q{
+        SELECT public.update_service_tags(?, ?);
+    } );
+    $sql->execute( $id, \@tags );
+    $sql->finish();
+    return $self->render( 'json' => { status => "success" } );
 }
 
 1;
