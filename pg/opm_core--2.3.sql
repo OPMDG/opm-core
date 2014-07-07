@@ -51,7 +51,7 @@ Every warehouse has to return its data with this type' ;
 -- API refrential table
 
 CREATE TABLE public.api (
-    proc regprocedure
+    proc regprocedure PRIMARY KEY
 );
 
 ----------------------------------------------
@@ -252,7 +252,15 @@ CREATE OR REPLACE FUNCTION public.register_api(IN p_proc regprocedure,
 LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
+DECLARE
+    v_ok boolean ;
 BEGIN
+    SELECT COUNT(*) = 0 INTO v_ok FROM public.api WHERE api.proc = p_proc;
+    IF NOT v_ok THEN
+        register_api.proc := p_proc ;
+        register_api.registered := false ;
+        RETURN ;
+    END IF ;
     INSERT INTO public.api VALUES (p_proc)
     RETURNING p_proc, true
         INTO register_api.proc, register_api.registered;
@@ -329,7 +337,7 @@ This should only be called when setting up OPM.
 */
 CREATE OR REPLACE
 FUNCTION public.create_admin (IN p_admin text, IN p_passwd text,
-    OUT bigint, OUT text)
+    OUT id bigint, OUT admname text)
 LANGUAGE SQL STRICT VOLATILE LEAKPROOF
 SET search_path TO public
 AS $$
@@ -1996,6 +2004,10 @@ BEGIN
         USING public.list_graphs() AS g
         WHERE g.id = p_id AND graphs.id = g.id
         RETURNING true INTO deleted;
+    END IF;
+
+    IF deleted IS NULL THEN
+        deleted := false;
     END IF;
 
     RETURN;
