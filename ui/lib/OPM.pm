@@ -152,8 +152,8 @@ sub register_routes {
     $r_adm->route('/accounts/revokeserver/:accname/:idserver')
         ->to('accounts#revokeserver')->name('accounts_revokeserver');
 
-    # show server
-    $r_auth->route(
+    # tags management
+    $r_adm->route(
         '/edit_tags/server/#idserver/#idservice/',
         idserver => qr/\d+/,
         idserver => qr/\d+/

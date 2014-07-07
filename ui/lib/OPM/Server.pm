@@ -111,14 +111,19 @@ sub service_edit_tags {
     my $self = shift;
     my $id   = $self->param('idservice');
     my @tags = $self->param('tags');
+    my $rc ;
     my $sql;
     $sql = $self->prepare(
         q{
         SELECT public.update_service_tags(?, ?);
     } );
-    $sql->execute( $id, \@tags );
+    $rc = $sql->execute( $id, \@tags );
     $sql->finish();
-    return $self->render( 'json' => { status => "success" } );
+    if ( $rc ) {
+        return $self->render( 'json' => { status => "success" } );
+    } else {
+        return $self->render( 'json' => { status => "error" } );
+    }
 }
 
 1;
