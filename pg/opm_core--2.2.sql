@@ -240,7 +240,7 @@ an application.
 */
 
 /* v2.1
- * public.register_api(name, name)
+ * public.register_api(regprocedure)
  * Add given function to the API function list
  * avaiable from application.
  */

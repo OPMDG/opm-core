@@ -273,7 +273,7 @@ COMMENT ON FUNCTION public.delete_graph(bigint)
 ALTER TABLE public.api ADD PRIMARY KEY (proc);
 
 /*
- * public.register_api(name, name)
+ * public.register_api(regprocedure)
  * Add given function to the API function list
  * avaiable from application.
  */
