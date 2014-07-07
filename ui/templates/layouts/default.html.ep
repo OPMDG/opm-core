@@ -29,19 +29,14 @@
     %= content_for 'header'
   </head>
   <body>
-    <div class="container-fluid main-content">
-      <div class="row" id="header">
-        <div class="col-sm-8">
-          <!-- Title -->
-          <h1 id="logo"><%= link_to site_home => begin %>Open PostgreSQL Monitoring<% end %></h1>
+    <nav class="navbar" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+         <%= link_to site_home => ('class' => 'navbar-brand') => begin %>Open PostgreSQL Monitoring<% end %>
         </div>
-
-        <div class="col-sm-4">
-          <!-- user menu -->
-          %= user_menu
-        </div>
+        %= user_menu
       </div>
-    </div>
+    </nav>
 
     <div class="container-fluid">
       %= display_messages
