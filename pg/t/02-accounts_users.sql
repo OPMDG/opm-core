@@ -347,8 +347,8 @@ SELECT lives_ok($$INSERT INTO public.servers (hostname) VALUES
 
 SELECT set_eq(
     $$SELECT * FROM public.list_servers()$$,
-    $$VALUES (1,'hostname1',NULL),
-    (2,'hostname2',NULL)$$,
+    $$VALUES (1::bigint,'hostname1',NULL,'{}'::text[]),
+    (2,'hostname2',NULL,'{}'::text[])$$,
     'Admin can see all servers.'
 );
 
@@ -363,7 +363,7 @@ SELECT test_set_opm_session('u1');
 
 SELECT set_eq(
     $$SELECT * FROM public.list_servers()$$,
-    $$VALUES (1,'hostname1','acc1')$$,
+    $$VALUES (1::bigint,'hostname1','acc1','{}'::text[])$$,
     '"u1" should only see server "hostname1".'
 );
 
