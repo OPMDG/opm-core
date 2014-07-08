@@ -301,3 +301,48 @@ REVOKE ALL ON FUNCTION public.register_api(regprocedure) FROM public;
 
 COMMENT ON FUNCTION public.register_api(regprocedure) IS
 'Add given function to the API function list avaiable from application.';
+
+/*
+public.list_metrics(bigint)
+
+Return every metrics used in given graphs (by id) if current user is allowed to.
+*/
+CREATE OR REPLACE
+FUNCTION public.list_metrics(p_id_graph bigint)
+RETURNS TABLE (id_graph bigint, id_metric bigint, label text, unit text,
+    id_service bigint, available boolean, tags text[])
+LANGUAGE plpgsql STRICT STABLE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    IF public.is_admin() THEN
+        RETURN QUERY
+            SELECT ss.id_graph, m.id, m.label, m.unit, m.id_service,
+                s.id_graph IS NOT NULL AS available, m.tags
+            FROM public.metrics AS ms
+                JOIN public.series AS ss ON ms.id = ss.id_metric
+                JOIN public.metrics AS m ON ms.id_service = m.id_service
+                LEFT JOIN public.series s
+                    ON (s.id_metric, s.id_graph) = (m.id, p_id_graph)
+            WHERE ss.id_graph = p_id_graph
+            GROUP BY 1,2,3,4,5,6;
+    ELSE
+        RETURN QUERY
+            SELECT ss.id_graph, m.id, m.label, m.unit, m.id_service,
+                s.id_graph IS NOT NULL AS available, m.tags
+            FROM public.metrics AS ms
+                JOIN public.series AS ss ON ms.id = ss.id_metric
+                JOIN public.metrics AS m ON ms.id_service = m.id_service
+                JOIN public.list_services() AS ser ON (ser.id = m.id_service)
+                LEFT JOIN public.series s
+                    ON (s.id_metric, s.id_graph) = (m.id, p_id_graph)
+            WHERE ss.id_graph = p_id_graph
+            GROUP BY 1,2,3,4,5,6;
+    END IF;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.list_metrics(bigint) FROM public;
+
+COMMENT ON FUNCTION public.list_metrics(bigint) IS
+'Return every metrics used in given graphs (by id) if current user is allowed to.';

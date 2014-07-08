@@ -168,7 +168,7 @@ REVOKE ALL ON TABLE public.metrics FROM public;
 
 COMMENT ON TABLE  public.metrics            IS 'Define a metric. This table has to be herited in warehouses.';
 COMMENT ON COLUMN public.metrics.id         IS 'Metric unique identifier.';
-COMMENT ON COLUMN public.metrics.id_service IS 'References the warehouse.services unique identifier..' ;
+COMMENT ON COLUMN public.metrics.id_service IS 'References the warehouse.services unique identifier.' ;
 COMMENT ON COLUMN public.metrics.label      IS 'Metric title.';
 COMMENT ON COLUMN public.metrics.unit       IS 'Metric unit.';
 
@@ -1634,7 +1634,7 @@ Return every metrics used in given graphs (by id) if current user is allowed to.
 CREATE OR REPLACE
 FUNCTION public.list_metrics(p_id_graph bigint)
 RETURNS TABLE (id_graph bigint, id_metric bigint, label text, unit text,
-    id_service bigint, available boolean)
+    id_service bigint, available boolean, tags text[])
 LANGUAGE plpgsql STRICT STABLE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
@@ -1642,7 +1642,7 @@ BEGIN
     IF public.is_admin() THEN
         RETURN QUERY
             SELECT ss.id_graph, m.id, m.label, m.unit, m.id_service,
-                s.id_graph IS NOT NULL AS available
+                s.id_graph IS NOT NULL AS available, m.tags
             FROM public.metrics AS ms
                 JOIN public.series AS ss ON ms.id = ss.id_metric
                 JOIN public.metrics AS m ON ms.id_service = m.id_service
@@ -1653,7 +1653,7 @@ BEGIN
     ELSE
         RETURN QUERY
             SELECT ss.id_graph, m.id, m.label, m.unit, m.id_service,
-                s.id_graph IS NOT NULL AS available
+                s.id_graph IS NOT NULL AS available, m.tags
             FROM public.metrics AS ms
                 JOIN public.series AS ss ON ms.id = ss.id_metric
                 JOIN public.metrics AS m ON ms.id_service = m.id_service
@@ -1669,7 +1669,7 @@ $$;
 REVOKE ALL ON FUNCTION public.list_metrics(bigint) FROM public;
 
 COMMENT ON FUNCTION public.list_metrics(bigint) IS
-'Return every metrics used in given graphs (by id) if current user is allowed to..';
+'Return every metrics used in given graphs (by id) if current user is allowed to.';
 
 SELECT * FROM public.register_api('public.list_metrics(bigint)'::regprocedure);
 
