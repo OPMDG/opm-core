@@ -59,7 +59,7 @@ $(document).ready(function (){
                 }).done(function () {
                     $this.trigger('tagSaved', {items: $this.tagsinput('items')});
                 }).fail(function () {
-                    displayError("Échec de la sauvegarde");
+                    displayError("Save failure.");
                 });
             };
             $this.data('pending_change', false);
