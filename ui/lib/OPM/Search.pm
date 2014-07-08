@@ -13,7 +13,7 @@ sub server {
     my $sql;
     my $servers;
     my $predicate;
-    
+
     $predicate = scalar($query) ? " WHERE hostname ilike ? " : "";
     $sql = $self->prepare(qq{SELECT id, hostname as name
         FROM public.list_servers()
@@ -24,7 +24,7 @@ sub server {
     $sql->execute("%$query%");
 
     $servers = $sql->fetchall_arrayref({});
-    
+
     return $self->render( 'json' => $servers );
 }
 

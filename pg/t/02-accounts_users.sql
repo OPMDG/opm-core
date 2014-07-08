@@ -20,7 +20,7 @@ BEGIN
             format('Set session to "%s".', p_user)
         );
 
-    RETURN QUERY 
+    RETURN QUERY
         SELECT results_eq(
             $$SELECT session_role()$$,
             format($$VALUES (%L::text)$$, p_user),

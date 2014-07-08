@@ -110,7 +110,7 @@ sub edit {
             my $granted = $self->proc_wrapper->grant_account(
                 $rolname, $validation->output->{accname}
             );
-            
+
             if( $granted ) {
                 $self->msg->info("Account added to user");
             }

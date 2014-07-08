@@ -49,7 +49,7 @@ $(document).ready(function () {
   });
 
 
-  // FIXME: clean this for a proper event-based date selection 
+  // FIXME: clean this for a proper event-based date selection
   $('.scales input[type=button]').click(function () {
     var fromDate = new Date(),
       toDate = new Date(),

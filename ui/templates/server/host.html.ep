@@ -41,8 +41,8 @@
             % $cur_service = $s->{'service'};
             <i class="fa fa-bar-chart-o fa-5x"></i>
             <h3><%= $s->{service} %></h3>
-          % if ( session 'user_admin' ) { 
-            <h4><select multiple 
+          % if ( session 'user_admin' ) {
+            <h4><select multiple
                     data-role="tagsinput"
                     data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
                     placeholder="New tag...">

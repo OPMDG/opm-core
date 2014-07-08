@@ -327,7 +327,7 @@ CREATE OR REPLACE
 FUNCTION public.create_admin (IN p_admin text, IN p_passwd text,
     OUT bigint, OUT text)
 LANGUAGE SQL STRICT VOLATILE LEAKPROOF
-SET search_path TO public 
+SET search_path TO public
 AS $$
     WITH ins_admin AS (
         INSERT INTO public.roles (rolname, canlogin, password)
@@ -592,7 +592,7 @@ BEGIN
         INTO create_account.id, create_account.accname;
 
     RETURN;
-END 
+END
 $$;
 
 REVOKE ALL ON FUNCTION public.create_account(IN text, OUT bigint, OUT text)
@@ -1315,7 +1315,7 @@ BEGIN
     END IF;
 
     DELETE FROM members
-    WHERE rolname = p_rolname 
+    WHERE rolname = p_rolname
         AND member = p_accountname
     RETURNING true INTO v_ok;
 
