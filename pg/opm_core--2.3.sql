@@ -324,7 +324,7 @@ COMMENT ON FUNCTION public.set_extension_owner(name) IS
 'this function is only called by the extensions themselves to set the owner of their functions to the database owner.';
 
 /*
-public.admin(IN p_admin name, IN p_passwd text)
+public.admin(IN p_admin text, IN p_passwd text)
 
 Create a new admin.
 
@@ -1112,10 +1112,14 @@ of his own account.
 CREATE OR REPLACE
 FUNCTION public.is_member(IN p_rolname text, IN p_accname text,
     OUT rc boolean)
-LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE plpgsql STABLE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 BEGIN
+    IF p_rolname IS NULL OR p_accname IS NULL THEN
+        rc := FALSE;
+        return ;
+    END IF;
     IF public.is_admin() THEN
         SELECT pg_catalog.bool_or(m.member = p_accname) INTO rc
         FROM public.members AS m
@@ -1127,7 +1131,10 @@ BEGIN
             AND public.is_member(p_accname);
     END IF;
 
-    RETURN;
+    IF rc IS NULL THEN
+        rc := FALSE;
+    END IF ;
+    RETURN ;
 END
 $$;
 
@@ -1152,7 +1159,7 @@ Check if current session user is member of given account.
 */
 CREATE OR REPLACE
 FUNCTION public.is_member(IN p_accname text, OUT rc boolean)
-LANGUAGE SQL STABLE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE SQL STABLE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
     SELECT pg_catalog.count(1) = 1
@@ -1178,7 +1185,7 @@ Check if current session user is member of given account (by id).
 */
 CREATE OR REPLACE
 FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean)
-LANGUAGE SQL STABLE STRICT LEAKPROOF SECURITY DEFINER
+LANGUAGE SQL STABLE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
     SELECT pg_catalog.count(1) = 1

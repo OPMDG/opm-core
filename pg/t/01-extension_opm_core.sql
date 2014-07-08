@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(264);
+SELECT plan(279);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -51,6 +51,29 @@ SELECT has_table('public', 'services', 'Schema public contains table "services" 
 SELECT has_type('public', 'metric_value', 'Schema public contains type "metric_value" of opm_core.' );
 
 
+-- List of unregistered function should be known
+SELECT set_eq(
+    $$
+        WITH ext AS (SELECT p.oid
+                FROM pg_depend d
+                JOIN pg_extension e ON d.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_extension') AND d.refobjid = e.oid AND d.deptype = 'e'
+                JOIN pg_proc p ON d.objid = p.oid
+                WHERE e.extname = 'opm_core'
+            )
+            SELECT  oid::regprocedure FROM ext
+            LEFT JOIN public.api ON ext.oid::regprocedure = api.proc
+            WHERE api.proc IS NULL;
+    $$,
+    $$ VALUES ('public.register_api(regprocedure)'::regprocedure),
+        ('public.set_extension_owner(name)'::regprocedure),
+        ('public.create_admin(text,text)'::regprocedure),
+        ('public.grant_appli(name)'::regprocedure),
+        ('public.revoke_appli(name)'::regprocedure),
+        ('public.grant_dispatcher(name,name)'::regprocedure),
+        ('public.revoke_dispatcher(name,name)'::regprocedure)
+    $$,
+    'List of unregistered function should be known.'
+);
 
 SELECT has_function('public', 'authenticate', '{text, text}', 'Function "authenticate" exists.');
 SELECT has_function('public', 'clone_graph', '{bigint}', 'Function "clone_graph" exists.');
@@ -193,10 +216,52 @@ SELECT set_eq($$SELECT * FROM public.delete_graph(1)$$,
     'Deleting an unexisting graph should return false.'
 );
 
-SELECT lives_ok($$INSERT INTO public.graphs (graph,description,config) VALUES
-    ('Test graph 1','A simple graph test','{}'::json)$$,
-    'Insert an empty graph.'
+SELECT lives_ok(
+    $$INSERT INTO public.servers(hostname) VALUES ('server1')$$,
+    'Create a new server.'
 );
+
+SELECT lives_ok(
+    $$INSERT INTO public.services(id_server,warehouse,service) VALUES (1,'public','Test graph 1')$$,
+    'Create a new service.'
+);
+
+SELECT lives_ok(
+    $$INSERT INTO public.metrics(id_service,label,unit) VALUES (1,'metric1','s')$$,
+    'Create a new metric.'
+);
+
+SELECT throws_ok(
+    $$SELECT * FROM public.create_graph_for_new_metric(123456::bigint)$$,
+    $$Server unknown or not allowed for current user.$$,
+    'Function create_graph_for_new_metric should raise an exception for an unexisting server.'
+);
+
+SELECT lives_ok($$SELECT set_opm_session('user')$$,'Log in as unprivileged user.');
+
+SELECT throws_ok(
+    $$SELECT * FROM public.create_graph_for_new_metric(1::bigint)$$,
+    $$Server unknown or not allowed for current user.$$,
+    'Function create_graph_for_new_metric should raise an exception for an unprivileged user.'
+);
+
+SELECT set_eq($$SELECT COUNT(*) FROM public.list_graphs()$$,
+    $$VALUES (0)$$,
+    'No graph should have been created.'
+);
+
+SELECT lives_ok($$SELECT set_opm_session('admin')$$,'Log in as admin.');
+
+SELECT set_eq(
+    $$SELECT * FROM public.create_graph_for_new_metric(1::bigint)$$,
+    $$VALUES (true)$$,
+    'Function create_graph_for_new_metric should return true.'
+);
+
+--SELECT lives_ok($$INSERT INTO public.graphs (graph,description,config) VALUES
+--    ('Test graph 1','A simple graph test','{}'::json)$$,
+--    'Insert an empty graph.'
+--);
 
 SELECT lives_ok($$SELECT set_opm_session('user')$$,'Log in as unprivileged user.');
 
@@ -217,7 +282,27 @@ SELECT set_eq($$SELECT COUNT(*) FROM public.list_graphs()$$,
     'Graph should still be in table graphs'
 );
 
+SELECT throws_ok($$SELECT * FROM public.clone_graph(123456)$$,
+    $$Graph not found or not allowed.$$,
+    'Cloning an unexisting graph should raise an exception.'
+);
+
+SELECT set_eq($$SELECT * FROM public.clone_graph(1)$$,
+    $$VALUES (2)$$,
+    'Cloning a graph should work.'
+);
+
+SELECT set_eq($$SELECT graph FROM public.list_graphs()$$,
+    $$VALUES ('Test graph 1 (in s)'),('Clone - Test graph 1 (in s)')$$,
+    'Both graphs should be seen, the cloned one with a specific name.'
+);
+
 SELECT set_eq($$SELECT * FROM public.delete_graph(1)$$,
+    $$VALUES (true)$$,
+    'Deleting a graph should return true if user is admin.'
+);
+
+SELECT set_eq($$SELECT * FROM public.delete_graph(2)$$,
     $$VALUES (true)$$,
     'Deleting a graph should return true if user is admin.'
 );

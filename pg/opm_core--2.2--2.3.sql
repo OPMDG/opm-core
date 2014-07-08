@@ -8,6 +8,36 @@
 
 
 /*
+ * public.register_api(regprocedure)
+ * Add given function to the API function list
+ * avaiable from application.
+ */
+CREATE OR REPLACE FUNCTION public.register_api(IN p_proc regprocedure,
+    OUT proc regprocedure, OUT registered boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
+SET search_path TO public
+AS $$
+DECLARE
+    v_ok boolean ;
+BEGIN
+    SELECT COUNT(*) = 0 INTO v_ok FROM public.api WHERE api.proc = p_proc;
+    IF NOT v_ok THEN
+        register_api.proc := p_proc ;
+        register_api.registered := false ;
+        RETURN ;
+    END IF ;
+    INSERT INTO public.api VALUES (p_proc)
+    RETURNING p_proc, true
+        INTO register_api.proc, register_api.registered;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.register_api(regprocedure) FROM public;
+
+COMMENT ON FUNCTION public.register_api(regprocedure) IS
+'Add given function to the API function list avaiable from application.';
+
+/*
 public.update_user
 Change the password of an opm user.
 
@@ -55,7 +85,8 @@ ALTER TABLE  public.metrics ADD tags text[] NOT NULL DEFAULT '{}';
 ALTER TABLE  public.servers ADD tags text[] NOT NULL DEFAULT '{}';
 ALTER TABLE  public.services ADD tags text[] NOT NULL DEFAULT '{}';
 
-DROP FUNCTION public.list_servers();
+DELETE FROM public.api WHERE proc = 'list_servers()'::regprocedure ;
+DROP FUNCTION public.list_servers() ;
 
 CREATE OR REPLACE
 FUNCTION public.list_servers()
@@ -82,10 +113,11 @@ REVOKE ALL ON FUNCTION public.list_servers() FROM public;
 COMMENT ON FUNCTION public.list_servers() IS
 'List servers available for the session user.';
 
-SELECT * FROM public.register_api('public.list_servers()'::regprocedure);
+SELECT * FROM public.register_api('public.list_servers()'::regprocedure) ;
 
 
-DROP FUNCTION public.list_services();
+DELETE FROM public.api WHERE proc = 'list_services()'::regprocedure ;
+DROP FUNCTION public.list_services() ;
 
 CREATE OR REPLACE
 FUNCTION public.list_services()
@@ -108,10 +140,11 @@ REVOKE ALL ON FUNCTION public.list_services() FROM public;
 COMMENT ON FUNCTION public.list_services() IS
 'List services available for the session user.';
 
-SELECT * FROM public.register_api('public.list_services()'::regprocedure);
+SELECT * FROM public.register_api('public.list_services()'::regprocedure) ;
 
 
-DROP FUNCTION public.list_graphs();
+DELETE FROM public.api WHERE proc = 'list_graphs()'::regprocedure ;
+DROP FUNCTION public.list_graphs() ;
 CREATE OR REPLACE
 FUNCTION public.list_graphs()
 RETURNS TABLE (id bigint, graph text, description text, config json,
@@ -159,7 +192,7 @@ REVOKE ALL ON FUNCTION public.list_graphs() FROM public ;
 COMMENT ON FUNCTION public.list_graphs()
     IS 'List all visible graphs depending on the user rights';
 
-SELECT * FROM public.register_api('public.list_graphs()'::regprocedure);
+SELECT * FROM public.register_api('public.list_graphs()'::regprocedure) ;
 
 
 CREATE OR REPLACE
@@ -184,6 +217,8 @@ COMMENT ON FUNCTION public.update_service_tags(bigint, text[]) IS
 
 SELECT * FROM public.register_api('public.update_service_tags(bigint, text[])'::regprocedure);
 
+DELETE FROM api WHERE proc = 'create_admin(text,text)'::regprocedure;
+DROP FUNCTION public.create_admin (text,text);
 /*
 public.admin(IN p_admin name, IN p_passwd text)
 
@@ -272,36 +307,8 @@ COMMENT ON FUNCTION public.delete_graph(bigint)
 
 ALTER TABLE public.api ADD PRIMARY KEY (proc);
 
-/*
- * public.register_api(regprocedure)
- * Add given function to the API function list
- * avaiable from application.
- */
-CREATE OR REPLACE FUNCTION public.register_api(IN p_proc regprocedure,
-    OUT proc regprocedure, OUT registered boolean)
-LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF
-SET search_path TO public
-AS $$
-DECLARE
-    v_ok boolean ;
-BEGIN
-    SELECT COUNT(*) = 0 INTO v_ok FROM public.api WHERE api.proc = p_proc;
-    IF NOT v_ok THEN
-        register_api.proc := p_proc ;
-        register_api.registered := false ;
-        RETURN ;
-    END IF ;
-    INSERT INTO public.api VALUES (p_proc)
-    RETURNING p_proc, true
-        INTO register_api.proc, register_api.registered;
-END
-$$;
-
-REVOKE ALL ON FUNCTION public.register_api(regprocedure) FROM public;
-
-COMMENT ON FUNCTION public.register_api(regprocedure) IS
-'Add given function to the API function list avaiable from application.';
-
+DELETE FROM api WHERE proc = 'list_metrics(bigint)'::regprocedure;
+DROP FUNCTION public.list_metrics(bigint);
 /*
 public.list_metrics(bigint)
 
@@ -346,3 +353,104 @@ REVOKE ALL ON FUNCTION public.list_metrics(bigint) FROM public;
 
 COMMENT ON FUNCTION public.list_metrics(bigint) IS
 'Return every metrics used in given graphs (by id) if current user is allowed to.';
+
+SELECT * FROM public.register_api('public.list_metrics(bigint)'::regprocedure);
+
+/*
+is_member(rolname, accname)
+
+A non admin user can only check if given rolname is member of one
+of his own account.
+
+@return rc: true if given rolname is member of accname
+            NULL if one of given role is unknown
+            false in other scenarios
+*/
+CREATE OR REPLACE
+FUNCTION public.is_member(IN p_rolname text, IN p_accname text,
+    OUT rc boolean)
+LANGUAGE plpgsql STABLE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    IF p_rolname IS NULL OR p_accname IS NULL THEN
+        rc := FALSE;
+        return ;
+    END IF;
+    IF public.is_admin() THEN
+        SELECT pg_catalog.bool_or(m.member = p_accname) INTO rc
+        FROM public.members AS m
+        WHERE m.rolname = p_rolname;
+    ELSE
+        SELECT pg_catalog.bool_or(m.member = p_accname) INTO rc
+        FROM public.members AS m
+        WHERE m.rolname = p_rolname
+            AND public.is_member(p_accname);
+    END IF;
+
+    IF rc IS NULL THEN
+        rc := FALSE;
+    END IF ;
+    RETURN ;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.is_member(IN p_rolname text, IN p_accname text, OUT rc boolean) FROM public;
+
+COMMENT ON FUNCTION public.is_member(IN p_rolname text, IN p_accname text, OUT rc boolean) IS
+'Tells if the given OPM role is member of given an OPM account.
+
+
+A non admin user can only check if given rolname is member of one
+of his own account.';
+
+/*
+is_member(accname)
+
+Check if current session user is member of given account.
+
+@return rc: true if current OPM session role is member of accname
+*/
+CREATE OR REPLACE
+FUNCTION public.is_member(IN p_accname text, OUT rc boolean)
+LANGUAGE SQL STABLE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+    SELECT pg_catalog.count(1) = 1
+    FROM public.members AS m
+    WHERE m.rolname = public.session_role()
+        AND m.member = p_accname;
+$$;
+
+REVOKE ALL ON FUNCTION public.is_member(IN p_accname text, OUT rc boolean) FROM public;
+
+COMMENT ON FUNCTION public.is_member(IN p_accname text, OUT rc boolean) IS
+'Tells if the current OPM session is member of given an OPM account.';
+
+/*
+is_member(id_account)
+
+Check if current session user is member of given account (by id).
+
+@return rc: true if current OPM session role is member of accname
+*/
+CREATE OR REPLACE
+FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean)
+LANGUAGE SQL STABLE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+    SELECT pg_catalog.count(1) = 1
+    FROM public.members AS m
+        JOIN public.roles AS r ON (m.member = r.rolname)
+    WHERE m.rolname = public.session_role()
+        AND r.id = p_id_account;
+$$;
+
+REVOKE ALL ON FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean) FROM public;
+
+COMMENT ON FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean) IS
+'Tells if the current OPM session is member of given an OPM account by id.
+
+A non admin user can only check if given rolname is member of one
+of his own account.';
+
