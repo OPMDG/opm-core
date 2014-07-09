@@ -43,19 +43,25 @@
             <h3><%= $s->{service} %></h3>
           % if ( session 'user_admin' ) {
             <h4><select multiple
-                    data-role="tagsinput"
-                    data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
-                    placeholder="New tag...">
-        <% foreach my $t ( @{$s->{tags}} ) { %>
+                  data-role="tagsinput"
+                  data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
+                  placeholder="New tag...">
+              % foreach my $t ( @{$s->{tags}} ) {
 
-        <option value="<%= $t%>">
-            <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'}, 'tags' => $t } => begin %>
-                <%= $t %>
-            <% end %>
-        </option>
+                <option value="<%= $t%>">
+                    <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'}, 'tags' => $t } => begin %>
+                        <%= $t %>
+                    <% end %>
+                </option>
 
-        <% } %>
-        </select></h4>
+             % }
+            </select></h4>
+          % } else {
+            <div class="bootstrap-tagsinput">
+              % foreach my $t ( @{$s->{tags}} ) {
+                <span class="tag label label-info"><%= $t %></span>
+              % }
+            </div>
           % }
 
         % }
