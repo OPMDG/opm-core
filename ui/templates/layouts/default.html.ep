@@ -45,11 +45,11 @@
 
     <div class="container-fluid main-content" id="main">
       <div class="row">
-        <div class="col-sm-3">
+        <div class="col-sm-3 col-md-3 col-lg-2">
           <!-- Main menu -->
           %= main_menu
         </div>
-        <div class="col-sm-9">
+        <div class="col-sm-9 col-md-9 col-lg-10">
           <div id="content">
             %= content
           </div>
@@ -66,8 +66,8 @@
             <li><a href="http://opm.io">http://opm.io</a></li>
           </ul>
         </div>
-        <div class="col-sm-3 col-sm-offset-5">
-          <ul class="list-unstyled useful-links">
+        <div class="col-lg-2 col-md-2 col-sm-2 col-lg-offset-7 col-md-offset-7 col-sm-offset-7">
+          <ul class="list-unstyled useful-links pull-right">
             <li><a href="http://opm.io/support"><i class="fa fa-stethoscope"></i>Get support</a></li>
             <li><a href="https://twitter.com/opmdg"><i class="fa fa-twitter"></i>Follow us</a></li>
             <li><a href="https://github.com/OPMDG/opm-core/issues"><i class="fa fa-bug"></i>Report a bug</a></li>
