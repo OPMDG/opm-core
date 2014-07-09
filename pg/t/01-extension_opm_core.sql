@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(279);
+SELECT plan(286);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -250,7 +250,39 @@ SELECT set_eq($$SELECT COUNT(*) FROM public.list_graphs()$$,
     'No graph should have been created.'
 );
 
+SELECT throws_ok($$SELECT * FROM public.update_service_tags(1,'{newtag}'::text[])$$,
+    'You must be an admin.',
+    'Updating tag as an unprivileged user should raise an exception.'
+);
+
 SELECT lives_ok($$SELECT set_opm_session('admin')$$,'Log in as admin.');
+
+SELECT lives_ok($$SELECT * FROM public.update_service_tags(1,'{newtag}'::text[])$$,
+    'Updating tag as an unprivileged user should not raise an exception.'
+);
+
+SELECT set_eq($$SELECT warehouse,service,tags FROM public.list_services()$$,
+    $$VALUES ('public','Test graph 1','{newtag}'::text[])$$,
+    'Tags should be updated.'
+);
+
+SELECT lives_ok($$SELECT * FROM public.update_service_tags(1,'{othertag}'::text[])$$,
+    'Change the tag.'
+);
+
+SELECT set_eq($$SELECT warehouse,service,tags FROM public.list_services()$$,
+    $$VALUES ('public','Test graph 1','{othertag}'::text[])$$,
+    'Tags should have been replaced.'
+);
+
+SELECT lives_ok($$SELECT * FROM public.update_service_tags(1,'{}'::text[])$$,
+    'Remove the tag.'
+);
+
+SELECT set_eq($$SELECT warehouse,service,tags FROM public.list_services()$$,
+    $$VALUES ('public','Test graph 1','{}'::text[])$$,
+    'Tags should have been removed.'
+);
 
 SELECT set_eq(
     $$SELECT * FROM public.create_graph_for_new_metric(1::bigint)$$,
