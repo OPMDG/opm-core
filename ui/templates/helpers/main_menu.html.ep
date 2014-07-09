@@ -5,7 +5,7 @@
 
 % my $cr = current_route;
 % my @servers = @{stash 'servers'};
-% my $accname = $self->format_accname(stash 'accname');
+% my %accstruct = $self->format_accname(stash 'accname');
 % my $hostname = stash 'hostname';
 % $hostname = '' if !defined $hostname;
 % my $active_all_servers = '';
@@ -25,13 +25,13 @@
         </li>
         % if ( scalar @servers ) {
           % foreach my $a ( @servers ) {
-            % $a->{'rolname'} = $self->format_accname($a->{'rolname'});
-            <li class="<%= ( $accname eq $a->{'rolname'} and $cr eq 'accounts_list' ? 'active' : '') %><%= ($accname eq $a->{'rolname'} and $cr ne 'accounts_list' ? 'active-parent' : '') %>">
-              %= link_to accounts_list => { accname => $a->{'rolname'} } => begin
-                <i class="fa fa-folder<%= ( $accname eq $a->{'rolname'} ? '-open' : '') %>"></i> <%= $a->{'rolname'} %>
+            % my %cur = $self->format_accname($a->{'rolname'});
+            <li class="<%= ( $accstruct{name} eq $cur{'name'} and $cr eq 'accounts_list' ? 'active' : '') %><%= ($accstruct{name} eq $cur{'name'} and $cr ne 'accounts_list' ? 'active-parent' : '') %>">
+              %= link_to accounts_list => { accname => $cur{'link'} } => begin
+                <i class="fa fa-folder<%= ( $accstruct{name} eq $cur{'name'} ? '-open' : '') %>"></i> <%= $cur{'name'} %>
               % end
             </li>
-            % if ( $accname eq $a->{'rolname'} ) {
+            % if ( $accstruct{name} eq $cur{'name'} ) {
               <ul class="nav nav-sidebar sub-level">
                 % foreach my $s ( @{ $a ->{'servers'} } ) {
                     <li class="<%= ( $hostname eq $s->{'hostname'} ? 'active' : '' ) %>">

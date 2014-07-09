@@ -14,8 +14,9 @@
 <div class="box server_list">
   % if ( scalar %{$servers_by_role} ) {
     % while ( (my $accname, my $servers ) = each $servers_by_role) {
+      % my %accstruct = $self->format_accname( $accname );
       <div class="row">
-      <h2><%= $self->format_accname( $accname ) %></h2>
+      <h2><%= $accstruct{name} %></h2>
         % foreach my $ser (@{$servers}) {
           <div class="col-md-6 server row">
             <div class="pull-left">

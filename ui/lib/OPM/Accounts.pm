@@ -50,7 +50,7 @@ sub list {
         WHERE COALESCE(rolname, '') = ?
         ORDER BY hostname
     });
-    $sql->execute( $accname  eq $self->l('Unassigned') ? '' : $accname );
+    $sql->execute( $accname  eq $self->get_unassigned() ? '' : $accname );
     return $self->render(servers => $sql->fetchall_arrayref( {} ));
 }
 

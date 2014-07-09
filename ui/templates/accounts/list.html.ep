@@ -9,7 +9,13 @@
 % my @servers = @{stash 'servers'};
 
 <div class="row">
-  <h1><%=l 'List of servers for account' %> <span class="at-hand"><%= stash 'accname' %></span></h1>
+  <h1>
+    % if ( stash('accname') eq $self->get_unassigned() ) {
+    <%=l 'List of unassigned servers' %>
+    % } else {
+    <%=l 'List of servers for account' %> <span class="at-hand"><%= stash 'accname' %></span>
+    % }
+  </h1>
   <div id="acc_list" class="server_list">
     <div class="box">
       <div class="row">

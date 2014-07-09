@@ -49,12 +49,28 @@ sub register {
         } );
 
     $app->helper(
+        get_unassigned => sub {
+            return "Unassigned";
+        }
+    );
+
+    $app->helper(
         format_accname => sub {
             my $ctrl    = shift;
             my $accname = shift;
-            return '' if ( !defined $accname );
-            return $ctrl->l('Unassigned') if ( $accname eq '' );
-            return $accname;
+            my %ret = (
+                link => '',
+                name => ''
+            );
+            return %ret if ( !defined $accname );
+            if ( $accname eq '' or $accname eq $ctrl->get_unassigned() ) {
+                $ret{link} = $ctrl->get_unassigned();
+                $ret{name} = $ctrl->l($ctrl->get_unassigned());
+            } else {
+                $ret{link} = $accname;
+                $ret{name} = $accname;
+            }
+            return %ret;
         } );
 
     $app->helper(
