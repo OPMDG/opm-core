@@ -21,11 +21,11 @@ sub register {
             my ( $ctrl, $context ) = ( shift, shift );
             my $method_name = "links_$context";
             my $links       = [];
-            foreach my $opm_plugin ( values $app->opm_plugins ) {
+            foreach my $opm_plugin ( values %{$app->opm_plugins()} ) {
                 foreach
                     my $link ( @{ $opm_plugin->$method_name( $ctrl, @_ ) } )
                 {
-                    push( $links, $link );
+                    push( @{$links}, $link );
                 }
             }
             return $links;
@@ -43,7 +43,7 @@ sub register {
             my $ctrl   = shift;
             my $values = [];
             foreach my $link ( @{ $ctrl->get_links(@_) } ) {
-                push( $values, $app->format_link($link) );
+                push( @{$values}, $app->format_link($link) );
             }
             return b( join( '', @{$values} ) );
         } );
@@ -78,11 +78,11 @@ sub register {
             my ( $ctrl, $context ) = ( shift, shift );
             my $method_name = "details_$context";
             my $details     = [];
-            foreach my $opm_plugin ( values $app->opm_plugins ) {
+            foreach my $opm_plugin ( values %{$app->opm_plugins()} ) {
                 foreach
                     my $detail ( @{ $opm_plugin->$method_name( $ctrl, @_ ) } )
                 {
-                    push( $details, $detail );
+                    push( @{$details}, $detail );
                 }
             }
             return $details;
@@ -99,7 +99,7 @@ sub register {
             my $ctrl   = shift;
             my $values = [];
             foreach my $detail ( @{ $ctrl->get_details(@_) } ) {
-                push( $values, $app->format_detail($detail) );
+                push( @{$values}, $app->format_detail($detail) );
             }
             return b( join( '', @{$values} ) );
         } );
