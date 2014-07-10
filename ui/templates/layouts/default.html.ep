@@ -34,7 +34,7 @@
       <div class="row" id="header">
         <div class="col-sm-4">
           <!-- Title -->
-          <h1 id="logo"><%= url_for site_home => begin %>Open PostgreSQL Monitoring<% end %></h1>
+          <h1 id="logo"><%= link_to site_home => begin %>Open PostgreSQL Monitoring<% end %></h1>
         </div>
 
         <div class="col-sm-8">
