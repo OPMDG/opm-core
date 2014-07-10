@@ -25,56 +25,45 @@
       </div>
     </div>
     <div class="row">
-      % my $cur_service;
       % my $i = 0;
       <% foreach my $s ( @services ) { %>
-        % if ( !defined($cur_service) or $cur_service ne $s->{'service'} ) {
-          % if ( defined($cur_service) ) {
-            </div>
-          % }
-          % if ( ($i % 3 eq 0 ) and ( $i ne 0 ) ){
-            </div>
-            <div class="row">
-          % }
-          % $i = $i+1;
-          <div class="col-sm-4 service-item">
-            % $cur_service = $s->{'service'};
-            <i class="fa fa-bar-chart-o fa-5x"></i>
-            <h3><%= $s->{service} %></h3>
-          % if ( session 'user_admin' ) {
-            <h4><select multiple
-                  data-role="tagsinput"
-                  data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
-                  placeholder="New tag...">
-              % foreach my $t ( @{$s->{tags}} ) {
-
-                <option value="<%= $t%>">
-                    <%= link_to 'graphs_showserver' => { 'idserver' => $s->{'id'}, 'tags' => $t } => begin %>
-                        <%= $t %>
-                    <% end %>
-                </option>
-
-             % }
-            </select></h4>
-          % } else {
-            <div class="bootstrap-tagsinput">
-              % foreach my $t ( @{$s->{tags}} ) {
-                <span class="tag label label-info"><%= $t %></span>
+        % $i++;
+        <div class="col-sm-6 col-md-4 col-lg-3 service-item">
+          <div class="service-box">
+            <%= link_to 'graphs_showservice' => { server => $s->{'hostname'}, service => $s->{'service'}} => begin %>
+              <h3><%= $s->{service} %></h3>
+              <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
+            <% end %>
+             % if ( session 'user_admin' ) {
+                <select multiple
+                      data-role="tagsinput"
+                      data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
+                      placeholder="New tag...">
+                  % foreach my $t ( @{$s->{tags}} ) {
+                    <option value="<%= $t%>"> <%= $t %> </option>
+                  % }
+                </select>
+              % } else {
+                <div class="bootstrap-tagsinput">
+                  % foreach my $t ( @{$s->{tags}} ) {
+                    <span class="tag label label-info"><%= $t %></span>
+                  % }
+                </div>
               % }
-            </div>
-          % }
+          </div>
+        </div>
 
+        %# FIXME: theses classes visible-* are deprecated in bootstrap 3.2 for visible-*-block
+        % if ($i%2 == 0) {
+          <div class="visible-sm clearfix"></div>
+        % }
+        % if ($i%3 == 0) {
+          <div class="visible-md clearfix"></div>
+        % }
+        % if ($i%4 == 0) {
+          <div class="visible-lg clearfix "></div>
         % }
 
-        % # <%= format_links('service', { server => stash('hostname'), service => $s->{'service'} }) %>
-        <%= link_to 'graphs_showservice' => { server => $s->{'hostname'}, service => $s->{'service'}} => begin %>
-          <span class="warehouse-service"><%= $s->{'warehouse'} . ' - ' . $s->{'service'} %></span>
-          % # <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id'} }) %>
-
-          <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
-        <% end %>
-
-        % $i = $i+1;
       <% } %>
     </div>
   <% } else { %>
