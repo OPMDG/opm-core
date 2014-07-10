@@ -30,16 +30,21 @@
     %= content_for 'header'
   </head>
   <body>
-    <nav class="navbar" role="navigation">
-      <div class="container-fluid">
-        <div class="navbar-header">
-         <%= link_to site_home => ('class' => 'navbar-brand') => begin %>Open PostgreSQL Monitoring<% end %>
+    <div class="container-fluid main-content">
+      <div class="row" id="header">
+        <div class="col-sm-4">
+          <!-- Title -->
+          <h1 id="logo"><%= url_for site_home => begin %>Open PostgreSQL Monitoring<% end %></h1>
         </div>
-        %= user_menu
-      </div>
-    </nav>
 
-    <div class="container-fluid">
+        <div class="col-sm-8">
+          <!-- user menu -->
+          %= user_menu
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid messages main-content">
       %= display_messages
     </div>
 
@@ -56,10 +61,10 @@
         </div>
       </div>
     </div>
-
     <div class="container-fluid global-footer">
       <div class="global-footer-content">
         <div class="col-sm-3">
+          <img src="<%= url_for '/img/opm-logo-small.png' %>" />
           <ul class="list-unstyled">
             <li><%= l 'Version' %>  <%= $OPM::VERSION %></li>
             <li>&copy 2012-2014 OPMDG</li>
