@@ -21,9 +21,14 @@
       <div class="row">
         <% foreach my $s (@servers) { %>
           <div class="col-md-4 server row">
-            %= link_to server_host=> { id => $s->{'id'} } => begin
-              <i class="fa fa-hdd-o fa-5x"></i> <h3><%= $s->{'hostname'} %></h3>
-            % end
+            <div class="pull-left">
+              %= link_to server_host=> { id => $s->{'id'} } => begin
+                <i class="fa fa-hdd-o fa-5x"></i> <h3><%= $s->{'hostname'} %></h3>
+              % end
+            </div>
+            <div class="pull-left">
+              <%= format_details('server', { id_server => $s->{id} }) %>
+            </div>
           </div>
         <% } %>
       </div>
