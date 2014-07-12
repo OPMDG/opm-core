@@ -88,19 +88,20 @@ ALTER TABLE  public.services ADD tags text[] NOT NULL DEFAULT '{}';
 DELETE FROM public.api WHERE proc = 'list_servers()'::regprocedure ;
 DROP FUNCTION public.list_servers() ;
 
+
 CREATE OR REPLACE
 FUNCTION public.list_servers()
-RETURNS TABLE (id bigint, hostname text, rolname text, tags text[])
+RETURNS TABLE (id bigint, hostname text, id_role bigint, rolname text, tags text[])
 LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 BEGIN
     IF public.is_admin() THEN
-        RETURN QUERY SELECT s.id, s.hostname, r.rolname, s.tags
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
             FROM public.servers s
                 LEFT JOIN public.roles r ON s.id_role = r.id;
     ELSE
-        RETURN QUERY SELECT s.id, s.hostname, r.rolname, s.tags
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
             FROM public.servers s
                 JOIN public.roles r ON s.id_role = r.id
             WHERE public.is_member(r.rolname);
@@ -114,6 +115,39 @@ COMMENT ON FUNCTION public.list_servers() IS
 'List servers available for the session user.';
 
 SELECT * FROM public.register_api('public.list_servers()'::regprocedure) ;
+
+
+DELETE FROM public.api WHERE proc= 'get_server(bigint)'::regprocedure ;
+DROP FUNCTION public.get_server(bigint);
+
+CREATE OR REPLACE
+FUNCTION public.get_server(IN p_id bigint)
+RETURNS TABLE (id bigint, hostname text, id_role bigint, rolname text, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
+            FROM public.servers s
+            LEFT JOIN public.roles r ON s.id_role = r.id
+            WHERE s.id = p_id;
+    ELSE
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
+        FROM public.servers s
+            JOIN public.roles r ON s.id_role = r.id
+        WHERE public.is_member(r.rolname)
+            AND s.id = p_id;
+    END IF;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.get_server(bigint) FROM public;
+
+COMMENT ON FUNCTION public.get_server(bigint) IS
+'Returns all data about given server by id.';
+
+SELECT * FROM public.register_api('public.get_server(bigint)'::regprocedure) ;
 
 
 DELETE FROM public.api WHERE proc = 'list_services()'::regprocedure ;

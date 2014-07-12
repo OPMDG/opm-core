@@ -1419,21 +1419,23 @@ list_servers()
 
 @return id: Server id
 @return name: Server name
+@return id_role: Server owner unique identifier
 @return rolname: Server owner
+@return tag: Server tags
 */
 CREATE OR REPLACE
 FUNCTION public.list_servers()
-RETURNS TABLE (id bigint, hostname text, rolname text, tags text[])
+RETURNS TABLE (id bigint, hostname text, id_role bigint, rolname text, tags text[])
 LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 BEGIN
     IF public.is_admin() THEN
-        RETURN QUERY SELECT s.id, s.hostname, r.rolname, s.tags
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
             FROM public.servers s
                 LEFT JOIN public.roles r ON s.id_role = r.id;
     ELSE
-        RETURN QUERY SELECT s.id, s.hostname, r.rolname, s.tags
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
             FROM public.servers s
                 JOIN public.roles r ON s.id_role = r.id
             WHERE public.is_member(r.rolname);
@@ -1453,28 +1455,31 @@ public.get_server(id)
 
 Returns data about given server by id
 
-@return public.servers%TABLE
+@return id: Server id
+@return name: Server name
+@return id_role: Server owner unique identifier
+@return rolname: Server owner
+@return tag: Server tags
 */
 CREATE OR REPLACE
-FUNCTION public.get_server(IN p_id bigint,
-    OUT server public.servers)
+FUNCTION public.get_server(IN p_id bigint)
+RETURNS TABLE (id bigint, hostname text, id_role bigint, rolname text, tags text[])
 LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 BEGIN
     IF public.is_admin() THEN
-        SELECT * INTO server
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
             FROM public.servers s
+            LEFT JOIN public.roles r ON s.id_role = r.id
             WHERE s.id = p_id;
     ELSE
-        SELECT * INTO server
+        RETURN QUERY SELECT s.id, s.hostname, s.id_role, r.rolname, s.tags
         FROM public.servers s
             JOIN public.roles r ON s.id_role = r.id
         WHERE public.is_member(r.rolname)
             AND s.id = p_id;
     END IF;
-
-    RETURN;
 END
 $$;
 
