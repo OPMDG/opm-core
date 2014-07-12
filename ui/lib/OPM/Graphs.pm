@@ -16,9 +16,9 @@ sub show {
     # Get the graph
     my $sth = $self->prepare(
         qq{SELECT CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description, s.id AS id_server, s.hostname, g.id
-        FROM public.list_graphs() g
-        LEFT JOIN public.list_servers() s ON g.id_server = s.id
-        WHERE g.id = ?} );
+          FROM public.get_graph( ? ) g
+          LEFT JOIN public.get_server( g.id_server ) s ON true
+        } );
 
     $sth->execute($id);
     my $graph = $sth->fetchrow_hashref;
@@ -38,12 +38,11 @@ sub show {
     if ( scalar $hostname ) {
         $sth = $self->prepare(
             qq{SELECT g.id, g.graph as graphname
-            FROM public.list_servers() s
-            JOIN public.list_graphs() g ON s.id = g.id_server
-            WHERE s.hostname = ? AND g.id <> ?
+            FROM public.list_graphs( ? ) g
+            WHERE g.id <> ?
             ORDER BY 2}
         );
-        $sth->execute( $hostname, $id );
+        $sth->execute( $graph->{'id_server'}, $id );
         $graph_list = $sth->fetchall_arrayref( {} );
     }
     return $self->render(
@@ -77,9 +76,8 @@ sub showservice {
         END || graph AS graph,
         g.description, s2.id AS id_server, s2.hostname
         FROM  public.list_services() AS s1
-        JOIN public.list_servers() AS s2 ON s2.id = s1.id_server
-        JOIN public.list_graphs() g ON g.id_server = s2.id
-            AND g.id_service = s1.id
+        JOIN public.get_server( s1.id_server) AS s2 ON true
+        JOIN public.list_graphs( s2.id ) g ON g.id_service = s1.id
         WHERE s2.hostname = ? AND s1.service = ?
     };
     if (@tags) {
@@ -145,9 +143,8 @@ sub showserver {
     # Get the graphs
     $query = qq{
         SELECT g.id, CASE WHEN s.hostname IS NOT NULL THEN s.hostname || '::' ELSE '' END || graph AS graph,description,s.hostname
-        FROM public.list_graphs() g
-        JOIN public.list_servers() s ON g.id_server = s.id
-        WHERE g.id_server = ?
+        FROM public.list_graphs( ? ) g
+        JOIN public.get_server( g.id_server) s ON true
     };
     if (@tags) {
         $query = $query . " AND g.tags && ? ";
@@ -203,8 +200,7 @@ sub edit {
     my $sth = $self->prepare(
         qq{SELECT graph, description,
                 config::text, string_agg(id_server::text, ',') AS id_server
-            FROM public.list_graphs()
-            WHERE id = ?
+            FROM public.get_graph( ? )
             GROUP BY 1,2,3} );
     $sth->execute($id);
     $graph = $sth->fetchrow_hashref();
@@ -487,7 +483,7 @@ sub data {
 
     # When a graph id is received, retrieve the properties from the DB
     my $sth = $self->prepare(
-        qq{SELECT config FROM public.list_graphs() WHERE id = ?});
+        qq{SELECT config FROM public.get_graph( ? )});
     $sth->execute($id);
 
     $config = $sth->fetchrow();
@@ -498,9 +494,9 @@ sub data {
 
     $sth = $self->prepare(
         qq{SELECT s.hostname || '::' || g.graph AS graph,description
-        FROM public.list_graphs() g
-        JOIN public.list_servers() s ON s.id = g.id_server
-        WHERE g.id = ?} );
+        FROM public.get_graph( ? ) g
+        LEFT JOIN public.get_server(g.id_server) s ON true
+        } );
     $sth->execute($id);
     my ( $graphtitle, $graphsubtitle ) = $sth->fetchrow();
     $sth->finish();
@@ -580,9 +576,8 @@ sub get_rolname_hostname_by_graph_id {
     my $sth = $self->prepare(
         q{
         SELECT COALESCE(s.rolname,''),s.hostname
-        FROM public.list_graphs() g
-        JOIN public.list_servers() s ON g.id_server = s.id
-        WHERE g.id = ?
+        FROM public.get_graph( ? ) g
+        JOIN public.get_server( g.id_server ) s ON true
     } );
     $sth->execute($id_graph);
     ( $accname, $hostname ) = $sth->fetchrow();

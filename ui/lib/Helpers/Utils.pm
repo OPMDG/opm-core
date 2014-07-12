@@ -113,8 +113,7 @@ sub register {
             $sth = $ctrl->prepare(
                 qq{
                 SELECT unnest(g.tags) as tag
-                FROM public.list_graphs() g
-                    JOIN public.get_server(?) s ON g.id_server = s.id
+                FROM public.list_graphs( ? ) g
                 GROUP BY tag
                 ORDER BY tag
             } );

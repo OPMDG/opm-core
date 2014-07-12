@@ -454,3 +454,117 @@ COMMENT ON FUNCTION public.is_member(IN p_id_account bigint, OUT rc boolean) IS
 A non admin user can only check if given rolname is member of one
 of his own account.';
 
+/*
+public.list_graphs(id_server bigint)
+
+Return every graphs user can see, including relations with
+services and servers related informations for a specific server.
+*/
+CREATE OR REPLACE
+FUNCTION public.list_graphs(p_id_server bigint)
+RETURNS TABLE (id bigint, graph text, description text, config json,
+               id_server bigint, id_service bigint, warehouse text, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    -- FIXME DISTINCT ?!
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s3.tags || s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                LEFT JOIN public.series s1
+                    ON g.id = s1.id_graph
+                LEFT JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                LEFT JOIN public.services s2
+                    ON m.id_service = s2.id
+                LEFT JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE s3.id = p_id_server ;
+    ELSE
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s3.tags || s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                JOIN public.series s1
+                    ON g.id = s1.id_graph
+                JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                JOIN public.services s2
+                    ON m.id_service = s2.id
+                JOIN public.servers s3
+                    ON s2.id_server = s3.id
+                    AND s3.id = p_id_server
+            WHERE public.is_member(s3.id_role);
+    END IF;
+END
+$$ ;
+
+REVOKE ALL ON FUNCTION public.list_graphs(bigint) FROM public ;
+
+COMMENT ON FUNCTION public.list_graphs(bigint)
+    IS 'List all visible graphs depending on the user rights for a specific server.' ;
+
+SELECT * FROM public.register_api('public.list_graphs(bigint)'::regprocedure) ;
+
+/*
+public.get_graph(id_graph bigint)
+
+Return a specific graphs a user can see, including relations with
+services and servers related informations.
+*/
+CREATE OR REPLACE
+FUNCTION public.get_graph(p_id_graph bigint)
+RETURNS TABLE (id bigint, graph text, description text, config json,
+               id_server bigint, id_service bigint, warehouse text, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    -- FIXME DISTINCT ?!
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s3.tags || s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                LEFT JOIN public.series s1
+                    ON g.id = s1.id_graph
+                LEFT JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                LEFT JOIN public.services s2
+                    ON m.id_service = s2.id
+                LEFT JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE g.id = p_id_graph ;
+    ELSE
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s3.tags || s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                JOIN public.series s1
+                    ON g.id = s1.id_graph
+                JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                JOIN public.services s2
+                    ON m.id_service = s2.id
+                JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE g.id = p_id_graph
+                AND public.is_member(s3.id_role) ;
+    END IF;
+END
+$$ ;
+
+REVOKE ALL ON FUNCTION public.get_graph(bigint) FROM public ;
+
+COMMENT ON FUNCTION public.get_graph(bigint)
+    IS 'Get a specific visible graph depending on the user rights.' ;
+
+SELECT * FROM public.register_api('public.get_graph(bigint)'::regprocedure) ;
+

@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(286);
+SELECT plan(296);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -85,6 +85,7 @@ SELECT has_function('public', 'delete_graph', '{bigint}', 'Function "delete_grap
 SELECT has_function('public', 'drop_account', '{text}', 'Function "drop_account" exists.');
 SELECT has_function('public', 'drop_user', '{text}', 'Function "drop_user" exists.');
 SELECT has_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function "edit_graph" exists.');
+SELECT has_function('public', 'get_graph', '{bigint}', 'Function "get_graph" exists.');
 SELECT has_function('public', 'get_sampled_metric_data', '{bigint, timestamp with time zone, timestamp with time zone, integer}', 'Function "get_sampled_metric_data" exists.');
 SELECT has_function('public', 'get_server', '{bigint}', 'Function "get_server" exists.');
 SELECT has_function('public', 'grant_account', '{text,text}', 'Function "grant_account" exists.');
@@ -102,6 +103,7 @@ SELECT has_function('public', 'js_time', '{timestamp with time zone}', 'Function
 SELECT has_function('public', 'js_timetz', '{timestamp with time zone}', 'Function "js_timetz" exists.');
 SELECT has_function('public', 'list_accounts', '{}', 'Function "list_accounts" exists.');
 SELECT has_function('public', 'list_graphs', '{}', 'Function "list_graphs" exists.');
+SELECT has_function('public', 'list_graphs', '{bigint}', 'Function "list_graphs(bigint)" exists.');
 SELECT has_function('public', 'list_metrics', '{bigint}', 'Function "list_metrics" exists.');
 SELECT has_function('public', 'list_users', '{}', 'Function "list_users" exists.');
 SELECT has_function('public', 'list_users', '{text}', 'Function "list_users(name)" exists.');
@@ -299,7 +301,12 @@ SELECT lives_ok($$SELECT set_opm_session('user')$$,'Log in as unprivileged user.
 
 SELECT set_eq($$SELECT COUNT(*) FROM public.list_graphs()$$,
     $$VALUES (0)$$,
-    'Unprivileged user should not see graph.'
+    'Unprivileged user should not see graph with list_graphs().'
+);
+
+SELECT set_eq($$SELECT COUNT(*) FROM public.get_graph(1)$$,
+    $$VALUES (0)$$,
+    'Unprivileged user should not see graph with list_graph(bigint).'
 );
 
 SELECT set_eq($$SELECT * FROM public.delete_graph(1)$$,
@@ -312,6 +319,11 @@ SELECT lives_ok($$SELECT set_opm_session('admin')$$,'Log in as admin.');
 SELECT set_eq($$SELECT COUNT(*) FROM public.list_graphs()$$,
     $$VALUES (1)$$,
     'Graph should still be in table graphs'
+);
+
+SELECT set_eq($$SELECT graph FROM public.get_graph(1)$$,
+    $$VALUES ('Test graph 1 (in s)')$$,
+    'Graph should still be in table graphs, visible by get_graph(bigint).'
 );
 
 SELECT throws_ok($$SELECT * FROM public.clone_graph(123456)$$,
@@ -542,6 +554,7 @@ SELECT hasnt_function('public', 'delete_graph', '{bigint}', 'Function "delete_gr
 SELECT hasnt_function('public', 'drop_account', '{name}', 'Function "drop_account" does not exist anymore.');
 SELECT hasnt_function('public', 'drop_user', '{name}', 'Function "drop_user" does not exist anymore.');
 SELECT hasnt_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function "edit_graph" does not exists anymore.');
+SELECT hasnt_function('public', 'get_graph', '{bigint}', 'Function "get_graph" does not exists anymore.');
 SELECT hasnt_function('public', 'get_sampled_metric_data', '{bigint, timestamp with time zone, timestamp with time zone, integer}', 'Function "get_sampled_metric_data" does not exist anymore.');
 SELECT hasnt_function('public', 'get_server', '{bigint}', 'Function "get_server" does not exists anymore.');
 SELECT hasnt_function('public', 'grant_account', '{name,name}', 'Function "grant_account" does not exist anymore.');
@@ -559,6 +572,7 @@ SELECT hasnt_function('public', 'js_time', '{timestamp with time zone}', 'Functi
 SELECT hasnt_function('public', 'js_timetz', '{timestamp with time zone}', 'Function "js_timetz" does not exist anymore.');
 SELECT hasnt_function('public', 'list_accounts', '{}', 'Function "list_accounts" does not exist anymore.');
 SELECT hasnt_function('public', 'list_graphs', '{}', 'Function "list_graphs" does not exist anymore.');
+SELECT hasnt_function('public', 'list_graphs', '{bigint}', 'Function "list_graphs(bigint)" does not exist anymore.');
 SELECT hasnt_function('public', 'list_metrics', '{bigint}', 'Function "list_metrics" does not exist anymore.');
 SELECT hasnt_function('public', 'list_users', '{}', 'Function "list_users" does not exist anymore.');
 SELECT hasnt_function('public', 'list_users', '{name}', 'Function "list_users(name)" does not exist anymore.');
