@@ -1492,6 +1492,50 @@ SELECT * FROM public.register_api('public.get_server(bigint)'::regprocedure);
 
 
 /*
+public.get_service(id)
+
+Returns data about given service by id
+
+@return id: Service id
+@çeturn id_server: Id of associated server
+@çeturn warehouse: name of the associated warehouse
+@return service: Service name
+@çeturn last_modified: last date service have been modified
+@return creation_ts: creation timestamp of the service
+@çeturn servalid: service interval retention
+@return tag: Service tags
+*/
+CREATE OR REPLACE
+FUNCTION public.get_service(IN p_id bigint)
+RETURNS TABLE (id bigint, id_server bigint, warehouse text, service text, last_modified date, creation_ts timestamptz, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT s.id, s.id_server, s.warehouse, s.service, s.last_modified, s.creation_ts, s.tags
+            FROM public.services s
+            WHERE s.id = p_id;
+    ELSE
+        RETURN QUERY SELECT s.id, s.id_server, s.warehouse, s.service, s.last_modified, s.creation_ts, s.tags
+        FROM public.services s
+            JOIN public.servers s2 ON s2.id = s.id_server
+            JOIN public.roles r ON s2.id_role = r.id
+        WHERE public.is_member(r.rolname)
+            AND s.id = p_id;
+    END IF;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.get_service(bigint) FROM public;
+
+COMMENT ON FUNCTION public.get_service(bigint) IS
+'Returns all data about given server by id.';
+
+SELECT * FROM public.register_api('public.get_service(bigint)'::regprocedure);
+
+
+/*
 grant_server(server_id, accname)
 
 Set given account as owner of the given server id.

@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(296);
+SELECT plan(305);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -88,6 +88,7 @@ SELECT has_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function
 SELECT has_function('public', 'get_graph', '{bigint}', 'Function "get_graph" exists.');
 SELECT has_function('public', 'get_sampled_metric_data', '{bigint, timestamp with time zone, timestamp with time zone, integer}', 'Function "get_sampled_metric_data" exists.');
 SELECT has_function('public', 'get_server', '{bigint}', 'Function "get_server" exists.');
+SELECT has_function('public', 'get_service', '{bigint}', 'Function "get_service" exists.');
 SELECT has_function('public', 'grant_account', '{text,text}', 'Function "grant_account" exists.');
 SELECT has_function('public', 'grant_appli', '{name}', 'Function "grant_appli" exists.');
 SELECT has_function('public', 'grant_dispatcher', '{name,name}', 'Function "grant_dispatcher" exists.');
@@ -223,9 +224,27 @@ SELECT lives_ok(
     'Create a new server.'
 );
 
+SELECT set_eq(
+    $$SELECT COUNT(*) FROM public.get_service(1)$$,
+    $$VALUES (0)$$,
+    'Function public.get_service should not see an unexeisting service.'
+);
+
+SELECT set_eq(
+    $$SELECT COUNT(*) FROM public.list_services()$$,
+    $$VALUES (0)$$,
+    'Function public.list_services should not see any service.'
+);
+
 SELECT lives_ok(
     $$INSERT INTO public.services(id_server,warehouse,service) VALUES (1,'public','Test graph 1')$$,
     'Create a new service.'
+);
+
+SELECT set_eq(
+    $$SELECT * FROM public.get_service(1)$$,
+    $$VALUES (1::bigint,1::bigint,'public','Test graph 1',current_date,now(),'{}'::text[])$$,
+    'Function public.get_service should see service 1 with an OPM superuser.'
 );
 
 SELECT lives_ok(
@@ -240,6 +259,12 @@ SELECT throws_ok(
 );
 
 SELECT lives_ok($$SELECT set_opm_session('user')$$,'Log in as unprivileged user.');
+
+SELECT set_eq(
+    $$SELECT COUNT(*) FROM public.get_service(1)$$,
+    $$VALUES (0)$$,
+    'An unprivileged user should not see an service 1 with public.get_service.'
+);
 
 SELECT throws_ok(
     $$SELECT * FROM public.create_graph_for_new_metric(1::bigint)$$,
@@ -259,8 +284,13 @@ SELECT throws_ok($$SELECT * FROM public.update_service_tags(1,'{newtag}'::text[]
 
 SELECT lives_ok($$SELECT set_opm_session('admin')$$,'Log in as admin.');
 
+SELECT set_eq($$SELECT warehouse,service,tags FROM public.list_services()$$,
+    $$VALUES ('public','Test graph 1','{}'::text[])$$,
+    'Tags should not be updated.'
+);
+
 SELECT lives_ok($$SELECT * FROM public.update_service_tags(1,'{newtag}'::text[])$$,
-    'Updating tag as an unprivileged user should not raise an exception.'
+    'Updating tag as an opm superuser should not raise an exception.'
 );
 
 SELECT set_eq($$SELECT warehouse,service,tags FROM public.list_services()$$,
@@ -557,6 +587,7 @@ SELECT hasnt_function('public', 'edit_graph', '{bigint,text,text,json}', 'Functi
 SELECT hasnt_function('public', 'get_graph', '{bigint}', 'Function "get_graph" does not exists anymore.');
 SELECT hasnt_function('public', 'get_sampled_metric_data', '{bigint, timestamp with time zone, timestamp with time zone, integer}', 'Function "get_sampled_metric_data" does not exist anymore.');
 SELECT hasnt_function('public', 'get_server', '{bigint}', 'Function "get_server" does not exists anymore.');
+SELECT hasnt_function('public', 'get_service', '{bigint}', 'Function "get_service" does not exists anymore.');
 SELECT hasnt_function('public', 'grant_account', '{name,name}', 'Function "grant_account" does not exist anymore.');
 SELECT hasnt_function('public', 'grant_appli', '{name}', 'Function "grant_appli" does not exist anymore.');
 SELECT hasnt_function('public', 'grant_dispatcher', '{name,name}', 'Function "grant_dispatcher" does not exist anymore.');
