@@ -21,7 +21,6 @@
           <i class="fa fa-bar-chart-o fa-2x"></i> <%= l 'Show All' %>
         <% end %>
         %= include ('helpers/tagcloud', tags => $tags, selected_tags => [], class => 'fa-tag', url => url_for 'graphs_showserver', idserver => $id )
-        % # <%= format_links('server', { idserver => $id }) %>
       </div>
     </div>
     <div class="row">

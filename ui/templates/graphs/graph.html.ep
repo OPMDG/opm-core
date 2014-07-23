@@ -26,6 +26,7 @@
               'title' => l('Clone')
             ), begin %><i class="fa fa-asterisk"></i>
           <% end %>
+          <%= format_links('service_graph', { id_graph => $graph->{id} }) %>
         <% } %>
       </div>
     </div>

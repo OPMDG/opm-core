@@ -34,7 +34,9 @@ sub register {
         format_link => sub {
             my ( $ctrl, $link ) = ( shift, shift );
             return b(
-                qq(<a href="$link->{href}"><i class="$link->{class}"></i>$link->{title}</a>)
+                $ctrl->tag('a' => ( %{ $link->{a} } ) => sub {
+                    $ctrl->tag('i' => ( %{ $link->{i} } ) => '' ) . $link->{display};
+                })
             );
         } );
 

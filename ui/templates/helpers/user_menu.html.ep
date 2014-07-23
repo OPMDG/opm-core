@@ -29,9 +29,9 @@
         <li class="divider"></li>
         % foreach my $link ( @{ get_links('adm_menu') } ) {
             <li>
-              <%= link_to $link->{'href'} => begin %>
-                <i class="<%= $link->{'class'} %>"></i>
-                <%= $link->{'title'} %>
+              <%= link_to $link->{'a'}{'href'} => begin %>
+                <i class="<%= $link->{'i'}{'class'} %>"></i>
+                <%= $link->{'display'} %>
               <% end %>
             </li>
         % }
