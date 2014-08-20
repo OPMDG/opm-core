@@ -7,7 +7,7 @@
 % content_for body_scripts => begin
   <script type="text/javascript" src="<%= url_for '/js/graph_edit.js' %>"></script>
 % end
-% my @labels       = @{ stash 'labels' };
+% my %labels       = %{ stash 'labels' };
 % my $rowid        = 0;
 % my $curr_service = -1;
 
@@ -176,19 +176,19 @@
           </div>
           <% if ( scalar (stash 'id_server')) { %>
             <div class="tab-pane" id="series">
-  %           foreach my $l (@labels) {
-  %             if ($curr_service != $l->{'id_service'}) {
-  %               if ( $curr_service ne -1 ) {
-                    </div>
+  %           foreach my $service (keys %labels) {
+  %             foreach my $unit ( keys %{ $labels{$service} } ) {
+                <strong><%= $service %> (<%= $unit %>)</strong>
+                <div class="container-fluid">
+  %               foreach my $l ( @{ $labels{$service}{$unit} } ) {
+                  <label class="checkbox col-md-3" >
+                    <%= check_box "labels" => $l->{'id_metric'} %> <%= "$l->{'label'} "%>
+                  </label>
   %               }
-  %               $curr_service = $l->{'id_service'};
-                  <strong><%= $l->{'service'} %></strong>
-                  <div class="container-fluid">
+                </div>
+                <br />
   %             }
-                <label class="checkbox col-md-3" >
-                  <%= check_box "labels" => $l->{'id_metric'} %> <%= "$l->{'label'} ($l->{'unit'}) "%>
-                </label>
-  %             }
+  %           }
               </div>
 
             </div>

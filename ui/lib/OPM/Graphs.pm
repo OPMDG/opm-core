@@ -339,13 +339,21 @@ sub edit {
             return;
         }
 
-        my @labels;
+        my %labels;
 
         my $row;
 
         while ( defined( $row = $sth->fetchrow_hashref ) ) {
             $row->{'unit'} = 'no unit' if $row->{'unit'} eq '';
-            push @labels, { %{$row} };
+
+            $labels{$row->{'id_service'}} = {}
+                unless defined $labels{$row->{'id_service'}};
+
+            $labels{$row->{'id_service'}}{$row->{'unit'}} = ()
+                unless defined $labels{$row->{'id_service'}}{$row->{'unit'}};
+
+            push @{ $labels{$row->{'id_service'}}{$row->{'unit'}} }, { %{$row} };
+
             $self->req->params->append( "labels", $row->{'id_metric'} )
                 if $row->{'checked'};
         }
@@ -375,7 +383,7 @@ sub edit {
         # Is the graph associated with a service ?
         $self->stash(
             'id_server' => $id_server,
-            'labels'    => \@labels,
+            'labels'    => \%labels,
             'accname'   => $accname,
             'hostname'  => $hostname,
             'graph'     => $graph->{'graph'} );
