@@ -178,12 +178,12 @@
             <div class="tab-pane" id="series">
   %           foreach my $service (keys %labels) {
   %             foreach my $unit ( keys %{ $labels{$service} } ) {
-                <strong><%= $service %> (<%= $unit %>)</strong>
+                <strong><%= l('Service') . " " . $labels{$service}{$unit}[0]{service} %> (<%= $unit %>)</strong>
                 <div class="container-fluid">
   %               foreach my $l ( @{ $labels{$service}{$unit} } ) {
                   <label class="checkbox col-md-3" >
-                    <%= check_box "labels" => $l->{'id_metric'} %> <%= "$l->{'label'} "%>
-                  </label>
+                    <%= check_box "labels" => $l->{'id_metric'} %> <%= "$l->{'label'} "%>
+                  </label>
   %               }
                 </div>
                 <br />
