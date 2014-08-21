@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(305);
+SELECT plan(312);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -70,7 +70,8 @@ SELECT set_eq(
         ('public.grant_appli(name)'::regprocedure),
         ('public.revoke_appli(name)'::regprocedure),
         ('public.grant_dispatcher(name,name)'::regprocedure),
-        ('public.revoke_dispatcher(name,name)'::regprocedure)
+        ('public.revoke_dispatcher(name,name)'::regprocedure),
+        ('public.opm_check_dropped_extensions()'::regprocedure)
     $$,
     'List of unregistered function should be known.'
 );
@@ -111,6 +112,7 @@ SELECT has_function('public', 'list_users', '{text}', 'Function "list_users(name
 SELECT has_function('public', 'list_servers', '{}', 'Function "list_servers" exists.');
 SELECT has_function('public', 'list_services', '{}', 'Function "list_services" exists.');
 SELECT has_function('public', 'list_warehouses', '{}', 'Function "list_warehouses" exists.');
+SELECT has_function('public', 'opm_check_dropped_extensions', '{}', 'Function "opm_check_dropped_extensions" exists.');
 SELECT has_function('public', 'register_api', '{regprocedure}', 'Function "register_api" exists.');
 SELECT has_function('public', 'revoke_account', '{text,text}', 'Function "revoke_account" exists.');
 SELECT has_function('public', 'revoke_appli', '{name}', 'Function "revoke_appli" exists.');
@@ -400,6 +402,12 @@ SELECT set_eq(
     'Should not find warehouse wh_nagios.'
 );
 
+SELECT set_eq(
+    $$SELECT COUNT(*) = 0 FROM public.api a JOIN pg_proc p ON a.proc = p.oid JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
+    $$VALUES (true)$$,
+    'Should not find any wh_nagios procs in public.api.'
+);
+
 SELECT lives_ok(
     $$CREATE EXTENSION hstore$$,
     'Create extension "hstore"'
@@ -422,9 +430,21 @@ SELECT set_eq(
     'Should find warehouse wh_nagios.'
 );
 
+SELECT set_eq(
+    $$SELECT COUNT(*) != 0 FROM public.api a JOIN pg_proc p ON a.proc = p.oid JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
+    $$VALUES (true)$$,
+    'Should find some wh_nagios procs in public.api.'
+);
+
 SELECT lives_ok(
     $$DROP EXTENSION wh_nagios$$,
     'Drop extension "wh_nagios"'
+);
+
+SELECT set_eq(
+    $$SELECT COUNT(*) = 0 FROM public.api a JOIN pg_proc p ON a.proc = p.oid JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
+    $$VALUES (true)$$,
+    'All wh_nagios procs should have been deleted from public.api.'
 );
 
 SELECT lives_ok(
@@ -610,6 +630,7 @@ SELECT hasnt_function('public', 'list_users', '{name}', 'Function "list_users(na
 SELECT hasnt_function('public', 'list_servers', '{}', 'Function "list_servers" does not exist anymore.');
 SELECT hasnt_function('public', 'list_services', '{}', 'Function "list_services" does not exist anymore.');
 SELECT hasnt_function('public', 'list_warehouses', '{}', 'Function "list_warehouses" does not exist anymore.');
+SELECT hasnt_function('public', 'opm_check_dropped_extensions', '{}', 'Function "opm_check_dropped_extensions" does not exists anymore.');
 SELECT hasnt_function('public', 'register_api', '{regprocedure}', 'Function "register_api" does not exists anymore.');
 SELECT hasnt_function('public', 'revoke_account', '{name,name}', 'Function "revoke_account" does not exist anymore.');
 SELECT hasnt_function('public', 'revoke_appli', '{name}', 'Function "revoke_appli" does not exist anymore.');
