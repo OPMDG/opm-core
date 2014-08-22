@@ -138,8 +138,23 @@ $(document).ready(function () {
     });
   });
 
-  /* by default, show the week graph by triggering the week button */
-  $('#sel_week').click();
+  /* by default, show the week graph by triggering the week button,
+   * except if a custom interval have been selected via URL
+   * custom interval format is : timestamp1 | timestamp2,
+   * the timestamps must be moment.js standard strings (see http://momentjs.com/docs/#/parsing/string/)
+   */
+  if ( typeof interval != 'undefined' ){
+    var tmp, fromDate, toDate, frompick = $('#fromdatepick').data('DateTimePicker'),
+      topick = $('#todatepick').data('DateTimePicker');
+    tmp = interval.split("|", 2);
+    fromDate = moment( tmp[0].trim() );
+    toDate = moment( tmp[1].trim() );
+    frompick.setDate(fromDate);
+    topick.setDate(toDate);
+    $('#sel_custom').click();
+  } else {
+    $('#sel_week').click();
+  }
 
   /* show tooltips */
   $('a[title]').tooltip();

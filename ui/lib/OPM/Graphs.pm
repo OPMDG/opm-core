@@ -10,6 +10,7 @@ use Mojo::Base 'Mojolicious::Controller';
 sub show {
     my $self = shift;
     my $id   = $self->param('id');
+    my $interval = $self->param('interval');
     my $hostname;
     my $accname;
 
@@ -52,6 +53,7 @@ sub show {
         hostname   => $hostname,
         accname    => $accname,
         graph_list => $graph_list,
+        interval   => $interval,
         is_admin   => $self->session('user_admin') );
 }
 
@@ -59,6 +61,7 @@ sub showservice {
     my $self         = shift;
     my $hostname     = $self->param('server');
     my $service_name = $self->param('service');
+    my $interval     = $self->param('interval');
     my @tags         = $self->param('tags');
     my $server_id;
     my $services;
@@ -123,6 +126,7 @@ sub showservice {
         hostname  => $hostname,
         accname   => $accname,
         services  => $services,
+        interval  => $interval,
         is_admin  => $self->session('user_admin') );
 }
 
@@ -131,6 +135,7 @@ sub showserver {
     my $server_id = $self->param('idserver');
     my $period    = $self->param('period');
     my @tags      = $self->param('tags');
+    my $interval  = $self->param('interval');
     my $servers;
     my $graphs;
     my $hostname;
@@ -182,6 +187,7 @@ sub showserver {
         server_id     => $server_id,
         servers       => $servers,
         is_admin      => $self->session('user_admin'),
+        interval      => $interval,
         tags          => $server_tags,
         selected_tags => \@tags );
 }

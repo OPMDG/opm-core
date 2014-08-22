@@ -175,6 +175,8 @@ sub register_routes {
     # show
     $r_auth->route( '/graphs/:id', id => qr/\d+/ )->name('graphs_show')
         ->to('graphs#show');
+    $r_auth->route( '/graphs/:id/:interval', id => qr/\d+/ )->name('graphs_show')
+        ->to('graphs#show');
 
     # edit
     $r_adm->route( '/graphs/:id/edit', id => qr/\d+/ )->name('graphs_edit')
@@ -194,9 +196,13 @@ sub register_routes {
     # show service (using name)
     $r_auth->route('/graphs/showservice/#server/:service')
         ->name('graphs_showservice')->to('graphs#showservice');
+    $r_auth->route('/graphs/showservice/#server/:service/:interval')
+        ->name('graphs_showservice')->to('graphs#showservice');
 
     # show server
     $r_auth->route( '/graphs/showserver/:idserver', idserver => qr/\d+/ )
+        ->name('graphs_showserver')->to('graphs#showserver');
+    $r_auth->route( '/graphs/showserver/:idserver/:interval', idserver => qr/\d+/ )
         ->name('graphs_showserver')->to('graphs#showserver');
 }
 

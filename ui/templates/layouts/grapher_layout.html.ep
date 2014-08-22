@@ -7,6 +7,9 @@
 % content_for body_scripts => begin
   %= javascript begin
     var graphDataUrl = '<%= url_for 'graphs_data' %>';
+    % if (defined $interval) {
+      var interval = '<%= $interval %>'
+    % }
   % end
   %= javascript '/js/flotr2.min.js'
   %= javascript '/js/grapher.js'
