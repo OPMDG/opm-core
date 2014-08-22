@@ -302,6 +302,8 @@ BEGIN
             AND deptype = 'e'
             -- exclude this function. It always needs to belong to a superuser.
             AND i.identity !~ '^public.set_extension_owner'
+            -- exclude event trigger. They always need to belong to a superuser.
+            AND i.type != 'event trigger'
         ORDER BY 1 DESC
     )
     LOOP
