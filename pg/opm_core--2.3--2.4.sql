@@ -39,3 +39,9 @@ CREATE EVENT TRIGGER opm_check_dropped_extensions
   ON sql_drop
   WHEN tag IN ('DROP EXTENSION')
   EXECUTE PROCEDURE public.opm_check_dropped_extensions() ;
+
+
+
+-- This line must be the last one, so that every functions are owned
+-- by the database owner
+SELECT * FROM public.set_extension_owner('opm_core');

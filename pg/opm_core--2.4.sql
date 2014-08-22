@@ -2349,9 +2349,6 @@ COMMENT ON FUNCTION public.update_service_tags(bigint, text[]) IS
 
 SELECT * FROM public.register_api('public.update_service_tags(bigint, text[])'::regprocedure);
 
-
-SELECT * FROM public.set_extension_owner('opm_core');
-
 CREATE OR REPLACE
 FUNCTION public.opm_check_dropped_extensions()
 RETURNS event_trigger
@@ -2385,3 +2382,8 @@ CREATE EVENT TRIGGER opm_check_dropped_extensions
   ON sql_drop
   WHEN tag IN ('DROP EXTENSION')
   EXECUTE PROCEDURE public.opm_check_dropped_extensions() ;
+
+
+-- This line must be the last one, so that every functions are owned
+-- by the database owner
+SELECT * FROM public.set_extension_owner('opm_core');
