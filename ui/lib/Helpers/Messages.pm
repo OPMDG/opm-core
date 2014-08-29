@@ -13,7 +13,7 @@ has msg_lists =>
 
 our %Error_class = (
     "debug" => "alert-info",
-    "error" => "alert-error",
+    "error" => "alert-danger",
     "info"  => "alert-success" );
 
 sub register {
@@ -29,9 +29,9 @@ sub register {
                 my $values = $self->msg_lists->{$error_type};
                 if ( scalar(@$values) ) {
                     my $class = $Error_class{$error_type} || '';
-                    $html .= qq{<div class="alert fade in $class">\n};
+                    $html .= qq{<div class="alert alert-dismissible $class" role="alert">\n};
                     $html .=
-                        qq{<button type="button" class="close" data-dismiss="alert">&times;</button>\n};
+                        qq{<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\n};
                     $html .= qq{<ul class="unstyled">\n};
                     $html .= join( "\n",
                         map { "<li>" . $ctrl->l($_) . "</li>" } @{$values} );
