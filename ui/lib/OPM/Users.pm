@@ -277,10 +277,10 @@ sub profile {
     my $self = shift;
     my $sql  = $self->prepare('SELECT accname AS acc
         FROM list_users()
-        WHERE rolname = current_user
+        WHERE rolname = ?
     ');
 
-    $sql->execute();
+    $sql->execute( $self->session('user_username') );
 
     return $self->render('users/profile',
         acc => $sql->fetchall_arrayref({})
