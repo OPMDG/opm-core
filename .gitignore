@@ -17,3 +17,5 @@ _build
 Build
 *.json
 ui/modules/*
+pg/*.o
+pg/*.so
