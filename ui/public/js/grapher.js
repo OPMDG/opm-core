@@ -54,7 +54,7 @@
             bars: {
               barWidth: 1,
               filled: true,
-              gropued: false,
+              grouped: false,
               lineWidth: 2,
               stacked: false
             },
