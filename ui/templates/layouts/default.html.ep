@@ -73,8 +73,8 @@
         </div>
         <div class="col-lg-2 col-md-2 col-sm-2 col-lg-offset-7 col-md-offset-7 col-sm-offset-7">
           <ul class="list-unstyled useful-links pull-right">
-            <li><a href="http://opm.io/support"><i class="fa fa-stethoscope"></i>Get support</a></li>
-            <li><a href="https://twitter.com/opmdg"><i class="fa fa-twitter"></i>Follow us</a></li>
+            <li><a href="https://github.com/OPMDG/opm-doc/wiki/FAQ#i-need-enterprise-grade-support-for-this-software"><i class="fa fa-stethoscope"></i>Get support</a></li>
+            <li><a href="https://twitter.com/__opm__"><i class="fa fa-twitter"></i>Follow us</a></li>
             <li><a href="https://github.com/OPMDG/opm-core/issues"><i class="fa fa-bug"></i>Report a bug</a></li>
           </ul>
         </div>
