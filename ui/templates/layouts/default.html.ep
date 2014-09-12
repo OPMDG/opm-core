@@ -67,13 +67,13 @@
           <img src="<%= url_for '/img/opm-logo-small.png' %>" />
           <ul class="list-unstyled">
             <li><%= l 'Version' %>  <%= $OPM::VERSION %></li>
-            <li>&copy 2012-2014 OPMDG</li>
+            <li>&copy; 2012-2014 OPMDG</li>
             <li><a href="http://opm.io">http://opm.io</a></li>
           </ul>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-2 col-lg-offset-7 col-md-offset-7 col-sm-offset-7">
           <ul class="list-unstyled useful-links pull-right">
-            <li><a href="https://github.com/OPMDG/opm-doc/wiki/FAQ#i-need-enterprise-grade-support-for-this-software"><i class="fa fa-stethoscope"></i>Get support</a></li>
+            <li><a href="http://opm.readthedocs.org/general/FAQ.html#i-need-enterprise-grade-support-for-this-software"><i class="fa fa-stethoscope"></i>Get support</a></li>
             <li><a href="https://twitter.com/__opm__"><i class="fa fa-twitter"></i>Follow us</a></li>
             <li><a href="https://github.com/OPMDG/opm-core/issues"><i class="fa fa-bug"></i>Report a bug</a></li>
           </ul>
