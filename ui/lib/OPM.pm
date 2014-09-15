@@ -163,7 +163,7 @@ sub register_routes {
     $r_auth->route('/server')->to('server#list')->name('server_list');
     $r_auth->route( '/server/:id', id => qr/\d+/ )->to('server#host')
         ->name('server_host');
-    $r_auth->route('/server/:server')->to('server#host_by_name')
+    $r_auth->route('/server/#server')->to('server#host_by_name')
         ->name('server_host_by_name');
 
     # Search bar
@@ -194,9 +194,9 @@ sub register_routes {
     $r_auth->post('/graphs/data')->name('graphs_data')->to('graphs#data');
 
     # show service (using name)
-    $r_auth->route('/graphs/showservice/#server/:service')
+    $r_auth->route('/graphs/showservice/#server/#service')
         ->name('graphs_showservice')->to('graphs#showservice');
-    $r_auth->route('/graphs/showservice/#server/:service/:interval')
+    $r_auth->route('/graphs/showservice/#server/#service/:interval')
         ->name('graphs_showservice')->to('graphs#showservice');
 
     # show server
