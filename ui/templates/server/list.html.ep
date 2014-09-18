@@ -13,7 +13,7 @@
 <h1><%=l 'List of servers per accounts' %></h1>
 <div class="box server_list">
   % if ( scalar %{$servers_by_role} ) {
-    % foreach my $accname ( sort keys $servers_by_role ) {
+    % foreach my $accname ( sort keys %{$servers_by_role} ) {
       % my $servers = $servers_by_role->{$accname};
       % my %accstruct = $self->format_accname( $accname );
       <div class="row">
