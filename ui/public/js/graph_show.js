@@ -32,7 +32,7 @@ $(document).ready(function () {
     // Export the graph
     $this.find('[data-graphrole="export-graph"]').click(function(e){
         e.preventDefault();
-        $grapher.export();
+        $grapher.exportGraph();
     });
 
 

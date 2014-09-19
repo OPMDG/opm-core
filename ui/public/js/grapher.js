@@ -293,7 +293,7 @@
             return true;
         },
 
-        export: function() {
+        exportGraph: function() {
             var legend_shown = this.fetched.properties.legend.show;
             if (!legend_shown) {
                 this.fetched.properties.legend.show = true;
