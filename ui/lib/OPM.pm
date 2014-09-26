@@ -134,7 +134,7 @@ sub register_routes {
     $r_adm->route('/accounts/')->to('accounts#adm')->name('accounts_adm');
     $r_adm->route('/accounts/create')->to('accounts#create')
         ->name('accounts_create');
-    $r->route('/accounts/:accname/')->to('accounts#list')
+    $r_auth->route('/accounts/:accname/')->to('accounts#list')
         ->name('accounts_list');
     $r_adm->route('/accounts/:accname/edit')->to('accounts#edit')
         ->name('accounts_edit');
