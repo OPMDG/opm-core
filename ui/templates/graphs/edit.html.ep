@@ -11,7 +11,7 @@
 % my $rowid        = 0;
 % my $curr_service = -1;
 
-<h1><%=l 'Update graph '%><span class="at-hand"><%=  stash 'graph' %></span></h1>
+<h1><%=l 'Update graph'%> <span class="at-hand"><%=  stash 'graph' %></span></h1>
 <div class="box">
   <%= form_for graphs_edit => (method => 'POST', class => 'form-horizontal') => begin %>
 
@@ -51,7 +51,7 @@
               </div>
             </div>
             <div class="control-group">
-              <label class="control-label">Type</label>
+              <label class="control-label"><%= l('Type') %></label>
               <div class="controls">
                 <%= select_field type => [[ l('Bars') => 'bars'], [ l('Lines') => 'lines'], [ l('Points') => 'points'], [ l('Pie') => 'pie']], id => 'graph_type_select', class => 'form-control' %>
               </div>

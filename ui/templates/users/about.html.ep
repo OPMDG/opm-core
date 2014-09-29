@@ -14,7 +14,7 @@
      <ul class="nav nav-list">
        <% foreach my $e (@exn) { %>
          <li>
-           Extension <b><%= $e->{name} %></b> version <em><%= $e->{version} %></em>
+           <%= l('Extension') %> <b><%= $e->{name} %></b> <%= l('version') %> <em><%= $e->{version} %></em>
          </li>
        <% } %>
      </ul>

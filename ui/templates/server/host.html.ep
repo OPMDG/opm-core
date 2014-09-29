@@ -18,7 +18,7 @@
       <%= format_details('server', { id_server => stash('id')}) %>
       <div class="pull-right show-all">
         <%= link_to 'graphs_showserver' => { idserver => $id} => begin %>
-          <i class="fa fa-bar-chart-o fa-2x"></i> <%= l 'Show All' %>
+          <i class="fa fa-bar-chart-o fa-2x"></i> <%= l 'Show all' %>
         <% end %>
         %= include ('helpers/tagcloud', tags => $tags, selected_tags => [], class => 'fa-tag', url => url_for 'graphs_showserver', idserver => $id )
       </div>
@@ -37,7 +37,7 @@
                 <select multiple
                       data-role="tagsinput"
                       data-tagupdateurl="<%= url_for('service_edit_tags', {idserver => stash('id'), idservice => $s->{'id_service'}})%>"
-                      placeholder="New tag...">
+                      placeholder="<%= l('New tag...') %>">
                   % foreach my $t ( @{$s->{tags}} ) {
                     <option value="<%= $t%>"> <%= $t %> </option>
                   % }
