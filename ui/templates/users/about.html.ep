@@ -19,6 +19,6 @@
        <% } %>
      </ul>
   <% } %>
-  <br /><a href="https://github.com/dalibo/OPM/wiki"><%=l 'Visit official website for more information' %></a>.
+  <br /><a href="http://opm.io"><%=l 'Visit official website for more information' %></a>.
   </div>
 </div>
