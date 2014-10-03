@@ -18,7 +18,7 @@ sub server {
     $sql = $self->prepare(qq{SELECT id, hostname as name
         FROM public.list_servers()
         $predicate
-        ORDER BY 1
+        ORDER BY 2
     });
 
     $sql->execute("%$query%");
