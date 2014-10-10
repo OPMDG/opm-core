@@ -97,7 +97,7 @@
                 labelsAngle: 0,
                 mode: 'time',
                 showLabels: true,
-                timeFormat: '%d/%m/%y %H:%M:%S',
+                timeFormat: '%y-%m-%d %H:%M:%S',
                 timeMode: 'local',
                 titleAngle: 0
             },
