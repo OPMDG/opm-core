@@ -23,9 +23,14 @@ sub register {
                     user_level => $level,
                     menu_username => $self->session('user_username') );
 
-                $html = $self->render(
-                    template => 'helpers/user_menu',
-                    partial  => 1 );
+                if ( $Mojolicious::VERSION >= 5.00 ) {
+                    $html = $self->render_to_string(
+                        template => 'helpers/user_menu' );
+                } else {
+                    $html = $self->render(
+                        template => 'helpers/user_menu',
+                        partial  => 1 );
+                }
             }
 
             return b($html);
@@ -81,8 +86,13 @@ sub register {
                 user_level => $level,
                 servers    => \@servers
             );
-            $html =
-                $self->render( template => 'helpers/main_menu', partial => 1 );
+            if ( $Mojolicious::VERSION >= 5.00 ) {
+                $html =
+                    $self->render_to_string( template => 'helpers/main_menu' );
+            } else {
+                $html =
+                    $self->render( template => 'helpers/main_menu', partial => 1 );
+            }
 
             return b($html);
         } );

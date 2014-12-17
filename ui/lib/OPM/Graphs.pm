@@ -6,6 +6,7 @@ package OPM::Graphs;
 # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 use Mojo::Base 'Mojolicious::Controller';
+use Mojo::JSON qw(decode_json encode_json);
 
 sub show {
     my $self = shift;
@@ -62,7 +63,7 @@ sub showservice {
     my $hostname     = $self->param('server');
     my $service_name = $self->param('service');
     my $interval     = $self->param('interval');
-    my @tags         = $self->param('tags');
+    my @tags         = $self->param('tags') || ();
     my $server_id;
     my $services;
     my $graphs;
@@ -83,7 +84,7 @@ sub showservice {
         JOIN public.list_graphs( s2.id ) g ON g.id_service = s1.id
         WHERE s2.hostname = ? AND s1.service = ?
     };
-    if (@tags) {
+    if (scalar @tags > 0) {
         $query = $query . " AND g.tags && ? ";
         push @params, \@tags;
     }
@@ -134,8 +135,8 @@ sub showserver {
     my $self      = shift;
     my $server_id = $self->param('idserver');
     my $period    = $self->param('period');
-    my @tags      = $self->param('tags');
     my $interval  = $self->param('interval');
+    my @tags      = $self->param('tags') || ();
     my $servers;
     my $graphs;
     my $hostname;
@@ -151,7 +152,7 @@ sub showserver {
         FROM public.list_graphs( ? ) g
         JOIN public.get_server( g.id_server) s ON true
     };
-    if (@tags) {
+    if (scalar @tags > 0) {
         $query = $query . " AND g.tags && ? ";
         push @params, \@tags;
     }
@@ -274,8 +275,7 @@ sub edit {
 
                 # Save the properties actually sent
                 # If a property is missing, library/grapher default value will be used
-                my $json   = Mojo::JSON->new;
-                my $config = $json->encode($props);
+                my $config = encode_json($props);
 
                 $sth =
                     $self->prepare(qq{SELECT public.edit_graph(?, ?, ?, ?)});
@@ -372,8 +372,7 @@ sub edit {
         $sth->finish;
 
         # Prepare properties
-        my $json   = Mojo::JSON->new;
-        my $config = $json->decode( $graph->{config} );
+        my $config = decode_json( $graph->{config} );
         delete $graph->{config};
 
         # Send each configuration value to prefill form
@@ -482,13 +481,12 @@ sub clone {
 
 sub data {
     my $self = shift;
-    my $id   = $self->param('id');
+    my $id   = $self->param("id");
     my $from = $self->param("from");
     my $to   = $self->param("to");
     my $config;
     my $isservice = 0;
     my $data      = [];
-    my $json      = Mojo::JSON->new;
 
     # Double check the input
     if ( !defined $id ) {
@@ -503,7 +501,7 @@ sub data {
     $config = $sth->fetchrow();
 
     if ( defined $config ) {
-        $config = $json->decode($config);
+        $config = decode_json($config);
     }
 
     $sth = $self->prepare(
@@ -548,7 +546,7 @@ sub data {
         # Buggy with multiple units!
         $config->{'yaxis_unit'} = $unit;
     }
-    $config->{'yaxis_autoscale'}       = $json->true;
+    $config->{'yaxis_autoscale'}       = Mojo::JSON->true;
     $config->{'yaxis_autoscaleMargin'} = 0.2;
 
     $sth->finish;

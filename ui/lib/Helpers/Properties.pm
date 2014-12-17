@@ -6,6 +6,7 @@ package Helpers::Properties;
 # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
 
 use Mojo::Base 'Mojolicious::Plugin';
+use Mojo::JSON;
 use Carp;
 
 has data => sub { { file => '' } };
@@ -26,7 +27,6 @@ sub register {
 
 sub validate {
     my ( $self, $input ) = @_;
-    my $json = Mojo::JSON->new;
 
     my %d;
 
@@ -45,7 +45,7 @@ sub validate {
         bars_stacked bars_filled bars_grouped lines_stacked
         lines_filled points_filled pie_filled show_legend
     }) {
-        $d{$c} = ( exists $input->{$c} ) ? $json->true : $json->false;
+        $d{$c} = ( exists $input->{$c} ) ? Mojo::JSON->true : Mojo::JSON->false;
     }
 
     # Process numbers
@@ -71,7 +71,6 @@ sub validate {
 
 sub to_plot {
     my ( $self, $props ) = @_;
-    my $json = Mojo::JSON->new;
 
     # This function does (and must do) the same as Grapher.options()
     # in public/js/grapher.js
@@ -81,7 +80,7 @@ sub to_plot {
         title      => $props->{'title'},
         subtitle   => $props->{'subtitle'},
         legend     => { position => 'ne' },
-        HtmlText   => $json->false,
+        HtmlText   => Mojo::JSON->false,
         xaxis      => { autoscaleMargin => 5 },
         selection  => { mode => 'x', fps => 30 } };
 
@@ -103,7 +102,7 @@ sub to_plot {
         if ( $p eq 'type' ) {
             $options->{ $props->{$p} } = {}
                 if !exists $options->{ $props->{$p} };
-            $options->{ $props->{$p} }->{show} = $json->true;
+            $options->{ $props->{$p} }->{show} = Mojo::JSON->true;
             next;
         }
     }

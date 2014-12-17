@@ -110,14 +110,26 @@ sub host {
 sub service_edit_tags {
     my $self = shift;
     my $id   = $self->param('idservice');
-    my @tags = $self->param('tags');
+    my @tags;
     my $rc ;
     my $sql;
+
+    if ( $Mojolicious::VERSION < 5.48 ) {
+        @tags = $self->param('tags');
+    } else {
+        @tags = $self->every_param('tags');
+    }
+
     $sql = $self->prepare(
         q{
         SELECT public.update_service_tags(?, ?);
     } );
-    $rc = $sql->execute( $id, \@tags );
+
+    if ( $Mojolicious::VERSION < 5.48 ) {
+        $rc = $sql->execute( $id, \@tags );
+    } else {
+        $rc = $sql->execute( $id, @tags );
+    }
     $sql->finish();
     if ( $rc ) {
         return $self->render( 'json' => { status => "success" } );
