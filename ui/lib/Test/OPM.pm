@@ -29,7 +29,7 @@ sub _get_message {
 sub has_error {
   my ($t, $message, $desc) = @_;
   $desc ||= 'error present';
-  $t->_test('is', _get_message($t, "error")->first->text, $message, $desc);
+  $t->_test('is', _get_message($t, "danger")->first->text, $message, $desc);
 }
 
 sub has_success {
