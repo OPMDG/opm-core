@@ -38,4 +38,18 @@
           <%= submit_button l('Add'), name => 'add', class => 'btn btn-primary' %>
       <% end %>
     </div>
+    <h2><%=l 'Change password' %></h2>
+    <div class="box">
+      <%= form_for users_edit => (role => 'form', method => 'POST') => begin %>
+          <div class="form-group">
+            <label class="control-label"><%=l 'New password' %>:</label>
+              <%= password_field 'new_password', type => 'password', class => 'form-control', id => 'new_password' %><br/>
+          </div>
+          <div class="form-group">
+            <label class="control-label"><%=l 'Repeat password' %>:</label>
+              <%= password_field 'repeat_password', type => 'password', class => 'form-control', id => 'repeat_password' %><br/>
+          </div>
+          <%= submit_button l('Change'), name => 'change_password', class => 'btn btn-primary' %>
+      <% end %>
+    </div>
   </div>

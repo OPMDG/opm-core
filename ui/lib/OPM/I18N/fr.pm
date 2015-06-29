@@ -38,6 +38,7 @@ our %Lexicon = (
     "Cleanup"                                     => "Nettoyer",
     "Cleanup now"                                 => "Nettoyer maintenant",
     "Clone"                                       => "Cloner",
+    "Could not change password"                   => "Impossible de changer le mot de passe",
     "Could not create account"                    => "Impossible de créer le groupe",
     "Could not add account to user"               =>
         "Impossible d'ajouter le groupe à l'utilisateur",

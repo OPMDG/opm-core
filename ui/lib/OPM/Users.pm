@@ -83,6 +83,7 @@ sub edit {
     my $validation;
     my $acc;
     my $allacc;
+    my $form_data;
 
     $sql = $self->prepare('SELECT COUNT(*) > 0
         FROM public.list_users()
@@ -103,21 +104,38 @@ sub edit {
     $validation = $self->validation;
 
     if ( $method eq 'POST' && $validation->has_data ) {
-        $validation->required('accname');
-        $self->validation_error($validation);
+        $form_data = $self->req->params->to_hash;
+        if (defined $form_data->{'add'}){
+            $validation->required('accname');
+            $self->validation_error($validation);
 
-        if( $validation->is_valid ) {
-            my $granted = $self->proc_wrapper->grant_account(
-                $rolname, $validation->output->{accname}
-            );
+            if( $validation->is_valid ) {
+                my $granted = $self->proc_wrapper->grant_account(
+                    $rolname, $validation->output->{accname}
+                );
 
-            if( $granted ) {
-                $self->msg->info("Account added to user");
+                if( $granted ) {
+                    $self->msg->info("Account added to user");
+                }
+                else {
+                    $self->msg->error("Could not add account to user");
+                }
             }
-            else {
-                $self->msg->error("Could not add account to user");
+        }
+        elsif(defined $form_data->{'change_password'}){
+            my $new_password;
+            $validation->required('new_password')->size(5, 64);
+            $validation->required('repeat_password')->equal_to('new_password');
+            $self->validation_error($validation);
+            $new_password = $validation->output->{new_password};
+            if (not $validation->has_error){
+                if( $self->proc_wrapper->update_user($rolname, $new_password) ) {
+                    $self->msg->info("Password changed");
+                } else {
+                    $self->msg->error("Could not change password");
+                }
             }
-      }
+        }
     }
 
     # Select account(s) assigned to user
