@@ -93,6 +93,105 @@ CREATE EVENT TRIGGER opm_check_dropped_extensions
   WHEN tag IN ('DROP EXTENSION')
   EXECUTE PROCEDURE public.opm_check_dropped_extensions() ;
 
+CREATE OR REPLACE
+FUNCTION public.create_graph_for_new_metric(IN p_server_id bigint,
+    OUT rc boolean)
+LANGUAGE plpgsql STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+DECLARE
+  v_owner    bigint;
+  metricsrow record;
+  graphsrow  record;
+BEGIN
+
+    rc := false;
+
+    --Does the server exists ?
+    SELECT id_role INTO v_owner
+    FROM public.servers AS s
+    WHERE s.id = p_server_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Server unknown or not allowed for current user.';
+    END IF;
+
+  -- Is the user allowed to create graphs ?
+    IF NOT (public.is_admin() OR public.is_member(v_owner)) THEN
+        RAISE EXCEPTION 'Server unknown or not allowed for current user.';
+    END IF;
+
+  FOR metricsrow IN (
+    SELECT DISTINCT s.service, s.warehouse, m.id_service, COALESCE(m.unit,'') AS unit
+    FROM public.services s
+    JOIN public.metrics m ON s.id = m.id_service
+    WHERE s.id_server = p_server_id
+        AND NOT EXISTS (
+            SELECT 1 FROM public.series gs
+            JOIN public.metrics m2 ON m2.id=gs.id_metric
+            WHERE m2.id=m.id
+        )
+    )
+  LOOP
+    -- how many graph existing for the ungraphed serie
+    SELECT COUNT(DISTINCT id_graph) as nb, min(id_graph) AS id_graph INTO graphsrow
+    FROM public.services s1
+    JOIN public.metrics m ON m.id_service = s1.id
+    JOIN public.series s2 ON s2.id_metric = m.id
+    JOIN public.graphs g ON g.id = s2.id_graph
+    WHERE s1.id = metricsrow.id_service
+    AND COALESCE(m.unit, '') = 's';
+
+    IF (graphsrow.nb != 1) THEN
+        -- already multiple graphs or no graph, let's create a new one
+        EXECUTE format('WITH new_graphs (id_graph) AS (
+              INSERT INTO public.graphs (graph, config)
+                VALUES (%L || '' ('' || CASE WHEN %L = '''' THEN ''no unit'' ELSE ''in '' || %2$L END || '')'', ''{"type": "lines"}'')
+                RETURNING graphs.id
+            )
+            INSERT INTO %I.series (id_graph, id_metric)
+              SELECT new_graphs.id_graph, m.id
+              FROM new_graphs
+              CROSS JOIN public.metrics m
+              WHERE m.id_service = %s
+                AND COALESCE(m.unit,'''') = %2$L
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM public.series gs
+                        JOIN public.metrics m2 ON m2.id=gs.id_metric
+                    WHERE m2.id=m.id
+                )',
+        metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service) ;
+    ELSE
+        -- exactly 1 graph, add the serie to it
+        EXECUTE format('WITH new_graphs (id_graph) AS (
+              SELECT %s
+            )
+            INSERT INTO %I.series (id_graph, id_metric)
+              SELECT new_graphs.id_graph, m.id
+              FROM new_graphs
+              CROSS JOIN public.metrics m
+              WHERE m.id_service = %s
+                AND COALESCE(m.unit,'''') = %L
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM public.series gs
+                        JOIN public.metrics m2 ON m2.id=gs.id_metric
+                    WHERE m2.id=m.id
+                )',
+        graphsrow.id_graph, metricsrow.warehouse, metricsrow.id_service, metricsrow.unit) ;
+    END IF;
+  END LOOP;
+  rc := true;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OUT rc boolean) FROM public;
+
+COMMENT ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OUT rc boolean) IS
+'Create default graphs for all new services.';
+
+SELECT * FROM public.register_api('public.create_graph_for_new_metric(bigint)'::regprocedure);
 
 
 -- This line must be the last one, so that every functions are owned

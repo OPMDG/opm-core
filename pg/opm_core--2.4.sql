@@ -2026,8 +2026,9 @@ LANGUAGE plpgsql STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 DECLARE
-  v_owner   bigint;
+  v_owner    bigint;
   metricsrow record;
+  graphsrow  record;
 BEGIN
 
     rc := false;
@@ -2058,25 +2059,54 @@ BEGIN
         )
     )
   LOOP
-    EXECUTE format('WITH new_graphs (id_graph) AS (
-          INSERT INTO public.graphs (graph, config)
-            VALUES (%L || '' ('' || CASE WHEN %L = '''' THEN ''no unit'' ELSE ''in '' || %2$L END || '')'', ''{"type": "lines"}'')
-            RETURNING graphs.id
-        )
-        INSERT INTO %I.series (id_graph, id_metric)
-          SELECT new_graphs.id_graph, m.id
-          FROM new_graphs
-          CROSS JOIN public.metrics m
-          WHERE m.id_service = %s
-            AND COALESCE(m.unit,'''') = %2$L
-            AND NOT EXISTS (
-                SELECT 1
-                FROM public.series gs
-                    JOIN public.metrics m2 ON m2.id=gs.id_metric
-                WHERE m2.id=m.id
-            )',
-    metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service) ;
+    -- how many graph existing for the ungraphed serie
+    SELECT COUNT(DISTINCT id_graph) as nb, min(id_graph) AS id_graph INTO graphsrow
+    FROM public.services s1
+    JOIN public.metrics m ON m.id_service = s1.id
+    JOIN public.series s2 ON s2.id_metric = m.id
+    JOIN public.graphs g ON g.id = s2.id_graph
+    WHERE s1.id = metricsrow.id_service
+    AND COALESCE(m.unit, '') = 's';
 
+    IF (graphsrow.nb != 1) THEN
+        -- already multiple graphs or no graph, let's create a new one
+        EXECUTE format('WITH new_graphs (id_graph) AS (
+              INSERT INTO public.graphs (graph, config)
+                VALUES (%L || '' ('' || CASE WHEN %L = '''' THEN ''no unit'' ELSE ''in '' || %2$L END || '')'', ''{"type": "lines"}'')
+                RETURNING graphs.id
+            )
+            INSERT INTO %I.series (id_graph, id_metric)
+              SELECT new_graphs.id_graph, m.id
+              FROM new_graphs
+              CROSS JOIN public.metrics m
+              WHERE m.id_service = %s
+                AND COALESCE(m.unit,'''') = %2$L
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM public.series gs
+                        JOIN public.metrics m2 ON m2.id=gs.id_metric
+                    WHERE m2.id=m.id
+                )',
+        metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service) ;
+    ELSE
+        -- exactly 1 graph, add the serie to it
+        EXECUTE format('WITH new_graphs (id_graph) AS (
+              SELECT %s
+            )
+            INSERT INTO %I.series (id_graph, id_metric)
+              SELECT new_graphs.id_graph, m.id
+              FROM new_graphs
+              CROSS JOIN public.metrics m
+              WHERE m.id_service = %s
+                AND COALESCE(m.unit,'''') = %L
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM public.series gs
+                        JOIN public.metrics m2 ON m2.id=gs.id_metric
+                    WHERE m2.id=m.id
+                )',
+        graphsrow.id_graph, metricsrow.warehouse, metricsrow.id_service, metricsrow.unit) ;
+    END IF;
   END LOOP;
   rc := true;
 END
