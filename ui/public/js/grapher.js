@@ -434,7 +434,7 @@
 
             case 'ms':
             case 's':
-                msecond = 1;
+                msecond = (unit === 's')? 0.001:1;
                 second  = (unit === 's')? 1:1000;
                 minute  = 60  * second;
                 hour    = 60  * minute;
