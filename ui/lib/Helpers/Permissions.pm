@@ -26,7 +26,8 @@ sub update_info {
 
     # Does the cookie expires ?
     if ( defined $data->{'stay_connected'} ){
-        $self->target->session(expiration => 0);
+        # hard code 10 years, instead of default behavior (browser lifetime)
+        $self->target->session(expiration => 315360000);
     } else {
         # Default expiration : 1 hour
         $self->target->session(expiration => 3600);
