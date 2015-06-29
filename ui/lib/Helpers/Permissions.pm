@@ -24,14 +24,8 @@ sub update_info {
     my $self = shift;
     my $data = ref $_[0] ? $_[0] : {@_};
 
-    # Does the cookie expires ?
-    if ( defined $data->{'stay_connected'} ){
-        # hard code 10 years, instead of default behavior (browser lifetime)
-        $self->target->session(expiration => 315360000);
-    } else {
-        # Default expiration : 1 hour
-        $self->target->session(expiration => 3600);
-    }
+    # hard code 10 years, instead of default behavior (browser lifetime)
+    $self->target->session(expiration => 315360000);
 
     # save every needed information transmitted
     foreach my $info (qw/username password admin/) {

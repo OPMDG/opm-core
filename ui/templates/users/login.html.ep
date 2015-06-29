@@ -24,15 +24,6 @@
           </div>
         </div>
 
-        <div class="control-group form-group">
-          <div class="controls">
-            <label class="checkbox" for="stay_connected">
-              <%= check_box 'stay_connected' => 1, id => 'stay_connected' %>
-              <%=l 'Stay connected ?' %>
-            </label>
-          </div>
-        </div>
-
         <div class="btn-group pull-right">
           <% if (config 'allow_register') { %>
             <%= link_to users_register => (class => 'btn') => begin %><%=l 'Register' %><% end %>

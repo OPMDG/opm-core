@@ -217,7 +217,6 @@ sub login {
 
         $validation->required('username');
         $validation->required('password');
-        $validation->optional('stay_connected');
         $self->validation_error($validation);
         return $self->render() if $validation->has_error;
 
@@ -242,7 +241,6 @@ sub login {
         # admin, he won't have access to specific pages before logging
         # off and on again.
         $self->perm->update_info(
-            stay_connected => $form_data->{stay_connected},
             username       => $form_data->{username},
             password       => $form_data->{password},
             admin          => $is_admin
