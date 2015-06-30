@@ -152,7 +152,6 @@ our %Lexicon = (
     "Sign Out"                                    => "Déconnexion",
     "Stacked"                                     => "Empilé(e)s",
     "State"                                       => "État",
-    "Stay connected ?"                            => "Rester connecté ?",
     "Stored interval"                             => "Intervalle stocké",
     "This user does not exists"                   => "Cet utilisateur n'existe pas",
     "This server does not exists"                 => "Ce serveur n'existe pas",
