@@ -1,0 +1,57 @@
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+
+% layout config 'layout';
+% my @templates = @{stash 'templates'};
+
+<div class="row">
+  <div class="col-md-8">
+    <h1><%=l 'List of graphs templates' %> :</h1>
+    <div class="box" id="graphs_templates_list">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th><%=l 'Action' %></th><th><%=l 'Id' %></th><th><%=l 'Service pattern' %></th><th><%=l 'Unit' %></th><th><%=l 'Metric pattern' %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% foreach my $t (@templates) { %>
+            <%   my %line = %{$t}; %>
+              <tr>
+                <td>
+                  <%= link_to graphs_tpl_delete => {id => $line{id}} => ( onclick => "return confirmDel('graph template id','$line{id}');" ) => begin %>
+                    <span class="label label-danger"><i class="fa fa-times"></i></span>
+                  <% end %>
+                  <%= link_to graphs_tpl_edit => {id => $line{id}} => begin %>
+                    <span class="label label-primary"><i class="fa fa-pencil-square-o"></i></span>
+                  <% end %>
+                </td>
+                <td><%= $line{id} %></td>
+                <td><%= $line{service_pattern} %></td>
+                <td><%= $line{unit} %></td>
+                <td><%= $line{metric_pattern} %></td>
+              </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-4" id="tpl_create">
+    <h1><%=l 'Add a graph template' %></h1>
+    <div class="box">
+      <%= form_for graphs_tpl_create => (role => 'form', method => 'POST') => begin %>
+        <div class="form-group">
+          <label for="service_pattern"><%=l 'Service pattern' %>:</label>
+          <%= text_field 'service_pattern', type => 'text', class => 'form-control', id => 'service_pattern' %>
+        </div>
+        <div class="form-group">
+          <label for="unit"><%=l 'Unit' %>:</label>
+          <%= text_field 'unit', type => 'text', class => 'form-control', id => 'unit' %>
+        </div>
+        <%= submit_button l('Create'), name => 'create', class => 'btn btn-primary' %>
+      <% end %>
+    </div>
+  </div>
+</div>

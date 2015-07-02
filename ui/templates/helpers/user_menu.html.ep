@@ -26,6 +26,11 @@
             <i class="fa fa-cog"></i> <%=l 'Accounts' %>
           % end
         </li>
+        <li>
+          %= link_to graphs_tpl_list => begin
+            <i class="fa fa-cog"></i> <%=l 'Graph templates' %>
+          % end
+        </li>
         <li class="divider"></li>
         % foreach my $link ( @{ get_links('adm_menu') } ) {
             <li>

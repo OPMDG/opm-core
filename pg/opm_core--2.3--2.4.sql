@@ -6,6 +6,25 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION opm_core" to load this file. \quit
 
+----------------------------------------------
+-- Graphs configuration templates
+CREATE TABLE public.graphs_templates (
+    id bigserial        PRIMARY KEY,
+    service_pattern     text NOT NULL,
+    unit                text,
+    config              json NOT NULL,
+    metric_pattern      text
+) ;
+
+REVOKE ALL ON TABLE public.graphs_templates FROM public ;
+
+COMMENT ON TABLE  public.graphs_templates                 IS 'Store configuration templates for new graphs';
+COMMENT ON COLUMN public.graphs_templates.id              IS 'Unique identifier of a configuration template.' ;
+COMMENT ON COLUMN public.graphs_templates.service_pattern IS 'Regex pattern to match a service for a new graph.' ;
+COMMENT ON COLUMN public.graphs_templates.unit            IS 'Unit to match a service for a new graph.' ;
+COMMENT ON COLUMN public.graphs_templates.config          IS 'Configuration to apply to the new graph.' ;
+COMMENT ON COLUMN public.graphs_templates.metric_pattern  IS 'Regex pattern to match a serie to remove from a new graph. It needs to also match the service pattern.' ;
+
 /*
  * this function is only called by the extensions themselves
  *  to set the owner of their functions to the database owner.
@@ -100,9 +119,12 @@ LANGUAGE plpgsql STRICT LEAKPROOF SECURITY DEFINER
 SET search_path TO public
 AS $$
 DECLARE
-  v_owner    bigint;
-  metricsrow record;
-  graphsrow  record;
+  v_owner     bigint ;
+  metricsrow  record ;
+  graphsrow   record ;
+  templaterow record ;
+  seriesrow   record ;
+  v_graph_id  bigint ;
 BEGIN
 
     rc := false;
@@ -140,7 +162,7 @@ BEGIN
     JOIN public.series s2 ON s2.id_metric = m.id
     JOIN public.graphs g ON g.id = s2.id_graph
     WHERE s1.id = metricsrow.id_service
-    AND COALESCE(m.unit, '') = 's';
+    AND COALESCE(m.unit, '') = '';
 
     IF (graphsrow.nb != 1) THEN
         -- already multiple graphs or no graph, let's create a new one
@@ -160,8 +182,38 @@ BEGIN
                     FROM public.series gs
                         JOIN public.metrics m2 ON m2.id=gs.id_metric
                     WHERE m2.id=m.id
-                )',
-        metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service) ;
+                )
+                RETURNING id_graph',
+        metricsrow.service, metricsrow.unit, metricsrow.warehouse, metricsrow.id_service)
+        INTO v_graph_id ;
+
+        IF (graphsrow.nb = 0) THEN
+            -- First graph to be created, let's check if a template
+            -- configuration exists.
+            -- if multiple templates matches the service name, well you did
+            -- something wrong, so only apply the first created
+            FOR templaterow IN (
+                SELECT service_pattern, config, metric_pattern
+                FROM public.graphs_templates
+                WHERE  COALESCE(unit, '') = metricsrow.unit
+                AND metricsrow.service ~* service_pattern
+                ORDER BY id
+                LIMIT 1
+            )
+            LOOP
+                UPDATE public.graphs SET config = templaterow.config
+                WHERE id = v_graph_id ;
+                -- Now, check for series to remove
+                IF (templaterow.metric_pattern IS NOT NULL) THEN
+                    UPDATE public.series s
+                    SET id_graph = NULL
+                    FROM public.metrics m
+                    WHERE m.label ~* templaterow.metric_pattern
+                    AND id_graph = v_graph_id
+                    AND id_metric = m.id ;
+                END IF ;
+            END LOOP ;
+        END IF ;
     ELSE
         -- exactly 1 graph, add the serie to it
         EXECUTE format('WITH new_graphs (id_graph) AS (
@@ -180,9 +232,9 @@ BEGIN
                     WHERE m2.id=m.id
                 )',
         graphsrow.id_graph, metricsrow.warehouse, metricsrow.id_service, metricsrow.unit) ;
-    END IF;
-  END LOOP;
-  rc := true;
+    END IF ;
+  END LOOP ;
+  rc := true ;
 END
 $$;
 
@@ -192,6 +244,168 @@ COMMENT ON FUNCTION public.create_graph_for_new_metric(p_server_id bigint, OUT r
 'Create default graphs for all new services.';
 
 SELECT * FROM public.register_api('public.create_graph_for_new_metric(bigint)'::regprocedure);
+
+/*
+public.list_graphs_templates(id)
+
+List the graphs templates. If an id is provided, only return this one.
+
+@p_id : id of the graph template to list (optional)
+*/
+CREATE OR REPLACE
+FUNCTION public.list_graphs_templates(IN p_id bigint)
+RETURNS TABLE(id bigint, service_pattern text, unit text, config text, metric_pattern text)
+LANGUAGE plpgsql VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+DECLARE
+    v_where text ;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.' ;
+    END IF;
+
+    IF (p_id IS NULL) THEN
+        v_where := 'true';
+    ELSE
+        v_where = 'id = ' || p_id;
+    END IF ;
+    RETURN QUERY EXECUTE format(
+        'SELECT id, service_pattern, unit, config::text, metric_pattern
+        FROM public.graphs_templates
+        WHERE %s', v_where);
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.list_graphs_templates(IN bigint)
+    FROM public;
+
+COMMENT ON FUNCTION public.list_graphs_templates(IN bigint) IS
+'List the graphs templates. You must be an admin to call this function.';
+
+SELECT * FROM public.register_api('public.list_graphs_templates(bigint)'::regprocedure);
+/*
+public.delete_graph_template(id)
+
+Drop a graph template. Only admin can do this.
+
+@p_id : id of the graph template to drop
+@return rc: return true if succeeded.
+*/
+CREATE OR REPLACE
+FUNCTION public.delete_graph_template(IN p_id bigint, OUT rc boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+DECLARE
+    v_id bigint;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.';
+    END IF;
+
+    DELETE FROM public.graphs_templates AS r
+    WHERE id = p_id
+    RETURNING id INTO v_id ;
+
+    rc := (v_id IS NOT NULL) ;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_graph_template(IN bigint)
+    FROM public;
+
+COMMENT ON FUNCTION public.delete_graph_template(IN bigint) IS
+'Drop a graph template. You must be an admin to call this function.';
+
+SELECT * FROM public.register_api('public.delete_graph_template(bigint)'::regprocedure);
+
+/*
+public.create_graph_template(text, text)
+
+Create a graph template. Only admin can do this.
+
+@service_pattern: The service regex for a new graph template
+@return id: id of the new graph template
+*/
+CREATE OR REPLACE
+FUNCTION public.create_graph_template(IN p_service_pattern text,
+    IN p_unit text, OUT p_id bigint)
+LANGUAGE plpgsql VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.';
+    END IF;
+
+    IF p_service_pattern IS NULL THEN
+        RAISE EXCEPTION 'You must provide a service pattern.';
+    END IF;
+
+    INSERT INTO public.graphs_templates (service_pattern, unit, config)
+    VALUES (p_service_pattern, p_unit, '{}')
+    RETURNING id INTO p_id ;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.create_graph_template(IN text, IN text)
+    FROM public;
+
+COMMENT ON FUNCTION public.create_graph_template(IN text, IN text) IS
+'Create a graph template. You must be an admin to call this function.';
+
+SELECT * FROM public.register_api('public.create_graph_template(text, text)'::regprocedure);
+
+/*
+public.update_graph_template(bigint, text, text, json, text)
+
+Create a graph template. Only admin can do this.
+
+@id: id of the graph template to update
+@service_pattern: service regex for a new graph template
+@config: json
+@metric_pattern: the metric regex for metric to delete from a new graph
+@return rc: true if everything went well
+*/
+CREATE OR REPLACE
+FUNCTION public.update_graph_template(IN p_id bigint, IN p_service_pattern text,
+    IN p_unit text, IN p_config json, IN p_metric_pattern text, OUT rc boolean)
+LANGUAGE plpgsql VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+DECLARE
+    v_id bigint;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.' ;
+    END IF ;
+
+    rc := false ;
+
+    IF (COALESCE(p_service_pattern,'') = ''  OR p_config IS NULL) THEN
+        return ;
+    END IF ;
+    UPDATE public.graphs_templates
+    SET service_pattern = p_service_pattern,
+        unit = p_unit,
+        config = p_config,
+        metric_pattern = p_metric_pattern
+    WHERE id = p_id
+    RETURNING id INTO v_id ;
+
+    rc := (v_id IS NOT NULL) ;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.update_graph_template(IN bigint, IN text, IN text, IN json, IN text)
+    FROM public;
+
+COMMENT ON FUNCTION public.update_graph_template(IN bigint, IN text, IN text, IN json, IN text) IS
+'Update a graph template. You must be an admin to call this function.';
+
+SELECT * FROM public.register_api('public.update_graph_template(bigint, text, text, json, text)'::regprocedure);
+
 
 
 -- This line must be the last one, so that every functions are owned

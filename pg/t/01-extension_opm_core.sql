@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(312);
+SELECT plan(334);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -41,6 +41,7 @@ SELECT set_eq(
 );
 SELECT has_table('public', 'api', 'Schema public contains table "api" of opm_core.' );
 SELECT has_table('public', 'graphs', 'Schema public contains table "graphs" of opm_core.' );
+SELECT has_table('public', 'graphs_templates', 'Schema public contains table "graphs_templates" of opm_core.' );
 SELECT has_table('public', 'members', 'Schema public contains table "members" of opm_core.' );
 SELECT has_table('public', 'metrics', 'Schema public contains table "metrics" of opm_core.' );
 SELECT has_table('public', 'roles', 'Schema public contains table "roles" of opm_core.' );
@@ -81,8 +82,10 @@ SELECT has_function('public', 'clone_graph', '{bigint}', 'Function "clone_graph"
 SELECT has_function('public', 'create_account', '{text}', 'Function "create_account" exists.');
 SELECT has_function('public', 'create_admin', '{text, text}', 'Function "create_admin" exists.');
 SELECT has_function('public', 'create_graph_for_new_metric', '{bigint}', 'Function "create_graph_for_new_metric" exists.');
+SELECT has_function('public', 'create_graph_template', '{text, text}', 'Function "create_graph_template" exist.s');
 SELECT has_function('public', 'create_user', '{text, text, text[]}', 'Function "create_user" exists.');
 SELECT has_function('public', 'delete_graph', '{bigint}', 'Function "delete_graph" exists.');
+SELECT has_function('public', 'delete_graph_template', '{bigint}', 'Function "delete_graph_template" exists.');
 SELECT has_function('public', 'drop_account', '{text}', 'Function "drop_account" exists.');
 SELECT has_function('public', 'drop_user', '{text}', 'Function "drop_user" exists.');
 SELECT has_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function "edit_graph" exists.');
@@ -101,6 +104,7 @@ SELECT has_function('public', 'is_member', '{bigint}', 'Function "is_member(bigi
 SELECT has_function('public', 'is_member', '{text}', 'Function "is_member(name)" exists.');
 SELECT has_function('public', 'is_member', '{text, text}', 'Function "is_member(name, name)" exists.');
 SELECT has_function('public', 'is_user', '{text}', 'Function "is_user" exists.');
+SELECT has_function('public', 'list_graphs_templates', '{bigint}', 'Function "list_graphs_templates" exists.');
 SELECT has_function('public', 'js_time', '{timestamp with time zone}', 'Function "js_time" exists.');
 SELECT has_function('public', 'js_timetz', '{timestamp with time zone}', 'Function "js_timetz" exists.');
 SELECT has_function('public', 'list_accounts', '{}', 'Function "list_accounts" exists.');
@@ -123,6 +127,7 @@ SELECT has_function('public', 'set_extension_owner', '{name}', 'Function "set_ex
 SELECT has_function('public', 'set_opm_session', '{text}', 'Function "set_opm_session" exists.');
 SELECT has_function('public', 'update_current_user', '{text}', 'Function "update_current_user" exists.');
 SELECT has_function('public', 'update_graph_metrics', '{bigint,bigint[]}', 'Function "update_graph_metrics" exists.');
+SELECT has_function('public', 'update_graph_template', '{bigint,text,text,json,text}', 'Function "update_graph_template" exists.');
 SELECT has_function('public', 'update_user', '{text, text}', 'Function "update_user" exists.');
 SELECT has_function('public', 'wh_exists', '{text}', 'Function "wh_exists" exists.');
 
@@ -583,6 +588,7 @@ SELECT lives_ok(
 
 SELECT hasnt_extension('opm_core', 'Extension "opm_core" does not exist.');
 SELECT hasnt_table('public', 'graphs', 'Schema public does not contains table "graphs" of opm_core.' );
+SELECT hasnt_table('public', 'graphs_templates', 'Schema public does not contains table "graphs_templates" of opm_core.' );
 SELECT hasnt_table('public', 'members', 'Schema public does not contains table "members" of opm_core.' );
 SELECT hasnt_table('public', 'metrics', 'Schema public does not contains table "metrics" of opm_core.' );
 SELECT hasnt_table('public', 'roles', 'Schema public does not contains table "roles" of opm_core.' );
@@ -599,8 +605,10 @@ SELECT hasnt_function('public', 'clone_graph', '{bigint}', 'Function "clone_grap
 SELECT hasnt_function('public', 'create_account', '{text}', 'Function "create_account" does not exist anymore.');
 SELECT hasnt_function('public', 'create_admin', '{name, text}', 'Function "create_admin" does not exist anymore.');
 SELECT hasnt_function('public', 'create_graph_for_new_metric', '{bigint}', 'Function "create_graph_for_new_metric" does not exist anymore.');
+SELECT hasnt_function('public', 'create_graph_template', '{text, text}', 'Function "create_graph_template" does not exist anymore.');
 SELECT hasnt_function('public', 'create_user', '{text, text, name[]}', 'Function "create_user" does not exist anymore.');
 SELECT hasnt_function('public', 'delete_graph', '{bigint}', 'Function "delete_graph" does not exist anymore.');
+SELECT hasnt_function('public', 'delete_graph_template', '{bigint}', 'Function "delete_graph_template" does not exist anymore.');
 SELECT hasnt_function('public', 'drop_account', '{name}', 'Function "drop_account" does not exist anymore.');
 SELECT hasnt_function('public', 'drop_user', '{name}', 'Function "drop_user" does not exist anymore.');
 SELECT hasnt_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function "edit_graph" does not exists anymore.');
@@ -619,6 +627,7 @@ SELECT hasnt_function('public', 'is_member', '{bigint}', 'Function "is_member(bi
 SELECT hasnt_function('public', 'is_member', '{name}', 'Function "is_member(name)" does not exist anymore.');
 SELECT hasnt_function('public', 'is_member', '{name, name}', 'Function "is_member(name, name)" does not exist anymore.');
 SELECT hasnt_function('public', 'is_user', '{name}', 'Function "is_user" does not exist anymore.');
+SELECT hasnt_function('public', 'list_graphs_templates', '{bigint}', 'Function "list_graphs_templates" does not exists anymore.');
 SELECT hasnt_function('public', 'js_time', '{timestamp with time zone}', 'Function "js_time" does not exist anymore.');
 SELECT hasnt_function('public', 'js_timetz', '{timestamp with time zone}', 'Function "js_timetz" does not exist anymore.');
 SELECT hasnt_function('public', 'list_accounts', '{}', 'Function "list_accounts" does not exist anymore.');
@@ -641,6 +650,7 @@ SELECT hasnt_function('public', 'set_extension_owner', '{name}', 'Function "set_
 SELECT hasnt_function('public', 'set_opm_session', '{text}', 'Function "set_opm_session" does not exist anymore.');
 SELECT hasnt_function('public', 'update_current_user', '{text}', 'Function "update_current_user" does not exist anymore.');
 SELECT hasnt_function('public', 'update_graph_metrics', '{bigint,bigint[]}', 'Function "update_graph_metrics" does not exist anymore.');
+SELECT hasnt_function('public', 'update_graph_template', '{bigint,text,text,json,text}', 'Function "update_graph_template" does not exist anymore.');
 SELECT hasnt_function('public', 'update_user', '{name, text}', 'Function "update_user" does not exist anymore.');
 SELECT hasnt_function('public', 'wh_exists', '{name}', 'Function "wh_exists" does not exist anymore.');
 

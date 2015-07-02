@@ -292,7 +292,7 @@ sub edit {
                 $sth->finish;
 
                 unless ($rc) {
-                    $self->msg->error("Error while saving graph.");
+                    $self->msg->error("Error while saving graph");
                     return $self->redirect_to( 'graphs_show', id => $id );
                 }
 
@@ -560,6 +560,145 @@ sub data {
             series     => $data,
             properties => $self->properties->to_plot($config)
         } );
+}
+
+sub tpl_list {
+    my $self = shift;
+    my $sth;
+    my $templates;
+
+    $sth = $self->prepare('SELECT id, service_pattern, unit,  metric_pattern FROM public.list_graphs_templates(NULL)
+        ORDER BY id');
+
+    $sth->execute();
+    $templates = $sth->fetchall_arrayref({});
+    $sth->finish();
+
+    $self->stash(
+        'templates' => $templates
+    );
+    $self->render;
+}
+
+sub tpl_delete {
+    my $self    = shift;
+    my $id = $self->param('id');
+
+    if ( $self->proc_wrapper->delete_graph_template( $id ) ) {
+        $self->msg->info("Graph template deleted");
+    }
+    else {
+        $self->msg->error("Could not delete graph template");
+    }
+
+    return $self->redirect_post('graphs_tpl_list');
+}
+
+sub tpl_edit {
+    my $self    = shift;
+    my $id = $self->param('id');
+    my $validation = $self->validation;
+    my $template;
+    my $sth;
+
+    if ( $self->req->method =~ m/^POST$/i ) {
+
+        # process the input data
+        my $form = $self->req->params->to_hash;
+
+        if ( exists $form->{save} ) {
+            my $rc;
+
+            $validation->required('service_pattern');
+            $validation->optional('unit');
+            $validation->optional('metric_pattern');
+            $self->validation_error($validation);
+            return $self->redirect_to('graphs_tpl_edit', id => $id) if $validation->has_error;
+
+            # Prepare the configuration: save and clean the $form
+            # hashref to keep only the properties, so that we can
+            # use the plugin
+
+            my $props = $self->properties->validate($form);
+            if ( !defined $props ) {
+                $self->msg->error(
+                    "Bad input, please double check the options");
+                return $self->redirect_to('graphs_tpl_edit', id => $id);
+            }
+
+            # Save the properties actually sent
+            # If a property is missing, library/grapher default value will be used
+            my $config = encode_json($props);
+            my $service_pattern = $validation->output->{service_pattern};;
+            my $unit = $validation->output->{unit};;
+            my $metric_pattern = $validation->output->{metric_pattern};;
+
+            $sth =
+                $self->prepare(qq{SELECT public.update_graph_template(?, ?, ?, ?, ?)});
+            if (
+                !defined $sth->execute( $id, $service_pattern, $unit, $config,
+                    $metric_pattern ) )
+            {
+                $self->render_exception( $self->database->errstr );
+                $sth->finish();
+                $self->database->rollback();
+                return;
+            }
+            $rc = $sth->fetchrow();
+            $sth->finish;
+
+            unless ($rc) {
+                $self->msg->error("Error while saving graph template.");
+                return $self->redirect_to( 'graphs_tpl_edit', id => $id );
+            }
+
+            $self->msg->info("Graph template saved");
+            return $self->redirect_to( 'graphs_tpl_list');
+        }
+
+        $self->render;
+    }
+
+    $sth = $self->prepare('SELECT id, service_pattern, unit, config,
+        metric_pattern
+        FROM public.list_graphs_templates( ? )');
+
+    $sth->execute($id);
+    $template = $sth->fetchrow_hashref();
+    $sth->finish();
+
+    # Prepare properties
+    my $config = decode_json( $template->{config} );
+
+    # Send each configuration value to prefill form
+    foreach my $p ( keys %$config ) {
+        $self->param( $p, $config->{$p} );
+    }
+
+    $self->param( 'service_pattern', $template->{service_pattern} );
+    $self->param( 'unit', $template->{unit} );
+    $self->param( 'metric_pattern', $template->{metric_pattern} );
+
+    $self->render();
+}
+
+sub tpl_create {
+    my $self    = shift;
+    my $pattern;
+    my $unit;
+    my $new_id;
+    my $validation = $self->validation;
+
+    $validation->required('service_pattern');
+    $validation->optional('unit');
+    $self->validation_error($validation);
+    return $self->tpl_list if $validation->has_error;
+
+    $pattern = $validation->output->{service_pattern};
+    $unit = $validation->output->{unit};
+    $new_id = $self->proc_wrapper->create_graph_template($pattern, $unit);
+
+    return $self->redirect_to('graphs_tpl_edit', id => $new_id);
 }
 
 sub get_rolname_by_hostname {

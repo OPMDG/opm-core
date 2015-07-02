@@ -159,6 +159,16 @@ sub register_routes {
         idserver => qr/\d+/
     )->name('service_edit_tags')->to('server#service_edit_tags');
 
+    # graph template management
+    $r_adm->route('/graphs/templates')
+        ->to('graphs#tpl_list')->name('graphs_tpl_list');
+    $r_adm->route('/graphs/templates/create')
+        ->to('graphs#tpl_create')->name('graphs_tpl_create');
+    $r_adm->route('/graphs/templates/:id', id => qr/\d+/)
+        ->to('graphs#tpl_edit')->name('graphs_tpl_edit');
+    $r_adm->route('/graphs/templates/delete/:id', id => qr/\d+/)
+        ->to('graphs#tpl_delete')->name('graphs_tpl_delete');
+
     # Server management
     $r_auth->route('/server')->to('server#list')->name('server_list');
     $r_auth->route( '/server/:id', id => qr/\d+/ )->to('server#host')
