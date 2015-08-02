@@ -26,4 +26,15 @@ $(document).ready(function () {
 
   // Need to call it the first time
   toggleGraphType();
+
+  // Handle toggle serie selection
+  $('.select-all-none').click(function (e) {
+    e.preventDefault();
+    $this = $(this);
+    $chks = $('#unit-' + $this.data('unit') + ' :checkbox');
+    $checked = $chks.first().is(':checked');
+    $chks.each(function() {
+      $(this).prop('checked', !$checked);
+    });
+  });
 });

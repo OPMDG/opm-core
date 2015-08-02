@@ -2,6 +2,7 @@ Changelog
 =========
 
 WIP 2.4:
+  - add a select all/none series button in graph edition page
   - add graph templates. This allow to automatically configure graphs options or remove metrics when a new graph is created
   - display the host name in the UI titles
   - when a new metrics is created, only create a new graph if there are already multiple graphs

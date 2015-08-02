@@ -179,7 +179,11 @@
   %           foreach my $service (keys %labels) {
   %             foreach my $unit ( keys %{ $labels{$service} } ) {
                 <strong><%= l('Service') . " " . $labels{$service}{$unit}[0]{service} %> (<%= $unit %>)</strong>
-                <div class="container-fluid">
+                <a href="#" data-unit="<%= $unit %>"
+                  class="select-all-none"
+                  title="<%= l 'Select all/none' %>"
+                  ><i class="fa fa-eye"></i></a>
+                <div class="container-fluid" id="unit-<%= $unit %>">
   %               foreach my $l ( @{ $labels{$service}{$unit} } ) {
                   <label class="checkbox col-md-3" >
                     <%= check_box "labels" => $l->{'id_metric'} %> <%= "$l->{'label'} "%>

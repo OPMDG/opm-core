@@ -147,6 +147,7 @@ our %Lexicon = (
     "Save"                                        => "Sauvegarder",
     "Search amongs servers"                       => "Recherche parmi les serveurs",
     "Second Y axis"                               => "Deuxième axe Y",
+    "Select all/none"                             => "Sélectionner tout/rien",
     "Series"                                      => "Séries",
     "Server not found"                            => "Serveur non trouvé",
     "Service"                                     => "Service",
