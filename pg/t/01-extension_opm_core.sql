@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(334);
+SELECT plan(342);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -78,6 +78,7 @@ SELECT set_eq(
 );
 
 SELECT has_function('public', 'authenticate', '{text, text}', 'Function "authenticate" exists.');
+SELECT has_function('public', 'clean_graphs', '{}', 'Function "clean_graphs" exists.');
 SELECT has_function('public', 'clone_graph', '{bigint}', 'Function "clone_graph" exists.');
 SELECT has_function('public', 'create_account', '{text}', 'Function "create_account" exists.');
 SELECT has_function('public', 'create_admin', '{text, text}', 'Function "create_admin" exists.');
@@ -87,6 +88,7 @@ SELECT has_function('public', 'create_user', '{text, text, text[]}', 'Function "
 SELECT has_function('public', 'delete_graph', '{bigint}', 'Function "delete_graph" exists.');
 SELECT has_function('public', 'delete_graph_template', '{bigint}', 'Function "delete_graph_template" exists.');
 SELECT has_function('public', 'drop_account', '{text}', 'Function "drop_account" exists.');
+SELECT has_function('public', 'drop_server', '{bigint}', 'Function "drop_server" exists.');
 SELECT has_function('public', 'drop_user', '{text}', 'Function "drop_user" exists.');
 SELECT has_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function "edit_graph" exists.');
 SELECT has_function('public', 'get_graph', '{bigint}', 'Function "get_graph" exists.');
@@ -601,6 +603,7 @@ SELECT hasnt_type('public', 'metric_value', 'Schema public does not contains typ
 
 
 SELECT hasnt_function('public', 'authenticate', '{name, text}', 'Function "authenticate" does not exist anymore.');
+SELECT hasnt_function('public', 'clean_graphs', '{}', 'Function "clean_graphs" does not exists anymore.');
 SELECT hasnt_function('public', 'clone_graph', '{bigint}', 'Function "clone_graph" does not exist anymore.');
 SELECT hasnt_function('public', 'create_account', '{text}', 'Function "create_account" does not exist anymore.');
 SELECT hasnt_function('public', 'create_admin', '{name, text}', 'Function "create_admin" does not exist anymore.');
@@ -610,6 +613,7 @@ SELECT hasnt_function('public', 'create_user', '{text, text, name[]}', 'Function
 SELECT hasnt_function('public', 'delete_graph', '{bigint}', 'Function "delete_graph" does not exist anymore.');
 SELECT hasnt_function('public', 'delete_graph_template', '{bigint}', 'Function "delete_graph_template" does not exist anymore.');
 SELECT hasnt_function('public', 'drop_account', '{name}', 'Function "drop_account" does not exist anymore.');
+SELECT hasnt_function('public', 'drop_server', '{bigint}', 'Function "drop_server" does not exists anymore.');
 SELECT hasnt_function('public', 'drop_user', '{name}', 'Function "drop_user" does not exist anymore.');
 SELECT hasnt_function('public', 'edit_graph', '{bigint,text,text,json}', 'Function "edit_graph" does not exists anymore.');
 SELECT hasnt_function('public', 'get_graph', '{bigint}', 'Function "get_graph" does not exists anymore.');

@@ -407,6 +407,78 @@ COMMENT ON FUNCTION public.update_graph_template(IN bigint, IN text, IN text, IN
 SELECT * FROM public.register_api('public.update_graph_template(bigint, text, text, json, text)'::regprocedure);
 
 
+/*
+public.clean_graphs()
+
+Clean existing graphs.
+Some actions like removing a server or removing series may lead to empty
+graphs. This function will clean such graphs, and can be called numerous time.
+
+@return rc: true if everything went well.
+*/
+CREATE OR REPLACE
+FUNCTION public.clean_graphs(OUT rc boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+DELETE FROM public.graphs g
+    WHERE NOT EXISTS (SELECT 1 FROM public.series s
+        WHERE s.id_graph = g.id
+    );
+
+    rc := true;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.clean_graphs()
+    FROM public;
+
+COMMENT ON FUNCTION public.clean_graphs() IS
+'Clean empty existing graphs.';
+
+SELECT * FROM public.register_api('public.clean_graphs()'::regprocedure);
+
+
+/*
+public.drop_server(id)
+
+Drop a server. Only admin can do this.
+Existing foreign keys and trigger will remove the metrics, series and counter
+tables. The remaining existing and empty graphs are cleaned by calling the
+clean_graphs() function.
+
+@return rc: return id and name of the dropped server.
+*/
+CREATE OR REPLACE
+FUNCTION public.drop_server(IN p_id bigint, OUT id bigint, OUT hostname text)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.';
+    END IF;
+
+    DELETE FROM public.servers AS s
+    WHERE s.id = p_id
+    RETURNING s.id, s.hostname
+        INTO drop_server.id, drop_server.hostname;
+
+    PERFORM public.clean_graphs();
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.drop_server(IN bigint)
+    FROM public;
+
+COMMENT ON FUNCTION public.drop_server(IN bigint) IS
+'Drop an existing server. You must be an admin to call this function.';
+
+SELECT * FROM public.register_api('public.drop_server(bigint)'::regprocedure);
+
+
+
 
 -- This line must be the last one, so that every functions are owned
 -- by the database owner
