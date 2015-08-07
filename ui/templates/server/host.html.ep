@@ -8,10 +8,17 @@
   <script type="text/javascript" src="<%= url_for '/js/host.js' %>"></script>
 % end
 % my @services = @{stash 'services'};
+% my $hostname = stash 'hostname';
 % my $id = stash 'id';
 
 
-<h1><%=l 'List of services for server' %> <span class="at-hand"><%= stash 'hostname' %></span></h1>
+<h1><%=l 'List of services for server' %> <span class="at-hand"><%= stash 'hostname' %></span>
+% if ($is_admin and not scalar @services) {
+  <%= link_to server_delete => {id => $id} => ( onclick => "return confirmDel('server','$hostname');" ) => begin %>
+    <span class="label label-danger"><i class="fa fa-times"></i></span>
+  <% end %>
+% }
+</h1>
 <div class="box services_list">
   <% if ( scalar @services ) { %>
     <div class="overview-labels">

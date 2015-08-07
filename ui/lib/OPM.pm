@@ -170,6 +170,8 @@ sub register_routes {
         ->to('graphs#tpl_delete')->name('graphs_tpl_delete');
 
     # Server management
+    $r_adm->route('/server/delete/:id')->to('server#delete')
+        ->name('server_delete');
     $r_auth->route('/server')->to('server#list')->name('server_list');
     $r_auth->route( '/server/:id', id => qr/\d+/ )->to('server#host')
         ->name('server_host');

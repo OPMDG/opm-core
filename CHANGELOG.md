@@ -2,6 +2,8 @@ Changelog
 =========
 
 WIP 2.4:
+  - add the ability the remove an empty server (after all services have been
+    deleted)
   - add a select all/none series button in graph edition page
   - add graph templates. This allow to automatically configure graphs options or remove metrics when a new graph is created
   - display the host name in the UI titles

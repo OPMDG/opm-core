@@ -103,7 +103,8 @@ sub host {
         hostname => $hostname,
         accname  => $accname,
         id       => $id,
-        tags     => $server_tags );
+        tags     => $server_tags,
+        is_admin => $self->session('user_admin') );
     return $self->render();
 }
 
@@ -136,6 +137,21 @@ sub service_edit_tags {
     } else {
         return $self->render( 'json' => { status => "error" } );
     }
+}
+
+sub delete {
+    my $self    = shift;
+    my $id = $self->param('id');
+
+    if ( $self->proc_wrapper->drop_server( $id ) ) {
+        $self->msg->info("Server deleted");
+    }
+    else {
+        $self->msg->error("Could not delete server");
+    }
+
+    return $self->redirect_post('server_list');
+
 }
 
 1;
