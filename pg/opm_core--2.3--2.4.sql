@@ -478,6 +478,71 @@ COMMENT ON FUNCTION public.drop_server(IN bigint) IS
 SELECT * FROM public.register_api('public.drop_server(bigint)'::regprocedure);
 
 
+/*
+public.rename_account
+Rename an existing account.
+
+Can only be executed by admins.
+
+@return rc: true if everything went well
+*/
+CREATE OR REPLACE
+FUNCTION public.rename_account (IN p_id bigint, IN p_newname text,
+    OUT rc boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+DECLARE
+    v_ok boolean;
+BEGIN
+    rc := false;
+
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.';
+    END IF;
+
+    -- Check if an existing role or account already exists with the same name.
+    -- there's already an unique constraint, but try to return false instead
+    SELECT COUNT(*) = 0 INTO v_ok
+    FROM public.roles
+    WHERE rolname = p_newname;
+
+    IF NOT v_ok THEN
+        RETURN;
+    END IF;
+
+    -- Make sure we're not renomming the opm_admins account
+    SELECT COUNT(*) = 0 INTO v_ok
+    FROM public.roles
+    WHERE id = p_id
+    AND rolname = 'opm_admins';
+
+    IF NOT v_ok THEN
+        RETURN;
+    END IF;
+
+    WITH upd AS (
+        UPDATE public.roles
+        SET rolname = p_newname
+        WHERE id = p_id
+        AND NOT canlogin
+        RETURNING id
+    )
+    SELECT COUNT(*) = 1 INTO rc
+    FROM upd;
+
+    RETURN;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.rename_account(IN bigint, IN text, OUT boolean)
+    FROM public;
+
+COMMENT ON FUNCTION public.rename_account (IN bigint, IN text, OUT boolean) IS 'Rename an OPM account.
+Return true if everything went well.';
+SELECT * FROM public.register_api('public.rename_account(bigint,text)'::regprocedure);
+
+
 
 
 -- This line must be the last one, so that every functions are owned
