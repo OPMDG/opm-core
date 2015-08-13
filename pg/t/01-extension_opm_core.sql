@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(351);
+SELECT plan(350);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
