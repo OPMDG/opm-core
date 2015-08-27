@@ -25,6 +25,7 @@ WIP 2.4:
   - fix issue in the list of accoutns for an OPM user
   - add ability to specify an interval in the URL
   - automatically handle warehouse deletion
+
 2014-08-20 2.3:
   - fix some css and title issue in graph edit page
   - sort metrics by units on graph edit pages
@@ -39,6 +40,7 @@ WIP 2.4:
   - fix some translation issue
   - improve tap tests
   - better integration of admin list in the top navigation bar
+
 2014-06-24 2.2:
   - prevent removing all labels from a graph
   - fix several bugs in pg API
@@ -48,12 +50,14 @@ WIP 2.4:
   - enhance graph display
   - fix the stay connected option
   - fix issue when displaying 0 second
+
 2014-06-16 2.1:
   - introduce a new authentification mechanism, allowing pooler usage and user creation.
   - fix some missing NOT NULL in table definition
   - fix bug with host names containing a "."
   - fix bug where graph where not automatically created
   - fix a missing GRANT in grant_dispatcher() function
+
 2014-06-11 2.0:
   - architecture refactoring, simplifying code and merging the pr_grapher extension in the core module
   - enhance server list view
