@@ -1017,6 +1017,60 @@ SELECT * FROM public.register_api('public.clean_graphs()'::regprocedure);
 
 
 /*
+public.rename_server
+Rename an existing server.
+
+Can only be executed by admins.
+
+@return rc: true if everything went well
+*/
+CREATE OR REPLACE
+FUNCTION public.rename_server(IN p_id bigint, IN p_newhostname text,
+    OUT rc boolean)
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+DECLARE
+    v_ok boolean;
+BEGIN
+    rc := false;
+
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'You must be an admin.';
+    END IF;
+
+    -- Check if an existing server already exists with the same name.
+    -- there's already an unique constraint, but try to return false instead
+    SELECT COUNT(*) = 0 INTO v_ok
+    FROM public.servers
+    WHERE hostname = p_newhostname;
+
+    IF NOT v_ok THEN
+        RETURN;
+    END IF;
+
+    WITH upd AS (
+        UPDATE public.servers
+        SET hostname = p_newhostname
+        WHERE id = p_id
+        RETURNING id
+    )
+    SELECT COUNT(*) = 1 INTO rc
+    FROM upd;
+
+    RETURN;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.rename_server(IN bigint, IN text, OUT boolean)
+    FROM public;
+
+COMMENT ON FUNCTION public.rename_server(IN bigint, IN text, OUT boolean) IS 'Rename an OPM server.
+Return true if everything went well.';
+SELECT * FROM public.register_api('public.rename_server(bigint,text)'::regprocedure);
+
+
+/*
 public.drop_server(id)
 
 Drop a server. Only admin can do this.
