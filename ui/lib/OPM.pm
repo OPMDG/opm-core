@@ -144,6 +144,8 @@ sub register_routes {
         ->name('accounts_add_server');
     $r_adm->route('/accounts/:accname/new_user')->to('accounts#new_user')
         ->name('accounts_new_user');
+    $r_adm->route('/accounts/:accname/rename')->to('accounts#rename')
+        ->name('accounts_rename');
 
     $r_adm->route('/accounts/delete/:accname')->to('accounts#delete')
         ->name('accounts_delete');

@@ -225,6 +225,35 @@ sub new_user {
     return $self->edit;
 }
 
+sub rename {
+    my $self    = shift;
+    my $method  = $self->req->method;
+    my $accname = $self->param('accname');
+    my $new_accname = $self->param('new_accname');
+
+    return $self->render_not_found unless $self->_is_account($accname);
+
+    if ( $method eq 'POST' ) {{
+        my $validation = $self->validation;
+
+        $validation->required('new_accname');
+        $self->validation_error($validation);
+        last if $validation->has_error;
+
+        if ($self->proc_wrapper->rename_account(
+            $accname,
+            $validation->output->{new_accname}
+        )) {
+            $self->msg->info("Account renamed");
+            return $self->redirect_post('accounts_edit',
+                accname => $new_accname);
+        }
+
+        $self->msg->error("Could not rename account");
+    }}
+    return $self->edit;
+}
+
 sub add_server {
     my $self    = shift;
     my $method  = $self->req->method;

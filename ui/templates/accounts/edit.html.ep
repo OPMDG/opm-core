@@ -48,8 +48,9 @@
   </div>
 
   <div class="col-md-4" id="acc_edit">
-    <h2><%=l 'Add a user to account' %> <%= param 'accname' %></h2>
+    <h2><%=l 'Account settings' %></h2>
     <div class="box">
+      <h3><%=l 'Add a user to account' %> <%= param 'accname' %></h3>
       <%= form_for accounts_new_user => (role => 'form', method => 'POST') => begin %>
         <div class="form-group">
           <label for="username"><%=l 'Username' %>:</label>
@@ -85,6 +86,14 @@
           </select>
         </div>
         <%= submit_button l('Assign'), name => 'add', class => 'btn btn-primary' %>
+      <% end %>
+      <hr />
+      <%= form_for accounts_rename => (role => 'form', method => 'POST') => begin %>
+        <div class="form-group">
+          <label for="new_accname"><%=l 'New account name' %>:</label>
+          <%= text_field 'new_accname', type => 'text', class => 'form-control', id => 'new_accname' %>
+        </div>
+        <%= submit_button l('Rename'), name => 'rename', class => 'btn btn-primary' %>
       <% end %>
     </div>
   </div>
