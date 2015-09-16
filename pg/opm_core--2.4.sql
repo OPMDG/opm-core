@@ -649,7 +649,7 @@ Can only be executed by admins.
 @return rc: true if everything went well
 */
 CREATE OR REPLACE
-FUNCTION public.rename_account (IN p_id bigint, IN p_newname text,
+FUNCTION public.rename_account (IN p_oldname text, IN p_newname text,
     OUT rc boolean)
 LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
@@ -663,6 +663,12 @@ BEGIN
         RAISE EXCEPTION 'You must be an admin.';
     END IF;
 
+    -- don't try to rename for the same name, or to rename the reserved
+    -- opm_admins account
+    IF p_oldname = p_newname OR p_oldname = 'opm_admins' THEN
+        RETURN;
+    END IF;
+
     -- Check if an existing role or account already exists with the same name.
     -- there's already an unique constraint, but try to return false instead
     SELECT COUNT(*) = 0 INTO v_ok
@@ -673,20 +679,10 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Make sure we're not renomming the opm_admins account
-    SELECT COUNT(*) = 0 INTO v_ok
-    FROM public.roles
-    WHERE id = p_id
-    AND rolname = 'opm_admins';
-
-    IF NOT v_ok THEN
-        RETURN;
-    END IF;
-
     WITH upd AS (
         UPDATE public.roles
         SET rolname = p_newname
-        WHERE id = p_id
+        WHERE rolname = p_oldname
         AND NOT canlogin
         RETURNING id
     )
@@ -697,12 +693,12 @@ BEGIN
 END
 $$;
 
-REVOKE ALL ON FUNCTION public.rename_account(IN bigint, IN text, OUT boolean)
+REVOKE ALL ON FUNCTION public.rename_account(IN text, IN text, OUT boolean)
     FROM public;
 
-COMMENT ON FUNCTION public.rename_account (IN bigint, IN text, OUT boolean) IS 'Rename an OPM account.
+COMMENT ON FUNCTION public.rename_account (IN text, IN text, OUT boolean) IS 'Rename an OPM account.
 Return true if everything went well.';
-SELECT * FROM public.register_api('public.rename_account(bigint,text)'::regprocedure);
+SELECT * FROM public.register_api('public.rename_account(text,text)'::regprocedure);
 
 /*
 public.drop_account

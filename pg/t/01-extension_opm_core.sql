@@ -120,7 +120,7 @@ SELECT has_function('public', 'list_services', '{}', 'Function "list_services" e
 SELECT has_function('public', 'list_warehouses', '{}', 'Function "list_warehouses" exists.');
 SELECT has_function('public', 'opm_check_dropped_extensions', '{}', 'Function "opm_check_dropped_extensions" exists.');
 SELECT has_function('public', 'register_api', '{regprocedure}', 'Function "register_api" exists.');
-SELECT has_function('public', 'rename_account', '{bigint, text}', 'Function "rename_account" exists.');
+SELECT has_function('public', 'rename_account', '{text, text}', 'Function "rename_account" exists.');
 SELECT has_function('public', 'revoke_account', '{text,text}', 'Function "revoke_account" exists.');
 SELECT has_function('public', 'revoke_appli', '{name}', 'Function "revoke_appli" exists.');
 SELECT has_function('public', 'revoke_dispatcher', '{name,name}', 'Function "revoke_dispatcher" exists.');
@@ -157,22 +157,22 @@ SELECT set_eq($$SELECT accname FROM public.create_account('account_test')$$,
     'Create an account.'
 );
 
-SELECT set_eq($$SELECT rc FROM public.rename_account(1,'new_accname')$$,
+SELECT set_eq($$SELECT rc FROM public.rename_account('opm_admins','new_accname')$$,
     $$VALUES (false)$$,
     'Cannot rename opm_admins.'
 );
 
-SELECT set_eq($$SELECT rc FROM public.rename_account(2,'new_accname')$$,
+SELECT set_eq($$SELECT rc FROM public.rename_account('admin','new_accname')$$,
     $$VALUES (false)$$,
     'Cannot rename a user with rename_account.'
 );
 
-SELECT set_eq($$SELECT rc FROM public.rename_account(3,'admin')$$,
+SELECT set_eq($$SELECT rc FROM public.rename_account('account_test','admin')$$,
     $$VALUES (false)$$,
     'Cannot rename an account with an existing username.'
 );
 
-SELECT set_eq($$SELECT rc FROM public.rename_account(3,'account')$$,
+SELECT set_eq($$SELECT rc FROM public.rename_account('account_test','account')$$,
     $$VALUES (true)$$,
     'Rename an account.'
 );
@@ -666,7 +666,7 @@ SELECT hasnt_function('public', 'list_services', '{}', 'Function "list_services"
 SELECT hasnt_function('public', 'list_warehouses', '{}', 'Function "list_warehouses" does not exist anymore.');
 SELECT hasnt_function('public', 'opm_check_dropped_extensions', '{}', 'Function "opm_check_dropped_extensions" does not exists anymore.');
 SELECT hasnt_function('public', 'register_api', '{regprocedure}', 'Function "register_api" does not exists anymore.');
-SELECT hasnt_function('public', 'rename_account', '{bigint, text}', 'Function does not "rename_account" exists anymore.');
+SELECT hasnt_function('public', 'rename_account', '{text, text}', 'Function does not "rename_account" exists anymore.');
 SELECT hasnt_function('public', 'revoke_account', '{name,name}', 'Function "revoke_account" does not exist anymore.');
 SELECT hasnt_function('public', 'revoke_appli', '{name}', 'Function "revoke_appli" does not exist anymore.');
 SELECT hasnt_function('public', 'revoke_dispatcher', '{name,name}', 'Function "revoke_dispatcher" does not exist anymore.');
