@@ -449,7 +449,7 @@ Can only be executed by admins.
 @return rc: true if everything went well
 */
 CREATE OR REPLACE
-FUNCTION public.rename_server(IN p_id bigint, IN p_newhostname text,
+FUNCTION public.rename_server(IN p_oldhostname text, IN p_newhostname text,
     OUT rc boolean)
 LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
 SET search_path TO public
@@ -461,6 +461,11 @@ BEGIN
 
     IF NOT public.is_admin() THEN
         RAISE EXCEPTION 'You must be an admin.';
+    END IF;
+
+    -- don't try to rename for the same name
+    IF p_oldhostname = p_newhostname THEN
+        RETURN;
     END IF;
 
     -- Check if an existing server already exists with the same name.
@@ -476,7 +481,7 @@ BEGIN
     WITH upd AS (
         UPDATE public.servers
         SET hostname = p_newhostname
-        WHERE id = p_id
+        WHERE hostname = p_oldhostname
         RETURNING id
     )
     SELECT COUNT(*) = 1 INTO rc
@@ -486,12 +491,12 @@ BEGIN
 END
 $$;
 
-REVOKE ALL ON FUNCTION public.rename_server(IN bigint, IN text, OUT boolean)
+REVOKE ALL ON FUNCTION public.rename_server(IN text, IN text, OUT boolean)
     FROM public;
 
-COMMENT ON FUNCTION public.rename_server(IN bigint, IN text, OUT boolean) IS 'Rename an OPM server.
+COMMENT ON FUNCTION public.rename_server(IN text, IN text, OUT boolean) IS 'Rename an OPM server.
 Return true if everything went well.';
-SELECT * FROM public.register_api('public.rename_server(bigint,text)'::regprocedure);
+SELECT * FROM public.register_api('public.rename_server(text,text)'::regprocedure);
 
 
 /*
