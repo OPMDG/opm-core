@@ -6,7 +6,7 @@
 \unset ECHO
 \i t/setup.sql
 
-SELECT plan(352);
+SELECT plan(358);
 
 SELECT diag(E'\n==== Install opm-core ====\n');
 
@@ -121,6 +121,7 @@ SELECT has_function('public', 'list_warehouses', '{}', 'Function "list_warehouse
 SELECT has_function('public', 'opm_check_dropped_extensions', '{}', 'Function "opm_check_dropped_extensions" exists.');
 SELECT has_function('public', 'register_api', '{regprocedure}', 'Function "register_api" exists.');
 SELECT has_function('public', 'rename_account', '{text, text}', 'Function "rename_account" exists.');
+SELECT has_function('public', 'rename_server', '{text, text}', 'Function "rename_server" exists.');
 SELECT has_function('public', 'revoke_account', '{text,text}', 'Function "revoke_account" exists.');
 SELECT has_function('public', 'revoke_appli', '{name}', 'Function "revoke_appli" exists.');
 SELECT has_function('public', 'revoke_dispatcher', '{name,name}', 'Function "revoke_dispatcher" exists.');
@@ -250,8 +251,31 @@ SELECT set_eq($$SELECT * FROM public.delete_graph(1)$$,
 );
 
 SELECT lives_ok(
-    $$INSERT INTO public.servers(hostname) VALUES ('server1')$$,
+    $$INSERT INTO public.servers(hostname) VALUES ('server')$$,
     'Create a new server.'
+);
+
+SELECT lives_ok(
+    $$INSERT INTO public.servers(hostname) VALUES ('server2')$$,
+    'Create another new server.'
+);
+
+SELECT set_eq(
+    $$SELECT rc FROM public.rename_server('unexisting server', 'server1')$$,
+    $$VALUES (false)$$,
+    'Cannot rename an unexisting server.'
+);
+
+SELECT set_eq(
+    $$SELECT rc FROM public.rename_server('server', 'server2')$$,
+    $$VALUES (false)$$,
+    'Cannot rename a server with an existing name.'
+);
+
+SELECT set_eq(
+    $$SELECT rc FROM public.rename_server('server', 'server1')$$,
+    $$VALUES (true)$$,
+    'Rename a server.'
 );
 
 SELECT set_eq(
@@ -667,6 +691,7 @@ SELECT hasnt_function('public', 'list_warehouses', '{}', 'Function "list_warehou
 SELECT hasnt_function('public', 'opm_check_dropped_extensions', '{}', 'Function "opm_check_dropped_extensions" does not exists anymore.');
 SELECT hasnt_function('public', 'register_api', '{regprocedure}', 'Function "register_api" does not exists anymore.');
 SELECT hasnt_function('public', 'rename_account', '{text, text}', 'Function does not "rename_account" exists anymore.');
+SELECT hasnt_function('public', 'rename_server', '{text, text}', 'Function does not "rename_server" exists anymore.');
 SELECT hasnt_function('public', 'revoke_account', '{name,name}', 'Function "revoke_account" does not exist anymore.');
 SELECT hasnt_function('public', 'revoke_appli', '{name}', 'Function "revoke_appli" does not exist anymore.');
 SELECT hasnt_function('public', 'revoke_dispatcher', '{name,name}', 'Function "revoke_dispatcher" does not exist anymore.');
