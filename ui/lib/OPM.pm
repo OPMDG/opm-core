@@ -154,6 +154,11 @@ sub register_routes {
     $r_adm->route('/accounts/revokeserver/:accname/:idserver')
         ->to('accounts#revokeserver')->name('accounts_revokeserver');
 
+    # Servers management
+    $r_adm->route('/servers/')->to('server#adm')->name('servers_adm');
+    $r_adm->route('/servers/:hostname/edit')->to('server#edit')
+        ->name('servers_edit');
+
     # tags management
     $r_adm->route(
         '/edit_tags/server/#idserver/#idservice/',

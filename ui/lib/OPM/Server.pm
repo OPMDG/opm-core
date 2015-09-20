@@ -7,6 +7,67 @@ package OPM::Server;
 
 use Mojo::Base 'Mojolicious::Controller';
 
+sub adm {
+    my $self       = shift;
+    my $method     = $self->req->method;
+    my $validation = $self->validation;
+    my $sql;
+
+    $sql = $self->prepare('SELECT hostname
+        FROM public.list_servers()
+        ORDER BY 1
+    ');
+    $sql->execute();
+
+    $self->stash( hostnames => $sql->fetchall_arrayref( {} ) );
+
+    return $self->render();
+}
+
+sub _is_server {
+    my ( $self, $hostname ) = @_;
+    my $sql = $self->prepare('SELECT COUNT(*)
+        FROM public.list_servers()
+        WHERE hostname = ?
+    ');
+
+    $sql->execute($hostname);
+
+    return $sql->fetchrow() == 1;
+}
+
+sub edit {
+    my $self         = shift;
+    my $method       = $self->req->method;
+    my $hostname     = $self->param('hostname');
+    my $new_hostname = $self->param('new_hostname');
+
+    # TODO: find a way to raise a NotFound exception
+    # from another subroutine.
+    return $self->render_not_found unless $self->_is_server($hostname);
+
+    if ( $method eq 'POST' ) {{
+        my $validation = $self->validation;
+
+        $validation->required('new_hostname');
+        $self->validation_error($validation);
+        last if $validation->has_error;
+
+        if ($self->proc_wrapper->rename_server(
+            $hostname,
+            $validation->output->{new_hostname}
+        )) {
+            $self->msg->info("Server renamed");
+            return $self->redirect_post('servers_edit',
+                hostname => $new_hostname);
+        }
+
+        $self->msg->error("Could not rename server");
+    }}
+
+    return;
+}
+
 sub list {
     my $self = shift;
     my $servers;

@@ -1,0 +1,25 @@
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+
+% layout config 'layout';
+% my @hostnames = @{stash 'hostnames'};
+
+<div class="row">
+  <div class="col-md-6" id="acc_list">
+    <h1><%=l 'List of servers' %></h1>
+    <div class="box">
+      <ul class="list-unstyled">
+        <% foreach my $h (@hostnames) { %>
+          <%   my %line = %{$h}; %>
+          <li><h5>
+            <%= link_to servers_edit => { hostname => $line{hostname} } => begin %>
+              <%= $line{hostname} %>
+            <% end %>
+          </h5></li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</div>

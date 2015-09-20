@@ -1,0 +1,27 @@
+% layout config 'layout';
+
+% # This program is open source, licensed under the PostgreSQL License.
+% # For license terms, see the LICENSE file.
+% #
+% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+
+% # This method will run once at server start
+% my $hostname = param 'hostname';
+
+<div class="row">
+  <h1><%=l 'Server' %> <span class="at-hand"><%= $hostname %></span></h1>
+
+  <div class="col-md-4" id="srv_edit">
+    <h2><%=l 'Server settings' %></h2>
+    <div class="box">
+      <h3><%=l 'Rename server' %></h3>
+      <%= form_for servers_edit => (role => 'form', method => 'POST') => begin %>
+        <div class="form-group">
+          <label for="new_hostname"><%=l 'New server name' %>:</label>
+          <%= text_field 'new_hostname', type => 'text', class => 'form-control', id => 'new_hostname' %>
+        </div>
+        <%= submit_button l('Rename'), name => 'rename', class => 'btn btn-primary' %>
+      <% end %>
+    </div>
+  </div>
+</div>

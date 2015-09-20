@@ -27,6 +27,11 @@
           % end
         </li>
         <li>
+          %= link_to servers_adm => begin
+            <i class="fa fa-cog"></i> <%=l 'Servers' %>
+          % end
+        </li>
+        <li>
           %= link_to graphs_tpl_list => begin
             <i class="fa fa-cog"></i> <%=l 'Graph templates' %>
           % end
