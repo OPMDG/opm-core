@@ -148,6 +148,8 @@ our %Lexicon = (
     "Purge now"                                   => "Purger maintenant",
     "Radius"                                      => "Rayon",
     "Register"                                    => "S'enregistrer",
+    "Remember to rename the server in Nagios before renaming it in the UI"
+    => "N'oubliez pas de renommer le serveur dans Nagios avant de le renommer dans l'interface",
     "Rename"                                      => "Renommer",
     "Rename server"                               => "Renommer le serveur",
     "Repeat password"                             => "Répéter le mot de passe",

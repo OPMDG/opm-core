@@ -19,6 +19,7 @@
         <div class="form-group">
           <label for="new_hostname"><%=l 'New server name' %>:</label>
           <%= text_field 'new_hostname', type => 'text', class => 'form-control', id => 'new_hostname' %>
+          <i><%=l 'Remember to rename the server in Nagios before renaming it in the UI' %></i>
         </div>
         <%= submit_button l('Rename'), name => 'rename', class => 'btn btn-primary' %>
       <% end %>
