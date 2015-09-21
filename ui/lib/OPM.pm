@@ -80,10 +80,20 @@ sub opm_plugin {
     my $mod_home   = catdir( splitdir( $self->home ), 'modules', $plugin );
     push( @INC, catdir( $mod_home, 'lib' ) );
     $opm_plugin_instance = $self->plugin($plugin);
-    $opm_plugin_instance->register_routes(
-        $route_base,
-        $route_base->bridge->to('users#check_auth'),
-        $route_base->bridge->to('users#check_admin') );
+
+    # API break in v6.0 - bridge replaced by under
+    if ($Mojolicious::VERSION <= 6.00){
+        $opm_plugin_instance->register_routes(
+            $route_base,
+            $route_base->bridge->to('users#check_auth'),
+            $route_base->bridge->to('users#check_admin') );
+    } else {
+        $opm_plugin_instance->register_routes(
+            $route_base,
+            $route_base->under('/')->to('users#check_auth'),
+            $route_base->under('/')->to('users#check_admin') );
+    }
+
     $registry->{$plugin} = $opm_plugin_instance;
 
     # Add the template path
@@ -100,8 +110,17 @@ sub opm_plugin {
 sub register_routes {
     my $self   = shift;
     my $r      = $self->routes;
-    my $r_auth = $r->bridge->to('users#check_auth');
-    my $r_adm  = $r_auth->bridge->to('users#check_admin');
+    my $r_auth;
+    my $r_adm;
+
+    # API break in v6.0 - bridge replaced by under
+    if ($Mojolicious::VERSION <= 6.00){
+        $r_auth = $r->bridge->to('users#check_auth');
+        $r_adm  = $r_auth->bridge->to('users#check_admin');
+    } else {
+        $r_auth = $r->under('/')->to('users#check_auth');
+        $r_adm  = $r_auth->under('/')->to('users#check_admin');
+    }
 
     # Home page
     $r_auth->route('/')->to('server#list')->name('site_home');
