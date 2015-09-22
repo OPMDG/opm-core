@@ -1,7 +1,7 @@
 % # This program is open source, licensed under the PostgreSQL License.
 % # For license terms, see the LICENSE file.
 % #
-% # Copyright (C) 2012-2014: Open PostgreSQL Monitoring Development Group
+% # Copyright (C) 2012-2015: Open PostgreSQL Monitoring Development Group
 
 % my $lang = session 'user_lang';
 %#   languages($lang);
@@ -72,7 +72,7 @@
           <img src="<%= url_for '/img/opm-logo-small.png' %>" />
           <ul class="list-unstyled">
             <li><%= l 'Version' %>  <%= $OPM::VERSION %></li>
-            <li>&copy; 2012-2014 OPMDG</li>
+            <li>&copy; 2012-2015 OPMDG</li>
             <li><a href="http://opm.io">http://opm.io</a></li>
           </ul>
         </div>
