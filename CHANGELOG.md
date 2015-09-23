@@ -2,6 +2,7 @@ Changelog
 =========
 
 WIP 2.4:
+  - add the ability to rename an account and a server
   - add the ability the remove an empty server (after all services have been
     deleted)
   - add a select all/none series button in graph edition page
@@ -12,7 +13,7 @@ WIP 2.4:
   - remove the "stay connected" option, always stay connected
   - stay connected for a long time, not only the browser lifetime
   - allow superuser to change user password
-  - make the UI compatible with mojo 5.0+
+  - make the UI compatible with mojo 6.0+
   - use ISO 8601 date format
   - fix soem typo in french translation
   - order search results by name
