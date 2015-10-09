@@ -25,6 +25,7 @@
         <div class="form-group">
           <label for="metric_pattern"><%=l 'Metric pattern' %>:</label>
           <%= text_field 'metric_pattern', type => 'text', class => 'form-control', id => 'metric_pattern' %>
+          <i><%= l 'Metrics matching this pattern will not be added in graphs' %></i>
         </div>
         <label><%=l 'Graph configuration' %>:</label>
         <div class="tabbable">

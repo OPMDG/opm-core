@@ -115,6 +115,8 @@ our %Lexicon = (
     "Max. value"                                  => "Valeur max.",
     "Member of"                                   => "Membre de",
     "Metric pattern"                              => "Motif de métrique",
+    "Metrics matching this pattern will not be added in graphs"
+            => "Les métriques orrespondant à ce motif ne seront pas ajoutés dans les graphs",
     "Min. value"                                  => "Valeur min.",
     "Missing graph name"                          => "Nom du graph manquant",
     "Mode"                                        => "Mode",
