@@ -2,6 +2,9 @@ Changelog
 =========
 
 WIP 2.4:
+  - show services and related status even if they don't have perfdata (depending
+    on the Nagios server capabilities). Thanks to Kyungho Kim for report and
+    help.
   - add the ability to rename an account and a server
   - add the ability the remove an empty server (after all services have been
     deleted)
