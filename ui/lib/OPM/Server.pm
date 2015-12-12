@@ -151,7 +151,8 @@ sub host {
     $sql = $self->prepare(
         q{
         SELECT s2.id AS id_service, s2.service, s1.hostname, s2.warehouse,
-               s2.tags
+               s2.tags,
+               (SELECT COUNT(*) FROM public.list_metrics(s2.id)) as nb
         FROM public.list_services() s2
         JOIN public.list_servers() s1 ON s2.id_server = s1.id
         WHERE s2.id_server = ?
