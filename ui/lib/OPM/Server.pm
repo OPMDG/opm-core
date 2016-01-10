@@ -152,10 +152,16 @@ sub host {
         q{
         SELECT s2.id AS id_service, s2.service, s1.hostname, s2.warehouse,
                s2.tags,
-               (SELECT COUNT(*) FROM public.list_metrics(s2.id)) as nb
+               CASE SUM(COALESCE(g.id, 0))
+                   WHEN 0 THEN true
+                   ELSE false
+                END AS is_empty
         FROM public.list_services() s2
         JOIN public.list_servers() s1 ON s2.id_server = s1.id
+        LEFT JOIN public.list_graphs() g ON s2.id = g.id_service
+            AND s1.id = g.id_server
         WHERE s2.id_server = ?
+        GROUP BY 1,2,3,4,5
         ORDER BY s2.service, s2.id
     } );
     $sql->execute($id);

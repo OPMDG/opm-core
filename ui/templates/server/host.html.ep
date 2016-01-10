@@ -36,14 +36,14 @@
         % $i++;
         <div class="col-sm-6 col-md-4 col-lg-3 service-item">
           <div class="service-box">
-            % if ($s->{'nb'} > 0) {
+            % if ($s->{'is_empty'}) {
+              <h3><%= $s->{service} %></h3>
+              <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
+            % } else {
               <%= link_to 'graphs_showservice' => { server => $s->{'hostname'}, service => $s->{'service'}} => begin %>
                 <h3><%= $s->{service} %></h3>
                 <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
               <% end %>
-            % } else {
-              <h3><%= $s->{service} %></h3>
-              <%= format_details('service', { id_server => stash('id'), id_service => $s->{'id_service'}}) %>
             % }
              % if ( session 'user_admin' ) {
                 <select multiple
