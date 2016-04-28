@@ -22,5 +22,5 @@ The versions showed have been tested, it may work with older versions
 Install
 -------
 
-Please read :  http://opm.readthedocs.org/opm-core/Installation.html
+Please read :  http://opm.readthedocs.io/opm-core/Installation.html
 
