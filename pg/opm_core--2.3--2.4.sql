@@ -597,6 +597,171 @@ COMMENT ON FUNCTION public.rename_account (IN text, IN text, OUT boolean) IS 'Re
 Return true if everything went well.';
 SELECT * FROM public.register_api('public.rename_account(text,text)'::regprocedure);
 
+CREATE OR REPLACE
+FUNCTION public.list_services()
+RETURNS TABLE (id bigint, id_server bigint, warehouse text,
+               service text, last_modified date,
+               creation_ts timestamp with time zone, servalid interval,
+               tags text[])
+LANGUAGE plpgsql STABLE LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+  RETURN QUERY SELECT ser.id, ser.id_server, ser.warehouse, ser.service,
+          ser.last_modified, ser.creation_ts, ser.servalid, ser.tags
+      FROM public.services ser JOIN public.list_servers() AS srv
+        ON srv.id = ser.id_server;
+END $$;
+
+CREATE OR REPLACE
+FUNCTION public.list_graphs()
+RETURNS TABLE (id bigint, graph text, description text, config json,
+               id_server bigint, id_service bigint, warehouse text, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    -- FIXME DISTINCT ?!
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                LEFT JOIN public.series s1
+                    ON g.id = s1.id_graph
+                LEFT JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                LEFT JOIN public.services s2
+                    ON m.id_service = s2.id
+                LEFT JOIN public.servers s3
+                    ON s2.id_server = s3.id;
+    ELSE
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                JOIN public.series s1
+                    ON g.id = s1.id_graph
+                JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                JOIN public.services s2
+                    ON m.id_service = s2.id
+                JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE public.is_member(s3.id_role);
+    END IF;
+END
+$$;
+
+CREATE OR REPLACE
+FUNCTION public.list_graphs(p_id_server bigint)
+RETURNS TABLE (id bigint, graph text, description text, config json,
+               id_server bigint, id_service bigint, warehouse text, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    -- FIXME DISTINCT ?!
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                LEFT JOIN public.series s1
+                    ON g.id = s1.id_graph
+                LEFT JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                LEFT JOIN public.services s2
+                    ON m.id_service = s2.id
+                LEFT JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE s3.id = p_id_server ;
+    ELSE
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                JOIN public.series s1
+                    ON g.id = s1.id_graph
+                JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                JOIN public.services s2
+                    ON m.id_service = s2.id
+                JOIN public.servers s3
+                    ON s2.id_server = s3.id
+                    AND s3.id = p_id_server
+            WHERE public.is_member(s3.id_role);
+    END IF;
+END
+$$;
+
+CREATE OR REPLACE
+FUNCTION public.get_graph(p_id_graph bigint)
+RETURNS TABLE (id bigint, graph text, description text, config json,
+               id_server bigint, id_service bigint, warehouse text, tags text[])
+LANGUAGE plpgsql STABLE STRICT LEAKPROOF SECURITY DEFINER
+SET search_path TO public
+AS $$
+BEGIN
+    -- FIXME DISTINCT ?!
+    IF public.is_admin() THEN
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                LEFT JOIN public.series s1
+                    ON g.id = s1.id_graph
+                LEFT JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                LEFT JOIN public.services s2
+                    ON m.id_service = s2.id
+                LEFT JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE g.id = p_id_graph ;
+    ELSE
+        RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
+                g.description, g.config,
+                s3.id, s2.id, s2.warehouse,
+                (s2.tags || m.tags)  as tags
+            FROM public.graphs g
+                JOIN public.series s1
+                    ON g.id = s1.id_graph
+                JOIN public.metrics m
+                    ON s1.id_metric = m.id
+                JOIN public.services s2
+                    ON m.id_service = s2.id
+                JOIN public.servers s3
+                    ON s2.id_server = s3.id
+            WHERE g.id = p_id_graph
+                AND public.is_member(s3.id_role) ;
+    END IF;
+END
+$$ ;
+
+CREATE OR REPLACE
+FUNCTION public.update_server_tags( p_id_server bigint, p_tags text[]) RETURNS VOID
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'You must be an admin.';
+  END IF;
+  UPDATE public.servers SET tags = p_tags WHERE id = p_id_server;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.update_server_tags(bigint, text[]) FROM public;
+
+COMMENT ON FUNCTION public.update_server_tags(bigint, text[]) IS
+'Update the tags on a specific server. Admin role is required';
+
+SELECT * FROM public.register_api('public.update_server_tags(bigint, text[])'::regprocedure);
+
 
 
 

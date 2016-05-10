@@ -180,6 +180,10 @@ sub register_routes {
 
     # tags management
     $r_adm->route(
+        '/edit_tags/server/#idserver/',
+        idserver => qr/\d+/
+    )->name('server_edit_tags')->to('server#server_edit_tags');
+    $r_adm->route(
         '/edit_tags/server/#idserver/#idservice/',
         idserver => qr/\d+/,
         idserver => qr/\d+/

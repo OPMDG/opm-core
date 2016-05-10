@@ -124,6 +124,26 @@ sub register {
             $sth->finish;
             return $server_tags;
         } );
+
+    $app->helper(
+        get_tags_for_account => sub {
+            my $ctrl         = shift;
+            my $account_name = shift;
+            my $sth;
+            my $account_tags;
+            $sth = $ctrl->prepare(
+                qq{
+                SELECT unnest(s.tags) as tag
+                FROM public.list_servers() s
+                WHERE s.rolname = ?
+                GROUP BY tag
+                ORDER BY tag
+            } );
+            $sth->execute($account_name);
+            $account_tags = $ctrl->database->selectcol_arrayref( $sth );
+            $sth->finish;
+            return $account_tags;
+        } );
 }
 
 1;

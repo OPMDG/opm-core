@@ -16,18 +16,43 @@
     % foreach my $accname ( sort keys %{$servers_by_role} ) {
       % my $servers = $servers_by_role->{$accname};
       % my %accstruct = $self->format_accname( $accname );
+      <div class="overview-labels">
+        <span class="h2"><%= $accstruct{name} %></span>
+        <div class="pull-right">
+          %= include ('helpers/tagcloud', tags => $self->get_tags_for_account($accname), selected_tags => [], class => 'fa-tag', url => url_for 'site_home' )
+        </div>
+      </div>
       <div class="row">
-        <h2><%= $accstruct{name} %></h2>
         % foreach my $ser (@{$servers}) {
           <div class="col-sm-6 col-md-4 col-lg-3 server row">
-            <div class="pull-left">
-              <%= link_to server_host => { id => $ser->{id} } => begin %>
-                <i class="fa fa-hdd-o fa-5x"></i>
-                <h3><%= $ser->{hostname} %></h3>
-              <% end %>
+            <div class="col-md-12">
+              <div class="pull-left">
+                <%= link_to server_host => { id => $ser->{id} } => begin %>
+                  <i class="fa fa-hdd-o fa-5x"></i>
+                  <h3><%= $ser->{hostname} %></h3>
+                <% end %>
+              </div>
+              <div class="pull-left">
+                <%= format_details('server', { id_server => $ser->{id} }) %>
+              </div>
             </div>
-            <div class="pull-left">
-              <%= format_details('server', { id_server => $ser->{id} }) %>
+            <div class="col-md-12 row">
+                % if ( session 'user_admin' ) {
+                  <select multiple
+                    data-role="tagsinput"
+                    data-tagupdateurl="<%= url_for('server_edit_tags', {idserver => $ser->{id}}) %>"
+                    placeholder="<%= l('New tag...') %>">
+                    % foreach my $t ( @{$ser->{tags}} ) {
+                      <option value="<%= $t%>"> <%= $t %> </option>
+                    % }
+                  </select>
+                % } else {
+                  <div class="bootstrap-tagsinput">
+                    % foreach my $t ( @{$ser->{tags}} ) {
+                      <span class="tag label label-info"><%= $t %></span>
+                    % }
+                  </div>
+                % }
             </div>
           </div>
         % }

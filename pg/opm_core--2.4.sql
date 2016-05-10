@@ -1877,7 +1877,7 @@ SET search_path TO public
 AS $$
 BEGIN
   RETURN QUERY SELECT ser.id, ser.id_server, ser.warehouse, ser.service,
-          ser.last_modified, ser.creation_ts, ser.servalid, srv.tags || ser.tags
+          ser.last_modified, ser.creation_ts, ser.servalid, ser.tags
       FROM public.services ser JOIN public.list_servers() AS srv
         ON srv.id = ser.id_server;
 END $$;
@@ -2065,7 +2065,7 @@ BEGIN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
                 s3.id, s2.id, s2.warehouse,
-                (s3.tags || s2.tags || m.tags)  as tags
+                (s2.tags || m.tags)  as tags
             FROM public.graphs g
                 LEFT JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2079,7 +2079,7 @@ BEGIN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
                 s3.id, s2.id, s2.warehouse,
-                (s3.tags || s2.tags || m.tags)  as tags
+                (s2.tags || m.tags)  as tags
             FROM public.graphs g
                 JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2121,7 +2121,7 @@ BEGIN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
                 s3.id, s2.id, s2.warehouse,
-                (s3.tags || s2.tags || m.tags)  as tags
+                (s2.tags || m.tags)  as tags
             FROM public.graphs g
                 LEFT JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2136,7 +2136,7 @@ BEGIN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
                 s3.id, s2.id, s2.warehouse,
-                (s3.tags || s2.tags || m.tags)  as tags
+                (s2.tags || m.tags)  as tags
             FROM public.graphs g
                 JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2179,7 +2179,7 @@ BEGIN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
                 s3.id, s2.id, s2.warehouse,
-                (s3.tags || s2.tags || m.tags)  as tags
+                (s2.tags || m.tags)  as tags
             FROM public.graphs g
                 LEFT JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2194,7 +2194,7 @@ BEGIN
         RETURN QUERY SELECT DISTINCT ON (g.id) g.id, g.graph,
                 g.description, g.config,
                 s3.id, s2.id, s2.warehouse,
-                (s3.tags || s2.tags || m.tags)  as tags
+                (s2.tags || m.tags)  as tags
             FROM public.graphs g
                 JOIN public.series s1
                     ON g.id = s1.id_graph
@@ -2766,6 +2766,25 @@ COMMENT ON FUNCTION public.js_timetz(timestamptz) IS
 
 SELECT * FROM public.register_api('public.js_timetz(timestamptz)'::regprocedure);
 
+
+CREATE OR REPLACE
+FUNCTION public.update_server_tags( p_id_server bigint, p_tags text[]) RETURNS VOID
+LANGUAGE plpgsql STRICT VOLATILE LEAKPROOF SECURITY DEFINER
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'You must be an admin.';
+  END IF;
+  UPDATE public.servers SET tags = p_tags WHERE id = p_id_server;
+END
+$$;
+
+REVOKE ALL ON FUNCTION public.update_server_tags(bigint, text[]) FROM public;
+
+COMMENT ON FUNCTION public.update_server_tags(bigint, text[]) IS
+'Update the tags on a specific server. Admin role is required';
+
+SELECT * FROM public.register_api('public.update_server_tags(bigint, text[])'::regprocedure);
 
 CREATE OR REPLACE
 FUNCTION public.update_service_tags( p_id_service bigint, p_tags text[]) RETURNS VOID

@@ -71,15 +71,26 @@ sub edit {
 sub list {
     my $self = shift;
     my $servers;
-    my $sql = $self->prepare(
-        q{
-        SELECT id, hostname, COALESCE(rolname,'') AS rolname
+    my @tags = $self->param('tags') || ();
+    my @params;
+    my $sth;
+    my $sql  = q{
+        SELECT id, hostname, COALESCE(rolname,'') AS rolname, id_role, tags
         FROM public.list_servers()
-        ORDER BY rolname, hostname
-    } );
-    $sql->execute();
+    };
 
-    $servers = $sql->fetchall_groupby('rolname');
+    if (scalar @tags > 0) {
+        $sql = $sql . " WHERE tags && ? ";
+        push @params, \@tags;
+    }
+
+    $sql = $sql . " ORDER BY rolname, hostname";
+    $sth = $self->prepare($sql);
+    $sth->execute(@params);
+
+    $servers = $sth->fetchall_groupby('rolname');
+    $sth->finish;
+
     return $self->render( servers_by_role => $servers );
 }
 
@@ -174,6 +185,37 @@ sub host {
         tags     => $server_tags,
         is_admin => $self->session('user_admin') );
     return $self->render();
+}
+
+sub server_edit_tags {
+    my $self = shift;
+    my $id   = $self->param('idserver');
+    my @tags;
+    my $rc ;
+    my $sql;
+
+    if ( $Mojolicious::VERSION < 5.48 ) {
+        @tags = $self->param('tags');
+    } else {
+        @tags = $self->every_param('tags');
+    }
+
+    $sql = $self->prepare(
+        q{
+        SELECT public.update_server_tags(?, ?);
+    } );
+
+    if ( $Mojolicious::VERSION < 5.48 ) {
+        $rc = $sql->execute( $id, \@tags );
+    } else {
+        $rc = $sql->execute( $id, @tags );
+    }
+    $sql->finish();
+    if ( $rc ) {
+        return $self->render( 'json' => { status => "success" } );
+    } else {
+        return $self->render( 'json' => { status => "error" } );
+    }
 }
 
 sub service_edit_tags {
