@@ -185,8 +185,8 @@ sub register_routes {
     )->name('server_edit_tags')->to('server#server_edit_tags');
     $r_adm->route(
         '/edit_tags/server/#idserver/#idservice/',
-        idserver => qr/\d+/,
-        idserver => qr/\d+/
+        idserver  => qr/\d+/,
+        idservice => qr/\d+/
     )->name('service_edit_tags')->to('server#service_edit_tags');
 
     # graph template management
