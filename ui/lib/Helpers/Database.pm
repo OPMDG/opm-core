@@ -55,6 +55,10 @@ sub register {
 
             return $dbh;
         }
+        else {
+            $ctrl->stash->{'err_msg'} = "Could not connect to the database";
+            $ctrl->stash->{'err_det'} = DBI->errstr;
+        }
 
         $ctrl->redirect_post('site_home');
 

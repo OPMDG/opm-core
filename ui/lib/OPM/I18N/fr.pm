@@ -47,6 +47,7 @@ our %Lexicon = (
     "Could not add account to user"               =>
         "Impossible d'ajouter le groupe à l'utilisateur",
     "Could not add user"                          => "Impossible d'ajouter l'utilisateur",
+    "Could not connect to the database"           => "Impossible de se connecter à la base",
     "Could not delete account"                    => "Impossible de supprimer le groupe",
     "Could not delete graph template"             => "Impossible de supprimer le modèle de graph",
     "Could not remove account from user"          =>

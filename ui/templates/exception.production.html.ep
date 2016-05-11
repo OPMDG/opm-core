@@ -3,11 +3,18 @@
 % #
 % # Copyright (C) 2012-2015: Open PostgreSQL Monitoring Development Group
 
+% my $msg = stash 'err_msg';
+% $msg ||= '';
+% my $detail = stash 'err_det';
+% $detail ||= '';
+
 % layout config 'layout';
 <div class="page-header">
   <h1>Server Error</h1>
+  <%= $msg %>
+  <pre><%= l $detail %></pre>
 </div>
 
-<p><%= l('Please continue to the') %> <%= link_to 'site_home' => begin %><M= l('home page') %><% end %>.</p>
+<p><%= l('Please continue to the') %> <%= link_to 'site_home' => begin %><%= l('home page') %><% end %>.</p>
 
 
