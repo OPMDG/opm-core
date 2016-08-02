@@ -762,6 +762,8 @@ COMMENT ON FUNCTION public.update_server_tags(bigint, text[]) IS
 
 SELECT * FROM public.register_api('public.update_server_tags(bigint, text[])'::regprocedure);
 
+SELECT pg_catalog.pg_extension_config_dump('public.roles', 'WHERE rolname != ''opm_admins''');
+
 
 
 
