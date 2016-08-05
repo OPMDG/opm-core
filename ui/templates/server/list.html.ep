@@ -6,6 +6,8 @@
 % layout config 'layout';
 % my $previous;
 % my $first = 1;
+% my $selected_tags = stash 'selected_tags';
+
 % content_for header => begin
   <link type="text/css" href="<%= url_for '/css/servers.css' %>" media="all" rel="stylesheet" />
 % end
@@ -19,7 +21,7 @@
       <div class="overview-labels">
         <span class="h2"><%= $accstruct{name} %></span>
         <div class="pull-right">
-          %= include ('helpers/tagcloud', tags => $self->get_tags_for_account($accname), selected_tags => [], class => 'fa-tag', url => url_for 'site_home' )
+          %= include ('helpers/tagcloud', tags => $self->get_tags_for_account($accname), selected_tags => $selected_tags, class => 'fa-square-o', url => url_for 'site_home' )
         </div>
       </div>
       <div class="row">
