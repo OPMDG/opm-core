@@ -44,14 +44,34 @@ sub adm {
 sub list {
     my $self    = shift;
     my $accname = $self->param('accname');
+    my @tags = $self->param('tags') || ();
+    my $servers;
+    my @params;
+    my $sth;
 
-    my $sql = $self->prepare(qq{SELECT id,hostname
+    my $sql = qq{SELECT id,hostname, tags
         FROM public.list_servers()
         WHERE COALESCE(rolname, '') = ?
-        ORDER BY hostname
-    });
-    $sql->execute( $accname  eq $self->get_unassigned() ? '' : $accname );
-    return $self->render(servers => $sql->fetchall_arrayref( {} ));
+    };
+
+    push @params, $accname  eq $self->get_unassigned() ? '' : $accname;
+
+    if (scalar @tags > 0) {
+        $sql = $sql . " AND tags && ? ";
+        push @params, \@tags;
+    }
+
+    $sql = $sql . "ORDER BY hostname";
+    $sth = $self->prepare($sql);
+    $sth->execute(@params);
+
+    $servers = $sth->fetchall_arrayref( {} );
+    $sth->finish();
+
+    return $self->render(
+        servers         => $servers,
+        selected_tags   => \@tags
+    );
 }
 
 sub delete {

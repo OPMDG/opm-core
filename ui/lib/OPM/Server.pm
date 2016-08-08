@@ -91,7 +91,10 @@ sub list {
     $servers = $sth->fetchall_groupby('rolname');
     $sth->finish;
 
-    return $self->render( servers_by_role => $servers );
+    return $self->render(
+        servers_by_role => $servers,
+        selected_tags   => \@tags
+    );
 }
 
 sub service {

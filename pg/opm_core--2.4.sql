@@ -234,7 +234,7 @@ COMMENT ON COLUMN public.graphs_templates.metric_pattern  IS 'Regex pattern to m
 ***************************************/
 
 SELECT pg_catalog.pg_extension_config_dump('public.members', '');
-SELECT pg_catalog.pg_extension_config_dump('public.roles', '');
+SELECT pg_catalog.pg_extension_config_dump('public.roles', 'WHERE rolname != ''opm_admins''');
 SELECT pg_catalog.pg_extension_config_dump('public.roles_id_seq', '');
 SELECT pg_catalog.pg_extension_config_dump('public.servers', '');
 SELECT pg_catalog.pg_extension_config_dump('public.servers_id_seq', '');
