@@ -8,7 +8,7 @@ use File::Spec::Functions qw(splitdir catdir);
 # Copyright (C) 2012-2015: Open PostgreSQL Monitoring Development Group
 
 use vars qw($VERSION);
-$VERSION = '2.3';
+$VERSION = '2.4';
 
 has opm_plugins => sub { my %plugins; return \%plugins; };
 
