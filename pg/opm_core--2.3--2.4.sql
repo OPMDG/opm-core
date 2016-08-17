@@ -162,7 +162,7 @@ BEGIN
     JOIN public.series s2 ON s2.id_metric = m.id
     JOIN public.graphs g ON g.id = s2.id_graph
     WHERE s1.id = metricsrow.id_service
-    AND COALESCE(m.unit, '') = '';
+    AND COALESCE(m.unit, '') = metricsrow.unit;
 
     IF (graphsrow.nb != 1) THEN
         -- already multiple graphs or no graph, let's create a new one
