@@ -144,6 +144,21 @@ sub register {
             $sth->finish;
             return $account_tags;
         } );
+
+    $app->helper(
+        get_tags => sub {
+            my $ctrl         = shift;
+            my @tags;
+
+
+            if ($Mojolicious::VERSION < 5.48) {
+                @tags = $ctrl->param('tags');
+            } else {
+                @tags = $ctrl->every_param('tags');
+            }
+
+            return @tags;
+        } );
 }
 
 1;

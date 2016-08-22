@@ -63,7 +63,7 @@ sub showservice {
     my $hostname     = $self->param('server');
     my $service_name = $self->param('service');
     my $interval     = $self->param('interval');
-    my @tags         = $self->param('tags') || ();
+    my @tags = $self->get_tags();
     my $server_id;
     my $services;
     my $graphs;
@@ -136,7 +136,7 @@ sub showserver {
     my $server_id = $self->param('idserver');
     my $period    = $self->param('period');
     my $interval  = $self->param('interval');
-    my @tags      = $self->param('tags') || ();
+    my @tags = $self->get_tags();
     my $servers;
     my $graphs;
     my $hostname;

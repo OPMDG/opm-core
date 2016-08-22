@@ -44,7 +44,7 @@ sub adm {
 sub list {
     my $self    = shift;
     my $accname = $self->param('accname');
-    my @tags = $self->param('tags') || ();
+    my @tags = $self->get_tags();;
     my $servers;
     my @params;
     my $sth;

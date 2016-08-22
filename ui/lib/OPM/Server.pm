@@ -71,7 +71,7 @@ sub edit {
 sub list {
     my $self = shift;
     my $servers;
-    my @tags = $self->param('tags') || ();
+    my @tags = $self->get_tags();
     my @params;
     my $sth;
     my $sql  = q{
@@ -193,15 +193,9 @@ sub host {
 sub server_edit_tags {
     my $self = shift;
     my $id   = $self->param('idserver');
-    my @tags;
+    my @tags = $self->get_tags();
     my $rc ;
     my $sql;
-
-    if ( $Mojolicious::VERSION < 5.48 ) {
-        @tags = $self->param('tags');
-    } else {
-        @tags = $self->every_param('tags');
-    }
 
     $sql = $self->prepare(
         q{
@@ -224,15 +218,9 @@ sub server_edit_tags {
 sub service_edit_tags {
     my $self = shift;
     my $id   = $self->param('idservice');
-    my @tags;
+    my @tags = $self->get_tags();;
     my $rc ;
     my $sql;
-
-    if ( $Mojolicious::VERSION < 5.48 ) {
-        @tags = $self->param('tags');
-    } else {
-        @tags = $self->every_param('tags');
-    }
 
     $sql = $self->prepare(
         q{
