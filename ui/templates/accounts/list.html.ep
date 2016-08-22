@@ -17,7 +17,7 @@
     <%=l 'List of servers for account' %> <span class="at-hand"><%= stash 'accname' %></span>
     % }
   </h1>
-  <div id="acc_list" class="server_list">
+  <div id="acc_list" class="box server_list">
     <div class="overview-labels">
       <span class="h2"><%= stash('accname') %></span>
       <div class="pull-right">
@@ -27,33 +27,36 @@
     <div class="box">
       <div class="row">
         <% foreach my $s (@servers) { %>
-          <div class="col-md-4 server row">
-            <div class="pull-left">
-              %= link_to server_host=> { id => $s->{'id'} } => begin
-                <i class="fa fa-hdd-o fa-5x"></i> <h3><%= $s->{'hostname'} %></h3>
-              % end
+          <div class="col-sm-6 col-md-4 col-lg-3 server row">
+            <div class="col-md-12">
+              <div class="pull-left">
+                %= link_to server_host=> { id => $s->{'id'} } => begin
+                  <i class="fa fa-hdd-o fa-5x"></i>
+                  <h3><%= $s->{'hostname'} %></h3>
+                % end
+              </div>
+              <div class="pull-left">
+                <%= format_details('server', { id_server => $s->{id} }) %>
+              </div>
             </div>
-            <div class="pull-left">
-              <%= format_details('server', { id_server => $s->{id} }) %>
+            <div class="col-md-12 row">
+                % if ( session 'user_admin' ) {
+                  <select multiple
+                    data-role="tagsinput"
+                    data-tagupdateurl="<%= url_for('server_edit_tags', {idserver => $s->{id}}) %>"
+                    placeholder="<%= l('New tag...') %>">
+                    % foreach my $t ( @{$s->{tags}} ) {
+                      <option value="<%= $t%>"> <%= $t %> </option>
+                    % }
+                  </select>
+                % } else {
+                  <div class="bootstrap-tagsinput">
+                    % foreach my $t ( @{$s->{tags}} ) {
+                      <span class="tag label label-info"><%= $t %></span>
+                    % }
+                  </div>
+                % }
             </div>
-          </div>
-          <div class="col-md-12 row">
-              % if ( session 'user_admin' ) {
-                <select multiple
-                  data-role="tagsinput"
-                  data-tagupdateurl="<%= url_for('server_edit_tags', {idserver => $s->{id}}) %>"
-                  placeholder="<%= l('New tag...') %>">
-                  % foreach my $t ( @{$s->{tags}} ) {
-                    <option value="<%= $t%>"> <%= $t %> </option>
-                  % }
-                </select>
-              % } else {
-                <div class="bootstrap-tagsinput">
-                  % foreach my $t ( @{$s->{tags}} ) {
-                    <span class="tag label label-info"><%= $t %></span>
-                  % }
-                </div>
-              % }
           </div>
         <% } %>
       </div>
