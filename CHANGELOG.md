@@ -1,7 +1,7 @@
 Changelog
 =========
 
-(WIP) 2.5:
+2018-01-04 2.5:
 
   - make graphs templates table and sequence dumpable if version was upgraded
     from 2.3
