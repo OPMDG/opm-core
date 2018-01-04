@@ -1,6 +1,11 @@
 Changelog
 =========
 
+(WIP) 2.5:
+
+  - make graphs templates table and sequence dumpable if version was upgraded
+    from 2.3
+
 2016-11-22 2.4:
 
 /!\ Please note that you must perform a "SELECT grant_appli('ui user')" if you upgrade from 2.3 to 2.4 /!\
