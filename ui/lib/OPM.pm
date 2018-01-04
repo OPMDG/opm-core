@@ -5,7 +5,7 @@ use File::Spec::Functions qw(splitdir catdir);
 # This program is open source, licensed under the PostgreSQL License.
 # For license terms, see the LICENSE file.
 #
-# Copyright (C) 2012-2015: Open PostgreSQL Monitoring Development Group
+# Copyright (C) 2012-2017: Open PostgreSQL Monitoring Development Group
 
 use vars qw($VERSION);
 $VERSION = '2.5';
