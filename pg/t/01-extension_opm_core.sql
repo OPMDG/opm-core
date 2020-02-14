@@ -188,7 +188,7 @@ SELECT diag(E'\n==== Test functions ====\n');
 SELECT lives_ok(
     $$CREATE FUNCTION public.test_register_api() RETURNS boolean LANGUAGE plpgsql AS
         $_$
-            BEGIN;
+            BEGIN
                 RETURN true;
             END;
         $_$
