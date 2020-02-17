@@ -55,24 +55,25 @@ SELECT has_type('public', 'metric_value', 'Schema public contains type "metric_v
 -- List of unregistered function should be known
 SELECT set_eq(
     $$
-        WITH ext AS (SELECT p.oid
+        WITH ext AS (SELECT (pg_identify_object('pg_catalog.pg_proc'::regclass, p.oid, 0)).identity AS ident
                 FROM pg_depend d
                 JOIN pg_extension e ON d.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_extension') AND d.refobjid = e.oid AND d.deptype = 'e'
                 JOIN pg_proc p ON d.objid = p.oid
                 WHERE e.extname = 'opm_core'
             )
-            SELECT  oid::regprocedure FROM ext
-            LEFT JOIN public.api ON ext.oid::regprocedure = api.proc
+            SELECT ident
+            FROM ext
+            LEFT JOIN public.api ON ext.ident = api.proc
             WHERE api.proc IS NULL;
     $$,
-    $$ VALUES ('public.register_api(regprocedure)'::regprocedure),
-        ('public.set_extension_owner(name)'::regprocedure),
-        ('public.create_admin(text,text)'::regprocedure),
-        ('public.grant_appli(name)'::regprocedure),
-        ('public.revoke_appli(name)'::regprocedure),
-        ('public.grant_dispatcher(name,name)'::regprocedure),
-        ('public.revoke_dispatcher(name,name)'::regprocedure),
-        ('public.opm_check_dropped_extensions()'::regprocedure)
+    $$ VALUES ('public.register_api(pg_catalog.regprocedure)'::text),
+        ('public.set_extension_owner(pg_catalog.name)'::text),
+        ('public.create_admin(pg_catalog.text,pg_catalog.text)'::text),
+        ('public.grant_appli(pg_catalog.name)'::text),
+        ('public.revoke_appli(pg_catalog.name)'::text),
+        ('public.grant_dispatcher(pg_catalog.name,pg_catalog.name)'::text),
+        ('public.revoke_dispatcher(pg_catalog.name,pg_catalog.name)'::text),
+        ('public.opm_check_dropped_extensions()'::text)
     $$,
     'List of unregistered function should be known.'
 );
@@ -188,7 +189,7 @@ SELECT diag(E'\n==== Test functions ====\n');
 SELECT lives_ok(
     $$CREATE FUNCTION public.test_register_api() RETURNS boolean LANGUAGE plpgsql AS
         $_$
-            BEGIN;
+            BEGIN
                 RETURN true;
             END;
         $_$
@@ -209,7 +210,7 @@ SELECT set_eq(
 );
 
 SELECT set_eq(
-    $$SELECT COUNT(*) FROM public.api WHERE proc::text = 'test_register_api()'$$,
+    $$SELECT COUNT(*) FROM public.api WHERE proc = 'public.test_register_api()'$$,
     $$VALUES (1)$$,
     'Should see function test_register_api().'
 );
@@ -221,7 +222,7 @@ SELECT set_eq(
 );
 
 SELECT set_eq(
-    $$SELECT COUNT(*) FROM public.api WHERE proc::text = 'test_register_api()'$$,
+    $$SELECT COUNT(*) FROM public.api WHERE proc::text = 'public.test_register_api()'$$,
     $$VALUES (1)$$,
     'Should still see function test_register_api(), and only 1 time.'
 );
@@ -455,7 +456,7 @@ SELECT set_eq(
 );
 
 SELECT set_eq(
-    $$SELECT COUNT(*) = 0 FROM public.api a JOIN pg_proc p ON a.proc = p.oid JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
+    $$SELECT COUNT(*) = 0 FROM public.api a JOIN pg_proc p ON a.proc = (pg_identify_object('pg_catalog.pg_proc'::regclass, p.oid, 0)).identity JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
     $$VALUES (true)$$,
     'Should not find any wh_nagios procs in public.api.'
 );
@@ -483,7 +484,7 @@ SELECT set_eq(
 );
 
 SELECT set_eq(
-    $$SELECT COUNT(*) != 0 FROM public.api a JOIN pg_proc p ON a.proc = p.oid JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
+    $$SELECT COUNT(*) != 0 FROM public.api a JOIN pg_proc p ON a.proc = (pg_identify_object('pg_catalog.pg_proc'::regclass, p.oid, 0)).identity JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
     $$VALUES (true)$$,
     'Should find some wh_nagios procs in public.api.'
 );
@@ -494,7 +495,7 @@ SELECT lives_ok(
 );
 
 SELECT set_eq(
-    $$SELECT COUNT(*) = 0 FROM public.api a JOIN pg_proc p ON a.proc = p.oid JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
+    $$SELECT COUNT(*) = 0 FROM public.api a JOIN pg_proc p ON a.proc = (pg_identify_object('pg_catalog.pg_proc'::regclass, p.oid, 0)).identity JOIN pg_namespace n ON p.pronamespace = n.oid WHERE nspname = 'wh_nagios'$$,
     $$VALUES (true)$$,
     'All wh_nagios procs should have been deleted from public.api.'
 );
