@@ -2813,20 +2813,20 @@ CREATE OR REPLACE
 FUNCTION public.opm_check_dropped_extensions()
 RETURNS event_trigger
 LANGUAGE plpgsql
-SET search_path TO public
+SET search_path TO pg_catalog
 AS $$
 DECLARE
     v_schema text;
 BEGIN
     WITH del AS (
         DELETE FROM public.api a
-        USING pg_event_trigger_dropped_objects() d
+        USING pg_catalog.pg_event_trigger_dropped_objects() d
         WHERE d.schema_name LIKE 'wh_%' ESCAPE '|'
         AND d.object_type = 'function'
         AND d.object_identity = a.proc
         RETURNING d.schema_name
     )
-    SELECT string_agg(DISTINCT schema_name,',') INTO v_schema
+    SELECT pg_catalog.string_agg(DISTINCT schema_name,',') INTO v_schema
     FROM del ;
     IF v_schema IS NOT NULL THEN
         RAISE NOTICE 'OPM: DROP EXTENSION intercepted, functions from % have been removed from the available API.', v_schema ;
