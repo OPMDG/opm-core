@@ -310,13 +310,14 @@ DECLARE
         FROM pg_extension AS e
             JOIN pg_namespace AS n ON e.extnamespace = n.oid
         WHERE e.extname = p_extname;
+    v_objid oid;
 BEGIN
     owner := r.rolname FROM pg_database AS d
         JOIN pg_roles AS r ON d.datdba = r.oid
         WHERE datname = pg_catalog.current_database();
 
-    FOR objtype, objname IN (
-        SELECT i.type, i.identity
+    FOR v_objid, objtype, objname IN (
+        SELECT d.objid, i.type, i.identity
         FROM pg_catalog.pg_depend AS d
             JOIN pg_catalog.pg_extension AS e ON d.refobjid = e.oid,
             LATERAL pg_catalog.pg_identify_object(d.classid, d.objid, 0) AS i
@@ -331,6 +332,16 @@ BEGIN
     )
     LOOP
         -- warning: identity is already escaped by pg_identify_object(...)
+        -- ignore some types (e.g. composite types automatically dervied from other types and array)
+        IF objtype = 'type' AND EXISTS (
+               SELECT 1
+               FROM pg_catalog.pg_type AS t
+               LEFT JOIN pg_catalog.pg_class AS c ON c.reltype = t.oid AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
+               WHERE t.oid = v_objid
+                     AND (c.oid IS NOT NULL OR (t.typelem <> 0 AND t.typcategory = 'A'))
+       ) THEN
+           CONTINUE;
+       END IF;
         EXECUTE pg_catalog.format('ALTER %s %s OWNER TO %I', objtype, objname, owner);
         RETURN NEXT;
     END LOOP;
